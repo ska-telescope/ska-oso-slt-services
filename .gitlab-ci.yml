@@ -1,22 +1,111 @@
+# GitLab CI in conjunction with GitLab Runner can use Docker Engine to test and build any application.
+# Docker, when used with GitLab CI, runs each job in a separate and isolated container using the predefined image that is set up in .gitlab-ci.yml.
+# In this case we use the latest python docker image to build and test this project.
 image: $SKA_K8S_TOOLS_DOCKER_BUILDER_IMAGE
+
 variables:
+  CHARTS_TO_PUBLISH: ska-oso-slt-services
   GIT_SUBMODULE_STRATEGY: recursive
-cache:
-  paths:
-    - build
+  MINIKUBE: "false"
+
+# The YAML file defines a set of jobs with constraints stating when they should be run.
+# You can specify an unlimited number of jobs which are defined as top-level elements with an arbitrary name and always have to contain at least the script clause.
+# In this case we have only the test job which produce an artifacts (it must be placed into a directory called "public")
+# It is also specified that only the master branch will be subject of this job.
+
+# non build and test stages hidden https://docs.gitlab.com/ee/ci/yaml/README.html#hide-jobs
 stages:
-  - lint
   - build
   - test
+  - deploy
+  - lint
   - publish
   - pages
   - scan
+  - integration
+  - staging
+
+test-chart-templates:
+  stage: test
+  variables:
+    MINIKUBE: "false"
+  tags:
+    - k8srunner
+  image: $SKA_K8S_TOOLS_DEPLOY_IMAGE
+  script:
+    - helm plugin install https://github.com/helm-unittest/helm-unittest.git
+    - make k8s-chart-test
+    - mkdir -p ./build/reports
+    - mv charts/build/chart_template_tests.xml ./build/reports/chart_template_tests.xml
+  artifacts:
+    name: "$CI_PROJECT_NAME-$CI_JOB_ID"
+    paths:
+      - "build/"
+    reports:
+      junit: build/reports/chart_template_tests.xml
+
+.info_script: &info_script
+  - |-
+    echo "Status of pods in $KUBE_NAMESPACE namespace:"
+    kubectl get pods -n $KUBE_NAMESPACE -o jsonpath="{range .items[*]}{'Pod: '}{.metadata.name}:{'\n'}{'\t'}{'Image: '}{.spec.containers[*].image}{'\n'}{'\t'}{'Status: '}{.status.phase}{'\n'}{end}{'\n'}"
+    echo "Addresses to connect to current Postgres deployment: "
+    echo "SLT REST API Swagger UI: https://k8s.stfc.skao.int/$KUBE_NAMESPACE/slt/api/v1/ui"
+    echo "SLT REST API: https://k8s.stfc.skao.int/$KUBE_NAMESPACE/slt/api/v1/"
+
+# Currently, the dev template uses ci-dev-$CI_PROJECT_NAME which means only one branch can be deployed at a time, so we overwrite this
+.dev_env: &dev_env
+  variables:
+    KUBE_NAMESPACE: "dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG"
+  environment:
+    name: "dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG"
+
+info-dev-environment:
+  <<: *dev_env
+  script:
+    - *info_script
+
+info-integration:
+  script:
+    - *info_script
+
+info-staging:
+  script:
+    - *info_script
+
+deploy-dev-environment:
+  <<: *dev_env
+
+test-dev-environment:
+  <<: *dev_env
+
+stop-dev-environment:
+  <<: *dev_env
+
 include:
-  - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/python.gitlab-ci.yml'
-  - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/docs.gitlab-ci.yml'
-  - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/release.gitlab-ci.yml'
-  - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/finaliser.gitlab-ci.yml'
+  # Python
+  - project: "ska-telescope/templates-repository"
+    file: "gitlab-ci/includes/python.gitlab-ci.yml"
+  # OCI
+  - project: "ska-telescope/templates-repository"
+    file: "gitlab-ci/includes/oci-image.gitlab-ci.yml"
+  # Helm Chart linting and Publish
+  - project: "ska-telescope/templates-repository"
+    file: "gitlab-ci/includes/helm-chart.gitlab-ci.yml"
+  # Docs pages
+  - project: "ska-telescope/templates-repository"
+    file: "gitlab-ci/includes/docs.gitlab-ci.yml"
+  # .post step finalisers eg: badges
+  - project: "ska-telescope/templates-repository"
+    file: "gitlab-ci/includes/finaliser.gitlab-ci.yml"
+  # change log
+  - project: "ska-telescope/templates-repository"
+    file: "gitlab-ci/includes/changelog.gitlab-ci.yml"
+  # release notes
+  - project: "ska-telescope/templates-repository"
+    file: "gitlab-ci/includes/release.gitlab-ci.yml"
+  # deploy steps
+  - project: "ska-telescope/templates-repository"
+    file: "gitlab-ci/includes/deploy.gitlab-ci.yml"
+  # Telescope model data job
+  - project: "ska-telescope/templates-repository"
+    file: "gitlab-ci/includes/tmdata.gitlab-ci.yml"

@@ -1,0 +1,2 @@
+global:
+  cluster_domain: cluster.local

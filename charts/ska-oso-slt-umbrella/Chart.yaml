@@ -1,0 +1,11 @@
+apiVersion: v2
+name: ska-oso-slt-services-umbrella
+description: Helm umbrella chart for the SLT Services
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+icon: https://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
+dependencies:
+  - name: ska-oso-slt-services
+    version: 1.0.0
+    repository: file://../ska-oso-slt-services

@@ -1,0 +1,41 @@
+# Default values for SLT.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+minikube: true
+
+system: OST
+subsystem: SLT
+
+labels:
+  app: ska-oso-slt-services
+
+global:
+  minikube: true
+  cluster_domain: cluster.local
+
+rest:
+  component: rest
+  function: SLT
+  domain: operations
+  logLevel: info
+  enabled: true
+  image:
+    registry: artefact.skao.int
+    image: ska-oso-slt-services
+    tag: ~ # Defaults to the chart appVersion if not set
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 1024Mi
+    limits:
+      cpu: 1000m
+      memory: 1024Mi
+  ingress:
+    enabled: true
+
+nodeSelector: {}
+
+affinity: {}
+
+tolerations: []

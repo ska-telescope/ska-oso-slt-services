@@ -98,7 +98,7 @@ extend-exclude = '''
     | buck-out
     | build
     | dist
-    | src/ska_ost_osd/rest/openapi/__submodules__
+    | src/ska_oso_slt_services/rest/openapi/__submodules__
   )/
   | foo.py           # also separately exclude a file named foo.py in
                      # the root of the project
@@ -108,7 +108,7 @@ extend-exclude = '''
 [tool.isort]
 profile = "black"
 line_length = 88
-skip = "src/ska_ost_osd/rest/openapi/__submodules__"
+skip = "src/ska_oso_slt_services/rest/openapi/__submodules__"
 
 [tool.pylint]
 disable = "C,R,W3101,W0511"
