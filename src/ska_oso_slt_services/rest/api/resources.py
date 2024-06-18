@@ -5,10 +5,7 @@ See the operationId fields of the Open API spec for the specific mappings.
 """
 
 
-from http import HTTPStatus
-
-
-def get_slts(**kwargs) -> dict:
+def get_slts() -> dict:
     """This function takes query parameters and SLT data source objects
       to generate a response containing matching SLT data.
 
@@ -17,4 +14,4 @@ def get_slts(**kwargs) -> dict:
 
     :returns dict: A dictionary with SLT data satisfying the query.
     """
-    return {"test":"test"}
+    return {"test": "test"}
