@@ -106,6 +106,3 @@ include:
   # deploy steps
   - project: "ska-telescope/templates-repository"
     file: "gitlab-ci/includes/deploy.gitlab-ci.yml"
-  # Telescope model data job
-  - project: "ska-telescope/templates-repository"
-    file: "gitlab-ci/includes/tmdata.gitlab-ci.yml"
