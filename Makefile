@@ -38,6 +38,10 @@ K8S_CHART_PARAMS = --set ska-oso-slt-services.rest.image.tag=$(VERSION)-dev.c$(C
 	--set ska-oso-slt-services.rest.image.registry=$(CI_REGISTRY)/ska-telescope/ost/ska-oso-slt-services
 endif
 
+POSTGRES_HOST ?= $(RELEASE_NAME)-postgresql
+K8S_CHART_PARAMS += \
+  --set ska-db-oda-umbrella.pgadmin4.serverDefinitions.servers.firstServer.Host=$(POSTGRES_HOST)
+
 # For the staging environment, make k8s-install-chart-car will pull the chart from CAR so we do not need to
 # change any values
 ENV_CHECK := $(shell echo $(CI_ENVIRONMENT_SLUG) | egrep 'staging')

@@ -72,7 +72,7 @@ spec:
         intent: production
     spec:
       containers:
-      - name: SLT
+      - name: slt
         image: "{{ .Values.rest.image.registry }}/{{ .Values.rest.image.image }}:{{$.Values.rest.image.tag | default $.Chart.AppVersion}}"
         imagePullPolicy: {{ .Values.rest.image.pullPolicy }}
         command: [ "/bin/sh" ]
