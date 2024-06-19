@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath("../../src"))
 
 project = "ska-oso-slt-services"
 copyright = "2024, SKAO"
-author = "Team Nakshatra <dayanand_arade@persistent.com>"
+author = "Team Nakshatra"
 release = "1.0.0"
 
 extensions = [

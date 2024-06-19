@@ -2,7 +2,7 @@
 name = "ska-oso-slt-services"
 version = "1.0.0"
 description = "Shift log tool"
-authors = ["Team Nakshatra <dayanand_arade@persistent.com>"]
+authors = ["Team Nakshatra"]
 license= "BSD-3-Clause"
 readme = "README.md"
 

@@ -12,7 +12,6 @@ API_PATH = f"{KUBE_NAMESPACE}/slt/api/v{SLT_MAJOR_VERSION}"
 
 # There is a (another) issue with Connexion where it cannot validate
 # against a spec with polymorphism,
-# like the SBDefinition. See https://github.com/spec-first/connexion/issues/1569
 # As a quick has, this basically turns off the validation
 class CustomRequestBodyValidator:
     def __init__(self, *args, **kwargs):
