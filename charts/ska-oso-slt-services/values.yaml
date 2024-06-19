@@ -3,8 +3,8 @@
 # Declare variables to be passed into your templates.
 minikube: true
 
-system: OST
-subsystem: SLT
+system: OSO
+subsystem: slt
 
 labels:
   app: ska-oso-slt-services
@@ -15,7 +15,7 @@ global:
 
 rest:
   component: rest
-  function: SLT
+  function: slt
   domain: operations
   logLevel: info
   enabled: true
