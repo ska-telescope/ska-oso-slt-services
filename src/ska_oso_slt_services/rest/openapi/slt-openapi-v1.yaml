@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Observatory Static Data API
+  title: Shift Log Tool API
   description: 'This OpenAPI document defines the API for the Shift Log Tool REST service'
   license:
     name: BSD-3-Clause
