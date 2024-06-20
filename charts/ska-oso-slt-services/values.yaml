@@ -22,7 +22,7 @@ rest:
   image:
     registry: registry.gitlab.com
     image: ska-telescope/oso/ska-oso-slt-services/ska-oso-slt-services
-    tag: 1.0.0-dev.c2de4dca2
+    tag: 1.0.0+dev.c735e7124
     pullPolicy: IfNotPresent
   resources:
     requests:
