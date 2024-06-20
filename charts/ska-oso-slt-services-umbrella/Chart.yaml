@@ -10,7 +10,7 @@ dependencies:
     version: 1.0.0
     repository: file://../ska-oso-slt-services
     
-  # ODA is a dependency of ODT services. Include it for data persistence
+  # ODA is a dependency of SLT services. Include it for data persistence
   # The ODA umbrella chart includes ODA API, PostgreSQL database and SKUID
   - name: ska-db-oda-umbrella
     version: 4.1.0
