@@ -17,7 +17,7 @@ spec:
   rules:
     - http:
         paths:
-          - path: /{{ .Release.Namespace }}/odt/api
+          - path: /{{ .Release.Namespace }}/slt/api
             pathType: Prefix
             backend:
               service:
