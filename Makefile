@@ -11,7 +11,13 @@ PROJECT_NAME = ska-oso-slt-services
 KUBE_NAMESPACE ?= ska-oso-slt-services
 RELEASE_NAME ?= test
 
+# include makefile to pick up the standard Make targets from the submodule
 
+-include .make/helm.mk
+-include .make/base.mk
+-include .make/oci.mk
+-include .make/k8s.mk
+-include .make/python.mk
 
 # Set sphinx documentation build to fail on warnings (as it is configured
 # in .readthedocs.yaml as well)
@@ -24,8 +30,6 @@ docs-pre-build:
 .PHONY: docs-pre-build
 
 IMAGE_TO_TEST = $(CAR_OCI_REGISTRY_HOST)/$(strip $(OCI_IMAGE)):$(VERSION)
-K8S_CHART = ska-oso-slt-services-umbrella
-
 
 # For the test, dev and integration environment, use the freshly built image in the GitLab registry
 ENV_CHECK := $(shell echo $(CI_ENVIRONMENT_SLUG) | egrep 'test|dev|integration')
@@ -56,13 +60,6 @@ PYTHON_LINE_LENGTH = 88
 # Set python-test make target to run unit tests and not the component tests
 PYTHON_TEST_FILE = tests/unit/
 
-# include makefile to pick up the standard Make targets from the submodule
-
--include .make/helm.mk
--include .make/base.mk
--include .make/oci.mk
--include .make/k8s.mk
--include .make/python.mk
 
 # include your own private variables for custom deployment configuration
 -include PrivateRules.mak
