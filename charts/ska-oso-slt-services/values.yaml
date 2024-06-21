@@ -1,21 +1,19 @@
-# Default values for SLT.
+# Default values for oet.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 minikube: true
 
-system: OSO
-subsystem: slt
-
-labels:
-  app: ska-oso-slt-services
+system: TM-mid
+telescope: SKA-mid
+subsystem: ska-oso-slt-services
 
 global:
   minikube: true
-  cluster_domain: cluster.local
+  cluster_domain: techops.internal.skao.int
 
 rest:
   component: rest
-  function: slt
+  function: slt-services
   domain: operations
   logLevel: info
   enabled: true
@@ -24,12 +22,16 @@ rest:
     image: ska-telescope/oso/ska-oso-slt-services/ska-oso-slt-services
     tag: 1.0.0-dev.c2de4dca2
     pullPolicy: IfNotPresent
+  oda:
+    backendType: filesystem
+    url: ~ # Defaults to the ODA Kubernetes service address if not set
+  use_skuid: true
   resources:
     requests:
-      cpu: 100m
+      cpu:  100m
       memory: 1024Mi
     limits:
-      cpu: 1000m
+      cpu:  1000m
       memory: 1024Mi
   ingress:
     enabled: true
