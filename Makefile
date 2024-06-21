@@ -49,24 +49,15 @@ PYTHON_SWITCHES_FOR_PYLINT =
 # System Team makefiles' 79 character default
 PYTHON_LINE_LENGTH = 88
 
-# Set the k8s test command run inside the testing pod to only run the component
-# tests (no k8s pod deployment required for unit tests)
-K8S_TEST_TEST_COMMAND = KUBE_NAMESPACE=$(KUBE_NAMESPACE) pytest ./tests/component --junitxml=build/reports/report.xml | tee pytest.stdout
 
 # Set python-test make target to run unit tests and not the component tests
 PYTHON_TEST_FILE = tests/unit/
-
-# Variables used by the xray make targets
-XRAY_TEST_RESULT_FILE = build/reports/report.xml
-XRAY_EXTRA_OPTS = -t pytest
-XRAY_EXECUTION_CONFIG_FILE ?= tests/xray-config.json
 
 # include makefile to pick up the standard Make targets from the submodule
 -include .make/base.mk
 -include .make/python.mk
 -include .make/oci.mk
 -include .make/k8s.mk
--include .make/xray.mk
 -include .make/helm.mk
 
 # include your own private variables for custom deployment configuration
@@ -74,18 +65,6 @@ XRAY_EXECUTION_CONFIG_FILE ?= tests/xray-config.json
 
 REST_POD_NAME=$(shell kubectl get pods -o name -n $(KUBE_NAMESPACE) -l app=ska-oso-slt-services,component=rest | cut -c 5-)
 
-# install helm plugin from https://github.com/helm-unittest/helm-unittest.git
-k8s-chart-test:
-	mkdir -p charts/build; \
-	helm unittest charts/ska-oso-slt-services/ --with-subchart \
-		--output-type JUnit --output-file charts/build/chart_template_tests.xml
-
-k8s-pre-test:
-	kubectl exec $(REST_POD_NAME) -n $(KUBE_NAMESPACE) -- mkdir -p /var/lib/oda/sbd/sbd-1234
-	kubectl cp tests/unit/files/testfile_sample_mid_sb.json $(KUBE_NAMESPACE)/$(REST_POD_NAME):/var/lib/oda/sbd/sbd-1234/1.json
-
-k8s-post-test:
-	kubectl -n $(KUBE_NAMESPACE) exec $(REST_POD_NAME) -- rm -r /var/lib/oda/sbd/
 
 
 MINIKUBE_NFS_SHARES_ROOT ?=
