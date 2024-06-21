@@ -75,12 +75,6 @@ k8s-chart-test:
 	helm unittest charts/ska-oso-slt-services/ --with-subchart \
 		--output-type JUnit --output-file charts/build/chart_template_tests.xml
 
-k8s-pre-test:
-	kubectl exec $(REST_POD_NAME) -n $(KUBE_NAMESPACE) -- mkdir -p /var/lib/oda/sbd/sbd-1234
-	kubectl cp tests/unit/testfile_sample_mid_sb.json $(KUBE_NAMESPACE)/$(REST_POD_NAME):/var/lib/oda/sbd/sbd-1234/1.json
-
-k8s-post-test:
-	kubectl -n $(KUBE_NAMESPACE) exec $(REST_POD_NAME) -- rm -r /var/lib/oda/sbd/
 
 
 MINIKUBE_NFS_SHARES_ROOT ?=
