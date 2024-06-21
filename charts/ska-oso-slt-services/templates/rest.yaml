@@ -13,12 +13,11 @@ metadata:
     domain: {{ .Values.rest.domain }}
     intent: production
   annotations:
-    kubernetes.io/ingress.class: nginx
 spec:
   rules:
     - http:
         paths:
-          - path: /{{ .Release.Namespace }}/SLT/api
+          - path: /{{ .Release.Namespace }}/odt/api
             pathType: Prefix
             backend:
               service:
@@ -72,7 +71,7 @@ spec:
         intent: production
     spec:
       containers:
-      - name: slt
+      - name: slt-services
         image: "{{ .Values.rest.image.registry }}/{{ .Values.rest.image.image }}:{{$.Values.rest.image.tag | default $.Chart.AppVersion}}"
         imagePullPolicy: {{ .Values.rest.image.pullPolicy }}
         command: [ "/bin/sh" ]

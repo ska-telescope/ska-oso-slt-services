@@ -1,9 +1,9 @@
 global:
-  cluster_domain: cluster.local
+  cluster_domain: techops.internal.skao.int
 
-ska-oso-slt-services:
+ska-oso-services:
   rest:
-    slt:
+    oda:
       backendType: rest
       url: ~ # Defaults to the ODA Kubernetes service address if not set
 

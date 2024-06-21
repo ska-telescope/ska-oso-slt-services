@@ -11,6 +11,9 @@ USER root
 
 WORKDIR /app
 
+# Used by the FilesystemRepository implementation of the ODA
+RUN mkdir -p /var/lib/oda && chown -R tango /var/lib/oda
+
 # Copy poetry.lock* in case it doesn't exist in the repo
 COPY pyproject.toml poetry.lock* ./
 
