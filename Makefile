@@ -49,6 +49,9 @@ PYTHON_SWITCHES_FOR_PYLINT =
 # System Team makefiles' 79 character default
 PYTHON_LINE_LENGTH = 88
 
+# Set the k8s test command run inside the testing pod to only run the component
+# tests (no k8s pod deployment required for unit tests)
+K8S_TEST_TEST_COMMAND = KUBE_NAMESPACE=$(KUBE_NAMESPACE) pytest ./tests/component --junitxml=build/reports/report.xml | tee pytest.stdout
 
 # Set python-test make target to run unit tests and not the component tests
 PYTHON_TEST_FILE = tests/unit/
@@ -58,6 +61,7 @@ PYTHON_TEST_FILE = tests/unit/
 -include .make/python.mk
 -include .make/oci.mk
 -include .make/k8s.mk
+-include .make/xray.mk
 -include .make/helm.mk
 
 # include your own private variables for custom deployment configuration
