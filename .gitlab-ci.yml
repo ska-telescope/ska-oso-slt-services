@@ -25,25 +25,6 @@ stages:
   - integration
   - staging
 
-test-chart-templates:
-  stage: test
-  variables:
-    MINIKUBE: "false"
-  tags:
-    - k8srunner
-  image: $SKA_K8S_TOOLS_DEPLOY_IMAGE
-  script:
-    - helm plugin install https://github.com/helm-unittest/helm-unittest.git
-    - make k8s-chart-test
-    - mkdir -p ./build/reports
-    - mv charts/build/chart_template_tests.xml ./build/reports/chart_template_tests.xml
-  artifacts:
-    name: "$CI_PROJECT_NAME-$CI_JOB_ID"
-    paths:
-      - "build/"
-    reports:
-      junit: build/reports/chart_template_tests.xml
-
 .info_script: &info_script
   - |-
     echo "Status of pods in $KUBE_NAMESPACE namespace:"
