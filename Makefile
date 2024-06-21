@@ -21,17 +21,17 @@ POSTGRES_HOST ?= $(RELEASE_NAME)-postgresql
 K8S_CHART_PARAMS += \
   --set ska-db-oda-umbrella.pgadmin4.serverDefinitions.servers.firstServer.Host=$(POSTGRES_HOST)
 
- # Set cluster_domain to minikube default (cluster.local) in local development
-# (CI_ENVIRONMENT_SLUG should only be defined when running on the CI/CD pipeline)
-ifeq ($(CI_ENVIRONMENT_SLUG),)
-K8S_CHART_PARAMS += --set global.cluster_domain="cluster.local"
-endif
-
 # For the test, dev and integration environment, use the freshly built image in the GitLab registry
 ENV_CHECK := $(shell echo $(CI_ENVIRONMENT_SLUG) | egrep 'test|dev|integration')
 ifneq ($(ENV_CHECK),)
 K8S_CHART_PARAMS += --set ska-oso-slt-services.rest.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA) \
 	--set ska-oso-slt-services.rest.image.registry=$(CI_REGISTRY)/ska-telescope/oso/ska-oso-slt-services
+endif
+
+# Set cluster_domain to minikube default (cluster.local) in local development
+# (CI_ENVIRONMENT_SLUG should only be defined when running on the CI/CD pipeline)
+ifeq ($(CI_ENVIRONMENT_SLUG),)
+K8S_CHART_PARAMS += --set global.cluster_domain="cluster.local"
 endif
 
 # For the staging environment, make k8s-install-chart-car will pull the chart from CAR so we do not need to
@@ -51,7 +51,7 @@ PYTHON_LINE_LENGTH = 88
 
 # Set the k8s test command run inside the testing pod to only run the component
 # tests (no k8s pod deployment required for unit tests)
-K8S_TEST_TEST_COMMAND = KUBE_NAMESPACE=$(KUBE_NAMESPACE) pytest ./tests/component --junitxml=build/reports/report.xml | tee pytest.stdout
+K8S_TEST_TEST_COMMAND = KUBE_NAMESPACE=$(KUBE_NAMESPACE) pytest ./tests/component | tee pytest.stdout
 
 # Set python-test make target to run unit tests and not the component tests
 PYTHON_TEST_FILE = tests/unit/
@@ -61,7 +61,7 @@ PYTHON_TEST_FILE = tests/unit/
 -include .make/python.mk
 -include .make/oci.mk
 -include .make/k8s.mk
--include .make/xray.mk
+
 -include .make/helm.mk
 
 # include your own private variables for custom deployment configuration
@@ -69,6 +69,18 @@ PYTHON_TEST_FILE = tests/unit/
 
 REST_POD_NAME=$(shell kubectl get pods -o name -n $(KUBE_NAMESPACE) -l app=ska-oso-slt-services,component=rest | cut -c 5-)
 
+# install helm plugin from https://github.com/helm-unittest/helm-unittest.git
+k8s-chart-test:
+	mkdir -p charts/build; \
+	helm unittest charts/ska-oso-slt-services/ --with-subchart \
+		--output-type JUnit --output-file charts/build/chart_template_tests.xml
+
+k8s-pre-test:
+	kubectl exec $(REST_POD_NAME) -n $(KUBE_NAMESPACE) -- mkdir -p /var/lib/oda/sbd/sbd-1234
+	kubectl cp tests/unit/testfile_sample_mid_sb.json $(KUBE_NAMESPACE)/$(REST_POD_NAME):/var/lib/oda/sbd/sbd-1234/1.json
+
+k8s-post-test:
+	kubectl -n $(KUBE_NAMESPACE) exec $(REST_POD_NAME) -- rm -r /var/lib/oda/sbd/
 
 
 MINIKUBE_NFS_SHARES_ROOT ?=
