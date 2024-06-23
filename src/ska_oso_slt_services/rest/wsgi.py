@@ -1,6 +1,7 @@
 """
 SLT REST server entry point.
 """
+
 import logging
 
 from gunicorn import glogging
