@@ -96,7 +96,7 @@ As the data models used by SKA evolve, the component in the OpenAPI document sho
 
 # Documentation
 
-[![Documentation Status](https://readthedocs.org/projects/ska-telescope-ska-oso-slt-services/badge/?version=latest)](https://developer.skao.int/projects/ska-oso-slt-services/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/ska-telescope-ska-oso-slt-services/badge/?version=latest)](https://ska-telescope-ska-oso-slt-services.readthedocs.io/en/latest/)
 
 To build the html version of the documentation, start 
 from the root directory and first install the dependency using 
