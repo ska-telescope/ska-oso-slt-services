@@ -1,12 +1,11 @@
-Welcome to ska-oso-slt-services's documentation!
-================================================
+Welcome to ska-oso-slt-services documentation!
+===============================================
 
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
+   :caption: Usage
 
    api/index
-
 
 Indices and tables
 ==================
