@@ -1,0 +1,98 @@
+openapi: 3.0.0
+info:
+  title: Shift Log Tool API
+  description: 'This OpenAPI document defines the API for the Shift Log Tool REST service'
+  license:
+    name: BSD-3-Clause
+    url: https://opensource.org/licenses/BSD-3-Clause
+  version: 1.0.0
+servers:
+# This default is overwritten when the application is deployed to include the actual namespace if it is different to the 'ska-SLT' default
+- url: ska-oso-slt-services/slt/api/v1
+paths:
+  /slt:
+    get:
+      summary: Get SLT data filter by the query parameter
+      description: |
+        Retrieves the SLT data for the given start time and end time.
+      operationId: ska_oso_slt_services.rest.api.resources.get_slts
+      parameters:
+        - $ref: '#/components/parameters/start_time'
+        - $ref: '#/components/parameters/end_time'
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      
+components:
+  parameters:
+    start_time:
+      in: query
+      name: start_time
+      schema:
+        type: string
+      required: false
+
+    end_time:
+      in: query
+      name: end_time
+      schema:
+        type: string
+      required: false
+
+
+  responses:
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Bad Request, eg validation of against OpenAPI spec failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BadRequestResponse'
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    BadRequestResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+        title:
+          type: string
+        detail:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        title:
+          type: string
+        detail:
+          type: string
+        traceback:
+          type: object
+          properties:
+            key:
+              type: string
+            type:
+              type: string
+            full_traceback:
+              type: string

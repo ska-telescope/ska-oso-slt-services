@@ -1,0 +1,109 @@
+[tool.poetry]
+name = "ska-oso-slt-services"
+version = "1.0.0"
+description = "Shift log tool"
+authors = ["Team Nakshatra"]
+license= "BSD-3-Clause"
+readme = "README.md"
+
+[[tool.poetry.source]]
+name = 'skao'
+url = 'https://artefact.skao.int/repository/pypi-internal/simple'
+
+[[tool.poetry.source]]
+name = "PyPI-public"
+url = 'https://pypi.org/simple'
+
+[tool.poetry.dependencies]
+python = "^3.10"
+connexion = {extras = ["swagger-ui"], version = "^2.14.0"}
+python-dateutil = "^2.8.2"
+gunicorn = "^20.1.0"
+ska-ser-logging = "^0.4.1"
+ska-ser-skuid = "^3.3.3"
+ska-db-oda = "3.0.2"
+prance = {version = "^23.6.21.0", extras = ["osv"]}
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.1.1"
+pytest-cov = "^3.0.0"
+pytest-forked = "^1.4.0"
+pytest-json-report = "^1.5.0"
+black = "^23.12.1"
+pycodestyle = "^2.8.0"
+isort = "^5.10.1"
+pylint-junit = "^0.3.2"
+flake8 = "^7.0.0"
+deepdiff = "^5.8.1"
+
+
+[tool.poetry.group.docs.dependencies]
+recommonmark = "^0.7.1"
+sphinxcontrib-openapi = "^0.8.1"
+ska-ser-sphinx-theme = "^0.1.2"
+sphinx_autodoc_typehints = "^2.0.0"
+
+
+[tool.pytest.ini_options]
+addopts = "-v"
+
+[tool.flake8]
+docstring-style = "sphinx"
+rst-directives = "literalinclude"
+rst-roles = ["py:attr", "py:class", "py:const", "py:exc", "py:func", "py:meth", "py:mod"]
+enable = "DAR104"
+max-complexity = 10
+
+# E203 and W503 conflict with black
+ignore = ["E203", "W503"]
+
+[tool.pylint.messages_control]
+disable = [
+    "duplicate-code",
+    "fixme",
+]
+enable = ["useless-suppression"]
+
+[tool.pylint.similarities]
+min-similarity-lines = 7
+ignore-imports = "yes"
+
+
+[tool.black]
+line-length = 88
+preview = true
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+    | src/ska_oso_slt_services/rest/openapi/__submodules__
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+skip = "src/ska_oso_slt_services/rest/openapi/__submodules__"
+
+[tool.pylint]
+disable = "C,R,W3101,W0511"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
