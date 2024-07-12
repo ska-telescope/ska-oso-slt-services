@@ -5,15 +5,12 @@ See the operationId fields of the Open API spec for the specific mappings.
 """
 
 import logging
+from datetime import datetime
 from http import HTTPStatus
 from typing import Any, Dict, Tuple, Union
 
 from ska_db_oda.domain.query import QueryParams, QueryParamsFactory
-
-from ska_db_oda.rest.api.resources import (
-    error_handler,
-    validation_response,
-)
+from ska_db_oda.rest.api.resources import error_handler, validation_response
 
 LOGGER = logging.getLogger(__name__)
 
@@ -61,7 +58,7 @@ def get_qry_params(kwargs: dict) -> Union[QueryParams, Response]:
 
 
 @error_handler
-def get_shift_history_data(shift_id: str) -> Response:
+def get_shift_history_data_with_id(shift_id: str) -> Response:
     """
     Function that a GET /shift/history/<shift_id> request is routed to.
 
@@ -69,11 +66,19 @@ def get_shift_history_data(shift_id: str) -> Response:
     :return: The Shift History Data with status wrapped in a Response, or appropriate error
      Response
     """
-    with oda.uow as uow:
-        sbd = uow.sbds.get(sbd_id)
-        sbd_json = sbd.model_dump(mode="json")
-        sbd_json["status"] = _get_sbd_status(
-            uow=uow, sbd_id=sbd_id, version=sbd_json["metadata"]["version"]
-        )["current_status"]
-    return sbd_json, HTTPStatus.OK
+    return "shift_data", HTTPStatus.OK
 
+
+@error_handler
+def get_shift_history_data_with_date(
+    start_time: datetime, end_time: datetime
+) -> Response:
+    """
+    Function that a GET /shift/history/<shift_id> request is routed to.
+
+    :param shift_id: Requested identifier from the path parameter
+    :return: The Shift History Data with status wrapped in a Response, or appropriate error
+     Response
+    """
+
+    return "shift_data", HTTPStatus.OK

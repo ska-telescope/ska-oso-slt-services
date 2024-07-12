@@ -9,7 +9,6 @@ from ska_ser_logging import configure_logging, get_default_formatter
 
 from ska_oso_slt_services.rest import init_app
 
-
 app = init_app()
 
 

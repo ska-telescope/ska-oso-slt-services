@@ -1,20 +1,14 @@
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.types import DateTime, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.types import Integer, String
+
+from .metadata import Base, Metadata
 
 
-class Base(DeclarativeBase):
-    pass
-
-
-class SLT(Base):
+class SLT(Metadata, Base):
     __tablename__ = "tab_oda_slt"
 
     id: Mapped[int] = mapped_column(Integer(), primary_key=True, nullable=False)
     comments: Mapped[str] = mapped_column(String(2000))
-    created_by: Mapped[str] = mapped_column(String(20), nullable=False)
-    created_on: Mapped[str] = mapped_column(DateTime(), nullable=False)
-    last_modified_by: Mapped[str] = mapped_column(String(20), nullable=False)
-    last_modified_on: Mapped[str] = mapped_column(DateTime(), nullable=False)
 
     def __repr__(self) -> str:
         return (

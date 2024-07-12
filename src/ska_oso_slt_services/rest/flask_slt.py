@@ -2,9 +2,11 @@
 The flask_SLT module contains code used to interface Flask applications with
 the SLT.
 """
+
 import logging
 
 from flask import _app_ctx_stack, current_app  # pylint: disable=no-name-in-module
+
 # from ska_db_oda.unit_of_work.postgresunitofwork import (
 #     create_connection_pool,
 # )
@@ -36,11 +38,15 @@ class FlaskSLT(object):
         """
         Initialise SLT Flask extension.
         """
-        app.config["SQLALCHEMY_DATABASE_URI"] = "https://k8s-cicd.skao.int/integration-ska-db-oda/api/v5/"
-        app.config["SQLALCHEMY_BINDS"] = {"ED": "sqlite:////path/2/uk.db", "Log DB": "sqlite:////path/2/us.db"}
+        app.config["SQLALCHEMY_DATABASE_URI"] = (
+            "https://k8s-cicd.skao.int/integration-ska-db-oda/api/v5/"
+        )
+        app.config["SQLALCHEMY_BINDS"] = {
+            "ED": "sqlite:////path/2/uk.db",
+            "Log DB": "sqlite:////path/2/us.db",
+        }
 
         app = SQLAlchemy(app)
-
 
     @property
     def uow(self):
@@ -50,17 +56,8 @@ class FlaskSLT(object):
         ctx = _app_ctx_stack.top
         if ctx is not None:
             if not hasattr(ctx, "uow"):
-                if current_app.config[BACKEND_VAR] == "filesystem":
-                    uow = FilesystemUnitOfWork()
-                elif current_app.config[BACKEND_VAR] == "postgres":
-                    uow = PostgresUnitOfWork(self.connection_pool)
-                elif current_app.config[BACKEND_VAR] == "rest":
-                    uow = RESTUnitOfWork()
-                else:
-                    uow = MemoryUnitOfWork(self.memory_session)
-                ctx.uow = uow
 
-            return ctx.uow
+                return ctx.uow
 
     @property
     def connection_pool(self):
@@ -68,8 +65,3 @@ class FlaskSLT(object):
         if not hasattr(current_app, "connection_pool"):
             current_app.connection_pool = create_connection_pool()
         return current_app.connection_pool
-
-
-def ed_connection():
-    uow = current_app.uow
-    return uow.engines["ED"].engine.raw_connection()
