@@ -1,7 +1,7 @@
 import os
 
 
-def create_connection_pool() -> "ConnectionPool":
+def create_connection_pool() -> None:
     conninfo = (
         f"host={os.environ.get('POSTGRES_HOST')} "
         f"port={os.environ.get('POSTGRES_PORT', '5432')} "
@@ -12,4 +12,4 @@ def create_connection_pool() -> "ConnectionPool":
 
     connect_kwargs = {"row_factory": "dict_row"}
 
-    return "ConnectionPool(conninfo, kwargs=connect_kwargs)"
+    return {connect_kwargs: conninfo}

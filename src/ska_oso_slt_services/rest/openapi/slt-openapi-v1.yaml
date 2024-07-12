@@ -8,14 +8,69 @@ info:
   version: 1.0.0
 servers:
 # This default is overwritten when the application is deployed to include the actual namespace if it is different to the 'ska-SLT' default
-- url: ska-oso-slt-services/slt/api/v1
+- url: ska-oso-slt-services/slt/api/v1/
+
 paths:
+
   /slt:
     get:
       summary: Get SLT data filter by the query parameter
       description: |
         Retrieves the SLT data for the given start time and end time.
-      operationId: ska_oso_slt_services.rest.api.resources.get_slts
+      operationId: ska_oso_slt_services.rest.api.resources.get_shift_data
+      parameters:
+        - $ref: '#/components/parameters/start_time'
+        - $ref: '#/components/parameters/end_time'
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+
+  /shift/history/{shift_id}:
+    parameters:
+    - name: shift_id
+      in: path
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
+    get:
+      summary: Get SLT data filter by the query parameter
+      description: |
+        Retrieves the SLT data for the given start time and end time.
+      operationId: ska_oso_slt_services.rest.api.resources.get_shift_history_data_with_id
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+
+  /shift/history:
+    get:
+      summary: Get SLT data filter by the query parameter
+      description: |
+        Retrieves the SLT data for the given start time and end time.
+      operationId: ska_oso_slt_services.rest.api.resources.get_shift_history_data_with_date
       parameters:
         - $ref: '#/components/parameters/start_time'
         - $ref: '#/components/parameters/end_time'
@@ -41,7 +96,8 @@ components:
       name: start_time
       schema:
         type: string
-      required: false
+      required: true
+      example: 2024-07-12T15:43:53.971548+00:00
 
     end_time:
       in: query
@@ -49,7 +105,7 @@ components:
       schema:
         type: string
       required: false
-
+      example: 2024-07-12T15:43:53.971548+00:00
 
   responses:
     NotFound:

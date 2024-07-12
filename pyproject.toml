@@ -27,6 +27,9 @@ ska-db-oda  = "^5.0.0"
 elasticsearch = "^8.14.0"
 pyhdbpp = "^1.5.12"
 flask-sqlalchemy = "^3.1.1"
+pydantic-core = "^2.20.1"
+annotated-types = "^0.7.0"
+pydantic = "^2.8.2"
 
 
 [tool.poetry.group.dev.dependencies]

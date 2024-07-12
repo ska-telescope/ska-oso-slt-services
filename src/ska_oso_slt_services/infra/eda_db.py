@@ -12,8 +12,10 @@ class EDADB:
         self.cluster_name = (
             "databaseds-tango-base.ci-ska-skampi-hm-213 mid.svc.cluster.local"
         )
+        self.telescope = "ska_mid"
         self.cluster_port = 10000
-        self.device_trl = f"tango://{self.cluster_name}:{self.cluster_port}/ska_mid/tm_subarray_node/1/obsstate"
+        self.url_1 = f"tango://{self.cluster_name}:{self.cluster_port}"
+        self.device_trl = f"{self.url_1}/{self.telescope}/tm_subarray_node/1/obsstate"
 
     def create_reader(self):
         return pyhdbpp.reader(

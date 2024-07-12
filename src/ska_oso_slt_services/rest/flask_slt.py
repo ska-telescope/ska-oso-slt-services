@@ -63,5 +63,5 @@ class FlaskSLT(object):
     def connection_pool(self):
         # Lazy creation of one psycopg ConnectionPool instance per Flask application
         if not hasattr(current_app, "connection_pool"):
-            current_app.connection_pool = create_connection_pool()
+            current_app.connection_pool = "create_connection_pool()"
         return current_app.connection_pool
