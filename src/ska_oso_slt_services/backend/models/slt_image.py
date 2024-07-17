@@ -1,13 +1,13 @@
+from sqlalchemy import BIGINT, String
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.types import Integer, String
 
 from .metadata import Base, Metadata
 
 
-class SLT(Metadata, Base):
+class SLTImage(Base, Metadata):
     __tablename__ = "tab_oda_slt_images"
 
-    id: Mapped[int] = mapped_column(Integer(), primary_key=True, nullable=False)
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
     slt_ref: Mapped[str] = mapped_column(String(20), nullable=False)
     image_path: Mapped[str] = mapped_column(String(20), nullable=False)
 

@@ -1,16 +1,18 @@
+from sqlalchemy import BIGINT, JSON, VARCHAR, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.types import Integer, String
 
 from .metadata import Base, Metadata
 
 
-class SLT(Metadata, Base):
+class SLTLogs(Base, Metadata):
     __tablename__ = "tab_oda_slt_logs"
 
-    id: Mapped[int] = mapped_column(Integer(), primary_key=True, nullable=False)
-    slt_ref: Mapped[str] = mapped_column(String(20), nullable=False)
-    info: Mapped[str] = mapped_column(String(20), nullable=False)
-    source: Mapped[str] = mapped_column(String(20), nullable=False)
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
+    slt_ref: Mapped[str] = mapped_column(
+        BIGINT, ForeignKey(column="tab_oda_slt.id", ondelete="SET NULL")
+    )
+    info: Mapped[str] = mapped_column(JSON)
+    source: Mapped[str] = mapped_column(VARCHAR(50), nullable=False)
 
     def __repr__(self) -> str:
         return (
