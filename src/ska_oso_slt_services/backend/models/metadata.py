@@ -1,14 +1,17 @@
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.types import DateTime, String
+from datetime import datetime, timezone
+from typing import Optional
 
-
-class Base(DeclarativeBase):
-    pass
+from pydantic import AwareDatetime, Field
 
 
 class Metadata:
+    """Represents metadata about other entities."""
 
-    created_by: Mapped[str] = mapped_column(String(20), nullable=False)
-    created_on: Mapped[str] = mapped_column(DateTime(), nullable=False)
-    last_modified_by: Mapped[str] = mapped_column(String(20), nullable=False)
-    last_modified_on: Mapped[str] = mapped_column(DateTime(), nullable=False)
+    created_by: Optional[str] = None
+    created_on: AwareDatetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    last_modified_by: Optional[str] = None
+    last_modified_on: AwareDatetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )

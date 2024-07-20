@@ -3,7 +3,7 @@ Functions which the HTTP requests to individual resources are mapped to.
 
 See the operationId fields of the Open API spec for the specific mappings.
 """
-
+import requests
 import logging
 from datetime import datetime
 from http import HTTPStatus
@@ -16,6 +16,15 @@ LOGGER = logging.getLogger(__name__)
 
 
 Response = Tuple[Union[dict, list], int]
+
+
+
+BASE_URL = "http://172.20.10.2:5001/ska-db-oda/oda/api/v4/"
+
+
+def get_response(url):
+    response = requests.get(url)
+    return response.json()
 
 
 class SLTQueryParamsFactory(QueryParamsFactory):
@@ -58,42 +67,37 @@ def get_qry_params(kwargs: dict) -> Union[QueryParams, Response]:
 
 
 @error_handler
-def get_shift_data(start_time: datetime, end_time: datetime) -> Response:
+def get_eb_data_with_sbi_status(start_time: datetime, end_time: datetime) -> Response:
     """
-    Function that a GET /slt request is routed to.
+    Function that a GET /eb/history/ request is routed to.
 
-    :param shift_id: Requested identifier from the path parameter
+    :param start_time: Requested start time from the path parameter
+    :param end_time: Requested end time from the path parameter
     :return: The Shift History Data with status wrapped in a Response,
              or appropriate error
      Response
     """
-    return start_time, HTTPStatus.OK
+    response = get_response(
+        url=f"{BASE_URL}/ebs?created_before={end_time}&created_after={start_time}"
+    )
+    # print("lllllllllllllllllllll",response[0]['sbi_ref'])
+    if response:
+        if isinstance(response, list):
+            for res in response:
+                status_response = get_response(
+                    url=f"{BASE_URL}/status/sbis/{res[0]['sbi_ref']}?version=1"
+                )
+        else:
+            status_response = get_response(
+                url=f"{BASE_URL}/status/sbis/{response[0]['sbi_ref']}?version=1"
+            )
+    else:
+        print("NO EB found")
+
+    print("kkkkkkkkkkkkkkkkk", status_response)
+
+    return response, HTTPStatus.OK
 
 
-@error_handler
-def get_shift_history_data_with_id(shift_id: str) -> Response:
-    """
-    Function that a GET /shift/history/<shift_id> request is routed to.
-
-    :param shift_id: Requested identifier from the path parameter
-    :return: The Shift History Data with status wrapped in a Response,
-             or appropriate error
-     Response
-    """
-    return shift_id, HTTPStatus.OK
-
-
-@error_handler
-def get_shift_history_data_with_date(
-    start_time: datetime, end_time: datetime
-) -> Response:
-    """
-    Function that a GET /shift/history/<shift_id> request is routed to.
-
-    :param shift_id: Requested identifier from the path parameter
-    :return: The Shift History Data with status wrapped in a Response,
-             or appropriate error
-     Response
-    """
-
-    return "shift_data", HTTPStatus.OK
+# response = get_response(url=f"{BASE_URL}/ebs?match_type=contains&entity_id=eb")
+# print(response)

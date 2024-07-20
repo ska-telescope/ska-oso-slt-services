@@ -1,19 +1,14 @@
-from sqlalchemy import BIGINT, String
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import Optional
 
-from .metadata import Base, Metadata
+from pydantic import BaseModel, Field
+
+from ska_oso_slt_services.backend.models.metadata import Metadata
 
 
-class SLTImage(Base, Metadata):
-    __tablename__ = "tab_oda_slt_images"
+class SLTImage(BaseModel):
+    """Shared Base Class for all SLT-Image Entities."""
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
-    slt_ref: Mapped[str] = mapped_column(String(20), nullable=False)
-    image_path: Mapped[str] = mapped_column(String(20), nullable=False)
-
-    def __repr__(self) -> str:
-        return (
-            f"tab_oda_slt_images(id={self.id!r}, "
-            f"slt_ref={self.slt_ref!r}, "
-            f"created_by={self.created_by!r})"
-        )
+    id: Optional[int] = Field(default=None)
+    slt_ref: str = None
+    image_path: str = None
+    metadata: Optional[Metadata] = None

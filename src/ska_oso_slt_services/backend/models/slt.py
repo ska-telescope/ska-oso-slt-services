@@ -1,18 +1,18 @@
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.types import BIGINT, VARCHAR
+from datetime import datetime, timezone
 
-from .metadata import Base, Metadata
+from pydantic import AwareDatetime, BaseModel, Field
+
+from ska_oso_slt_services.backend.models.metadata import Metadata
 
 
-class SLT(Base, Metadata):
-    __tablename__ = "tab_oda_slt"
+class SLTObject(BaseModel):
+    """Shared Base Class for all SLT Entities."""
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
-    comments: Mapped[str] = mapped_column(VARCHAR(300))
-
-    def __repr__(self) -> str:
-        return (
-            f"tab_oda_slt(id={self.id!r}, "
-            f"created_by={self.created_by!r}, "
-            f"created_on={self.created_on!r})"
-        )
+    id: int = Field(default=None)
+    comments: str = None
+    shift_start: AwareDatetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    shift_end: AwareDatetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    annotation: str = None
+    metadata: Metadata = None

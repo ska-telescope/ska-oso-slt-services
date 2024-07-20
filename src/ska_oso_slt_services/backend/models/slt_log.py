@@ -1,22 +1,15 @@
-from sqlalchemy import BIGINT, JSON, VARCHAR, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+import json
 
-from .metadata import Base, Metadata
+from pydantic import BaseModel, Field
+
+from ska_oso_slt_services.backend.models.metadata import Metadata
 
 
-class SLTLogs(Base, Metadata):
-    __tablename__ = "tab_oda_slt_logs"
+class SLTLog(BaseModel):
+    """Shared Base Class for all SLT-Image Entities."""
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
-    slt_ref: Mapped[str] = mapped_column(
-        BIGINT, ForeignKey(column="tab_oda_slt.id", ondelete="SET NULL")
-    )
-    info: Mapped[str] = mapped_column(JSON)
-    source: Mapped[str] = mapped_column(VARCHAR(50), nullable=False)
-
-    def __repr__(self) -> str:
-        return (
-            f"tab_oda_slt_logs(id={self.id!r}, "
-            f"slt_ref={self.slt_ref!r}, "
-            f"source={self.source!r})"
-        )
+    id: int = Field(default=None)
+    slt_ref: str = None
+    info: json = None
+    source: str = None
+    metadata: Metadata = None

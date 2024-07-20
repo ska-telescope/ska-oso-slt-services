@@ -12,65 +12,65 @@ servers:
 
 paths:
 
-  /slt:
-    get:
-      summary: Get SLT data filter by the query parameter
-      description: |
-        Retrieves the SLT data for the given start time and end time.
-      operationId: ska_oso_slt_services.rest.api.resources.get_shift_data
-      parameters:
-        - $ref: '#/components/parameters/start_time'
-        - $ref: '#/components/parameters/end_time'
+  # /slt:
+  #   get:
+  #     summary: Get SLT data filter by the query parameter
+  #     description: |
+  #       Retrieves the SLT data for the given start time and end time.
+  #     operationId: ska_oso_slt_services.rest.api.resources.get_shift_data
+  #     parameters:
+  #       - $ref: '#/components/parameters/start_time'
+  #       - $ref: '#/components/parameters/end_time'
 
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-        "400":
-          $ref: '#/components/responses/BadRequest'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
+  #     responses:
+  #       "200":
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: array
+  #               items:
+  #                 type: object
+  #       "400":
+  #         $ref: '#/components/responses/BadRequest'
+  #       "500":
+  #         $ref: '#/components/responses/InternalServerError'
 
-  /shift/history/{shift_id}:
-    parameters:
-    - name: shift_id
-      in: path
-      required: true
-      style: simple
-      explode: false
-      schema:
-        type: string
-    get:
-      summary: Get SLT data filter by the query parameter
-      description: |
-        Retrieves the SLT data for the given start time and end time.
-      operationId: ska_oso_slt_services.rest.api.resources.get_shift_history_data_with_id
+  # /shift/history/{shift_id}:
+  #   parameters:
+  #   - name: shift_id
+  #     in: path
+  #     required: true
+  #     style: simple
+  #     explode: false
+  #     schema:
+  #       type: string
+  #   get:
+  #     summary: Get SLT data filter by the query parameter
+  #     description: |
+  #       Retrieves the SLT data for the given start time and end time.
+  #     operationId: ska_oso_slt_services.rest.api.resources.get_shift_history_data_with_id
 
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-        "400":
-          $ref: '#/components/responses/BadRequest'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
+  #     responses:
+  #       "200":
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: array
+  #               items:
+  #                 type: object
+  #       "400":
+  #         $ref: '#/components/responses/BadRequest'
+  #       "500":
+  #         $ref: '#/components/responses/InternalServerError'
 
   /shift/history:
     get:
       summary: Get SLT data filter by the query parameter
       description: |
         Retrieves the SLT data for the given start time and end time.
-      operationId: ska_oso_slt_services.rest.api.resources.get_shift_history_data_with_date
+      operationId: ska_oso_slt_services.rest.api.resources.get_eb_data_with_sbi_status
       parameters:
         - $ref: '#/components/parameters/start_time'
         - $ref: '#/components/parameters/end_time'
