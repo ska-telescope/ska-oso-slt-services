@@ -1,0 +1,36 @@
+CREATE TABLE tab_oda_slt (
+    id SERIAL PRIMARY KEY,
+    created_on TIMESTAMP NOT NULL,
+    created_by VARCHAR(255) DEFAULT 'Defaultuser',
+    last_modified_on TIMESTAMP NOT NULL,
+    last_modified_by VARCHAR(255) DEFAULT 'DefaultUser',
+    comments TEXT,
+    shift_start TIMESTAMP NOT NULL,
+    shift_end TIMESTAMP,
+    annotation TEXT
+);
+
+
+
+CREATE TABLE tab_oda_slt_logs (
+    id SERIAL PRIMARY KEY,
+    created_on TIMESTAMP NOT NULL,
+    created_by VARCHAR(255) DEFAULT 'Defaultuser',
+    last_modified_on TIMESTAMP NOT NULL,
+    last_modified_by VARCHAR(255) DEFAULT 'DefaultUser',
+    slt_ref INT REFERENCES tab_oda_slt(id) ON DELETE CASCADE,
+    info JSONB NOT NULL,
+    source VARCHAR(255) NOT NULL
+);
+
+
+
+CREATE TABLE tab_oda_slt_images (
+    id SERIAL PRIMARY KEY,
+    created_on TIMESTAMP NOT NULL,
+    created_by VARCHAR(255) DEFAULT 'Defaultuser',
+    last_modified_on TIMESTAMP NOT NULL,
+    last_modified_by VARCHAR(255) DEFAULT 'DefaultUser',
+    slt_ref INT REFERENCES tab_oda_slt(id) ON DELETE CASCADE,
+    image_path TEXT[] NOT NULL
+);
