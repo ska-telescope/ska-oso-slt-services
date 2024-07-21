@@ -12,31 +12,7 @@ servers:
 
 paths:
 
-  /slt:
-    get:
-      summary: Get SLT data filter by the query parameter
-      description: |
-        Retrieves the SLT data for the given start time and end time.
-      operationId: ska_oso_slt_services.rest.api.resources.get_shift_data
-      parameters:
-        - $ref: '#/components/parameters/start_time'
-        - $ref: '#/components/parameters/end_time'
-
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-        "400":
-          $ref: '#/components/responses/BadRequest'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-
-  /shift/history/{shift_id}:
+  /shift/{shift_id}:
     parameters:
     - name: shift_id
       in: path
@@ -62,8 +38,75 @@ paths:
                   type: object
         "400":
           $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
         "500":
           $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Updates an Shift Data by identifier
+      description: |
+        Updates the Shift Data with the given identifier
+        in the underlying data store, creating a new version.
+        If the identifier does not exist in the data store, a not found error will be returned.
+      operationId: ska_oso_slt_services.rest.api.resources.put_shift_data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: './slt-dbschema-openapi-v1.yaml#/SLTDB'
+        required: true
+      responses:
+        "200":
+          description: OK, the Shift Data was created or updated
+          content:
+            application/json:
+              schema:
+                type: object
+
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+
+  /ebs/{shift_id}:
+    parameters:
+      - name: shift_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+    get:
+      summary: Get SLT data filter by the query parameter
+      description: |
+        Retrieves the SLT data for the given start time and end time. 
+      operationId: ska_oso_slt_services.rest.api.resources.get_eb_data_with_sbi_status
+      
+      responses:
+          "200":
+            description: OK, the Shift Data was created or updated
+            content:
+              application/json:
+                schema:
+                  type: object
+
+          "400":
+            $ref: '#/components/responses/BadRequest'
+          "404":
+            $ref: '#/components/responses/NotFound'
+          "422":
+            $ref: '#/components/responses/UnprocessableEntity'
+          "500":
+            $ref: '#/components/responses/InternalServerError'
+
 
   /shift/history:
     get:
@@ -77,15 +120,18 @@ paths:
 
       responses:
         "200":
-          description: OK
+          description: OK, the Shift Data was created or updated
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
+                type: object
+
         "400":
           $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
         "500":
           $ref: '#/components/responses/InternalServerError'
       
@@ -120,6 +166,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/BadRequestResponse'
+    UnprocessableEntity:
+      description: Unprocessable Entity, semantic error in request eg mismatched IDs
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     InternalServerError:
       description: Internal Server Error
       content:

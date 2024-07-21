@@ -5,9 +5,13 @@ from typing import Any, Dict
 import prance
 from connexion import App
 
+from ska_oso_slt_services.rest.flask_slt import FlaskSLT
+
 KUBE_NAMESPACE = os.getenv("KUBE_NAMESPACE", "ska-oso-slt-services")
 SLT_MAJOR_VERSION = version("ska-oso-slt-services").split(".")[0]
 API_PATH = f"{KUBE_NAMESPACE}/slt/api/v{SLT_MAJOR_VERSION}"
+
+slt = FlaskSLT()
 
 
 # There is a (another) issue with Connexion where it cannot validate

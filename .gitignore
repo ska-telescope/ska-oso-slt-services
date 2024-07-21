@@ -104,3 +104,6 @@ ENV/
 # IDE settings
 .vscode/
 .idea/
+
+# Database settings
+/src/ska_oso_slt_services/database/files/*
