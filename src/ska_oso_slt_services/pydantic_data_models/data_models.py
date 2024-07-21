@@ -1,6 +1,6 @@
 from typing import Optional
 from datetime import datetime
-from pydantic_data_models.base_data_models import BaseModelWithTimestamp
+from ska_oso_slt_services.pydantic_data_models.base_data_models import BaseModelWithTimestamp
 # from base_data_models import BaseModelWithTimestamp
 
 

@@ -3,8 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, List, Dict, Any
 from psycopg import DatabaseError
-from connection_init import connection_pool
-
+from ska_oso_slt_services.infra.connection_init import connection_pool
 
 class QueryType(Enum):
     GET = "GET"

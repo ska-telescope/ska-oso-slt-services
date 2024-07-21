@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from psycopg import DatabaseError
-from repository_classes.base_repository_mappings import BaseRepository, QueryType
+from ska_oso_slt_services.infra.repository_classes.base_repository_mappings import BaseRepository, QueryType
 
 class ODASLTRepository(BaseRepository):
     def __init__(self):

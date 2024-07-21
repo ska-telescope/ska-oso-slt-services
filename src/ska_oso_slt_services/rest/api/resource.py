@@ -4,8 +4,9 @@ from http import HTTPStatus
 from typing import Callable
 import logging
 from flask import Response
-from repository_classes.data_repository_mappings import ODASLTRepository, ODASLTLogsRepository, ODASLTImagesRepository
-from pydantic_data_models.data_models import ODASLT, ODASLTLogs, ODASLTImages
+from ska_oso_slt_services.infra.repository_classes.data_repository_mappings import ODASLTRepository, ODASLTLogsRepository, ODASLTImagesRepository
+
+from ska_oso_slt_services.pydantic_data_models.data_models import ODASLT, ODASLTLogs, ODASLTImages
 
 LOGGER = logging.getLogger(__name__)
 #Response = Tuple[Union[OSOEntity, dict], int]
