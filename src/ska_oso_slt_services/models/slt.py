@@ -9,7 +9,7 @@ from ska_oso_slt_services.models.metadata import Metadata
 class SLT(BaseModel):
     """Shared Base Class for all SLT Entities."""
 
-    id: int = Field(default=None)
+    id: str = Field(default=None)
     comments: str = None
     shift_start: AwareDatetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)

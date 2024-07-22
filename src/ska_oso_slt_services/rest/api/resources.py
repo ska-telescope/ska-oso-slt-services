@@ -7,16 +7,14 @@ See the operationId fields of the Open API spec for the specific mappings.
 import json
 import logging
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 from http import HTTPStatus
 from typing import Callable, Tuple, TypeVar, Union
 
 import requests
 from pydantic import ValidationError
-from ska_db_oda.domain.query import QueryParams, QueryParamsFactory
-from ska_db_oda.rest.api.resources import validation_response
-from ska_db_oda.rest.flask_oda import FlaskODA
+from ska_db_oda.unit_of_work.postgresunitofwork import PostgresUnitOfWork
 
 from ska_oso_slt_services.database.config import EDAConfig, LogDBConfig, ODAConfig
 from ska_oso_slt_services.database.eda_db import EDADB
@@ -26,7 +24,7 @@ from ska_oso_slt_services.infrastructure.mapping import (
     SLTLogRepository,
     SLTRepository,
 )
-from ska_oso_slt_services.models.metadata import _set_new_metadata
+from ska_oso_slt_services.infrastructure.postgresql import conn_pool
 from ska_oso_slt_services.models.slt import SLT
 
 # from ska_oso_slt_services.models.slt_image import SLTImage
@@ -42,13 +40,13 @@ T = TypeVar("T")
 log_db = LogDB(LogDBConfig)
 eda_db = EDADB(EDAConfig)
 oda_db = ODAConfig()
-oda = FlaskODA()
+# oda = FlaskODA()
+
+oda = PostgresUnitOfWork(conn_pool())
 
 slt_repo = SLTRepository()
 slt_log_repo = SLTLogRepository()
 slt_image_repo = SLTImageRepository()
-
-# ODA_BACKEND_TYPE = getenv("ODA_BACKEND_TYPE", "postgres")
 
 
 def get_response(url):
@@ -71,14 +69,18 @@ def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response
                 "Request to %s with args: %s and kwargs: %s", api_fn, args, kwargs
             )
             return api_fn(*args, **kwargs)
-        except KeyError:
+        except KeyError as err:
 
-            return {
-                "detail": (
-                    "Not Found. The requested identifier"
-                    f" {next(iter(kwargs.values()))} could not be found."
-                ),
-            }, HTTPStatus.NOT_FOUND
+            is_not_found_in_slt = any(
+                "not found" in str(arg).lower() for arg in err.args
+            )
+            if is_not_found_in_slt:
+                return {
+                    "detail": (
+                        "Not Found. The requested identifier"
+                        f" {next(iter(kwargs.values()))} could not be found."
+                    ),
+                }, HTTPStatus.NOT_FOUND
         except (ValueError, ValidationError) as e:
             LOGGER.exception(
                 "ValueError occurred when adding entity, likely some semantic"
@@ -96,71 +98,43 @@ def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response
     return wrapper
 
 
-class SLTQueryParamsFactory(QueryParamsFactory):
+@error_handler
+def post_shift_data(body: dict) -> Response:
     """
-    Class for checking Query Parameters
-    overrides QueryParamsFactory
+    Function that a POST /shift/{shift_id} request is routed to.
+
+    :param shift_id: Requested identifier from the path parameter
+    :return: The Shift History Data with status wrapped in a Response,
+             or appropriate error
+     Response
     """
-
-    @staticmethod
-    def from_dict(kwargs: dict) -> QueryParams:
-        """
-        Returns QueryParams instance if validation successful
-        param kwargs: Parameters Passed
-        raises: ValueError for incorrect values
-        """
-
-        return SLTQueryParamsFactory.from_dict(kwargs=kwargs)
-
-
-def get_qry_params(kwargs: dict) -> Union[QueryParams, Response]:
-    """
-    Convert the parameters from the request into QueryParams.
-
-    Currently only a single instance of QueryParams is supported, so
-    subsequent parameters will be ignored.
-
-    :param kwargs: Dict with parameters from HTTP GET request
-    :return: An instance of QueryParams
-    :raises: TypeError if a supported QueryParams cannot be extracted
-    """
-
     try:
-        return QueryParamsFactory.from_dict(kwargs)
-    except ValueError as err:
-        return validation_response(
-            "Not Supported",
-            err.args[0],
-            HTTPStatus.BAD_REQUEST,
+
+        slt_entity = SLT(
+            annotation=body["annotation"],
+            comments=body["comments"],
+            metadata={
+                "created_by": body["created_by"],
+                "last_modified_by": body["last_modified_by"],
+            },
         )
 
+    except KeyError as err:
 
-def slt_get_qry_params(kwargs: dict) -> Union[SLTQueryParamsFactory, Response]:
-    """
-    Convert the parameters from the request into SLTQueryParamsFactory.
+        return error_response(err, HTTPStatus.UNPROCESSABLE_ENTITY)
 
-    Currently only a single instance of SLTQueryParamsFactory is supported, so
-    subsequent parameters will be ignored.
+    slt_entity_id = slt_repo.insert(slt_entity=slt_entity)
+    persisted_entity = slt_repo.get_records_by_id_or_by_slt_ref(
+        record_id=slt_entity_id["id"]
+    )
 
-    :param kwargs: Dict with parameters from HTTP GET request
-    :return: An instance of SLTQueryParamsFactory
-    :raises: TypeError if a supported SLTQueryParamsFactory cannot be extracted
-    """
-
-    try:
-        return SLTQueryParamsFactory.from_dict(kwargs)
-    except ValueError as err:
-        return validation_response(
-            "Not Supported",
-            err.args[0],
-            HTTPStatus.BAD_REQUEST,
-        )
+    return persisted_entity, HTTPStatus.OK
 
 
 @error_handler
 def put_shift_data(shift_id: str, body: dict) -> Response:
     """
-    Function that a PUT /slt request is routed to.
+    Function that a PUT /shift/{shift_id} request is routed to.
 
     :param shift_id: Requested identifier from the path parameter
     :return: The Shift History Data with status wrapped in a Response,
@@ -168,52 +142,87 @@ def put_shift_data(shift_id: str, body: dict) -> Response:
      Response
     """
     try:
-        slt_comment_data = SLT(annotation=body["annotation"], comments=body["comments"])
-        slt_comment_data = _set_new_metadata(slt_comment_data)
 
-    except KeyError as e:
-        return error_response(e, HTTPStatus.UNPROCESSABLE_ENTITY)
+        slt_entity = slt_repo.get_records_by_id_or_by_slt_ref(record_id=shift_id)
 
-    insert_record = slt_repo.insert(record=slt_comment_data)
-    slt_comment_data.id = insert_record["id"]
+        if not slt_entity:
+            raise KeyError(
+                f"Not found. The requested Shift Id {shift_id} could not be found."
+            )
 
-    print(slt_comment_data)
+        else:
 
-    return json.loads(slt_comment_data.model_dump_json()), HTTPStatus.OK
+            comments = f"{body['comments']}, {slt_entity[0]['comments']}"
+            annotation = f"{body['annotation']}, {slt_entity[0]['annotation']}"
+
+            slt_entity = SLT(
+                id=slt_entity[0]["id"],
+                shift_start=slt_entity[0]["shift_start"].astimezone(tz=timezone.utc),
+                annotation=annotation,
+                comments=comments,
+                metadata={
+                    "created_by": slt_entity[0]["created_by"],
+                    "created_on": slt_entity[0]["created_on"].astimezone(
+                        tz=timezone.utc
+                    ),
+                    "last_modified_by": slt_entity[0]["last_modified_by"],
+                },
+            )
+
+    except KeyError as err:
+
+        return error_response(err, HTTPStatus.UNPROCESSABLE_ENTITY)
+
+    slt_entity = json.loads(slt_entity.model_dump_json())
+    slt_entity_without_id = {**slt_entity}
+    slt_entity_without_id.pop("id")
+
+    slt_repo.update(slt_entity=slt_entity_without_id, slt_entity_id=shift_id)
+    persisted_entity = slt_repo.get_records_by_id_or_by_slt_ref(record_id=shift_id)
+
+    return persisted_entity, HTTPStatus.OK
 
 
-@error_handler
-def get_shift_history_data_with_id(shift_id: str) -> Response:
-    """
-    Function that a GET /shift/history/<shift_id> request is routed to.
+# @error_handler
+# def get_shift_history_data_with_id(shift_id: str) -> Response:
+#     """
+#     Function that a GET /shift/history/<shift_id> request is routed to.
 
-    :param shift_id: Requested identifier from the path parameter
-    :return: The Shift History Data with status wrapped in a Response,
-             or appropriate error
-     Response
-    """
+#     :param shift_id: Requested identifier from the path parameter
+#     :return: The Shift History Data with status wrapped in a Response,
+#              or appropriate error
+#      Response
+#     """
 
-    slt_records = slt_repo.get_records_by_id_or_by_slt_ref(record_id=shift_id)
+#     slt_records = slt_repo.get_records_by_id_or_by_slt_ref(record_id=shift_id)
 
-    return slt_records, HTTPStatus.OK
+#     return slt_records, HTTPStatus.OK
 
 
 @error_handler
 def get_shift_history_data_with_date(
-    start_time: datetime, end_time: datetime
+    shift_start_time: datetime, shift_end_time: datetime, shift_id: str = None
 ) -> Response:
     """
-    Function that a GET /shift/history/<shift_id> request is routed to.
+    Function that a GET /shift/history request is routed to.
 
-    :param shift_id: Requested identifier from the path parameter
+    :param shift_start_time: Start time of the shift Required
+    :param shift_end_time: End time of the shift
+    :param shift_id: Unique Shift Id
     :return: The Shift History Data with status wrapped in a Response,
              or appropriate error
      Response
     """
 
-    slt_records = slt_repo.get_records_by_shift_time(
-        start_time=start_time, end_time=end_time
-    )
+    if shift_id:
+
+        slt_records = slt_repo.get_records_by_id_or_by_slt_ref(record_id=shift_id)
+
+    else:
+
+        slt_records = slt_repo.get_records_by_shift_time(
+            start_time=shift_start_time, end_time=shift_end_time
+        )
 
     return slt_records, HTTPStatus.OK
 
@@ -236,13 +245,18 @@ def get_eb_data_with_sbi_status(shift_id: str) -> Response:
 
             sbi_id = entity["info"]["sbi_ref"]
 
-            entity["info"]["sbi_status"] = get_response(
-                url=f"{ODAConfig.DB_URL}{ODAConfig.STATUS_API}{sbi_id}?version=1"
-            )["current_status"]
+            status = oda.sbis_status_history.get(
+                entity_id=sbi_id, version=1, is_status_history=False
+            )
+            print(f"#################### {status}")
 
-    else:
+    #         entity["info"]["sbi_status"] = get_response(
+    #             url=f"{ODAConfig.DB_URL}{ODAConfig.STATUS_API}{sbi_id}?version=1"
+    #         )["current_status"]
 
-        raise KeyError("No EB found")
+    # else:
+
+    #     raise KeyError("No EB found")
 
     # try:
 

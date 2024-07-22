@@ -12,11 +12,11 @@ class Metadata(BaseModel):
 
     created_by: Optional[str] = None
     created_on: AwareDatetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: datetime.now(tz=timezone.utc)
     )
     last_modified_by: Optional[str] = None
     last_modified_on: AwareDatetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: datetime.now(tz=timezone.utc)
     )
 
 
@@ -42,11 +42,8 @@ def update_metadata(
         last_modified_by = "DefaultUser"
 
     updated_entity = deepcopy(entity)
-
-    updated_entity.metadata.version = entity.metadata.version
-
-    updated_entity.metadata.last_modified_on = datetime.now(tz=timezone.utc)
-    updated_entity.metadata.last_modified_by = last_modified_by
+    updated_entity["metadata"]["last_modified_on"] = datetime.now(tz=timezone.utc)
+    updated_entity["metadata"]["last_modified_by"] = last_modified_by
 
     return updated_entity
 
@@ -63,17 +60,18 @@ def _set_new_metadata(entity: T, created_by: Optional[str] = None) -> T:
     :return: A copy of the entity with the new metadata to be persisted
     """
 
-    if created_by is None:
-        created_by = "DefaultUser"
+    created_by = "DefaultUser"
 
     entity = deepcopy(entity)
     now = datetime.now(tz=timezone.utc)
 
     entity.metadata = Metadata(
         created_on=now,
-        created_by=created_by,
+        created_by=entity.metadata.created_by if entity.metadata else created_by,
         last_modified_on=now,
-        last_modified_by=created_by,
+        last_modified_by=(
+            entity.metadata.last_modified_by if entity.metadata else created_by
+        ),
     )
 
     return entity

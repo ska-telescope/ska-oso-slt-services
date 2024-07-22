@@ -12,6 +12,37 @@ servers:
 
 paths:
 
+  /shift:
+    post:
+      summary: Updates an Shift Data by identifier
+      description: |
+        Updates the Shift Data with the given identifier
+        in the underlying data store, creating a new version.
+        If the identifier does not exist in the data store, a not found error will be returned.
+      operationId: ska_oso_slt_services.rest.api.resources.post_shift_data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: './slt-schema-openapi-v1.yaml#/SLT'
+        required: true
+      responses:
+        "200":
+          description: OK, the Shift Data was created or updated
+          content:
+            application/json:
+              schema:
+                type: object
+
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+
   /shift/{shift_id}:
     parameters:
     - name: shift_id
@@ -21,29 +52,29 @@ paths:
       explode: false
       schema:
         type: string
-    get:
-      summary: Get SLT data filter by the query parameter
-      description: |
-        Retrieves the SLT data for the given start time and end time.
-      operationId: ska_oso_slt_services.rest.api.resources.get_shift_history_data_with_id
+    # get:
+    #   summary: Get SLT data filter by the query parameter
+    #   description: |
+    #     Retrieves the SLT data for the given start time and end time.
+    #   operationId: ska_oso_slt_services.rest.api.resources.get_shift_history_data_with_id
 
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-        "400":
-          $ref: '#/components/responses/BadRequest'
-        "404":
-          $ref: '#/components/responses/NotFound'
-        "422":
-          $ref: '#/components/responses/UnprocessableEntity'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
+    #   responses:
+    #     "200":
+    #       description: OK
+    #       content:
+    #         application/json:
+    #           schema:
+    #             type: array
+    #             items:
+    #               type: object
+    #     "400":
+    #       $ref: '#/components/responses/BadRequest'
+    #     "404":
+    #       $ref: '#/components/responses/NotFound'
+    #     "422":
+    #       $ref: '#/components/responses/UnprocessableEntity'
+    #     "500":
+    #       $ref: '#/components/responses/InternalServerError'
 
     put:
       summary: Updates an Shift Data by identifier
@@ -75,7 +106,7 @@ paths:
         "500":
           $ref: '#/components/responses/InternalServerError'
 
-  /ebs/{shift_id}:
+  /shift_log/{shift_id}:
     parameters:
       - name: shift_id
         in: path
@@ -87,7 +118,7 @@ paths:
     get:
       summary: Get SLT data filter by the query parameter
       description: |
-        Retrieves the SLT data for the given start time and end time. 
+        Retrieves the SLT data for the given shift start time and shift end time. 
       operationId: ska_oso_slt_services.rest.api.resources.get_eb_data_with_sbi_status
       
       responses:
@@ -107,16 +138,16 @@ paths:
           "500":
             $ref: '#/components/responses/InternalServerError'
 
-
   /shift/history:
     get:
       summary: Get SLT data filter by the query parameter
       description: |
-        Retrieves the SLT data for the given start time and end time.
+        Retrieves the SLT data for the given shift start time and shift end time.
       operationId: ska_oso_slt_services.rest.api.resources.get_shift_history_data_with_date
       parameters:
-        - $ref: '#/components/parameters/start_time'
-        - $ref: '#/components/parameters/end_time'
+        - $ref: '#/components/parameters/shift_start_time'
+        - $ref: '#/components/parameters/shift_end_time'
+        - $ref: '#/components/parameters/shift_id'
 
       responses:
         "200":
@@ -137,21 +168,29 @@ paths:
       
 components:
   parameters:
-    start_time:
+    shift_start_time:
       in: query
-      name: start_time
+      name: shift_start_time
       schema:
         type: string
       required: true
       example: 2024-07-12T15:43:53.971548+00:00
 
-    end_time:
+    shift_end_time:
       in: query
-      name: end_time
+      name: shift_end_time
       schema:
         type: string
       required: false
       example: 2024-07-12T15:43:53.971548+00:00
+
+    shift_id:
+      in: query
+      name: shift_id
+      schema:
+        type: string
+      required: false
+      example: slt-mvp001-42000
 
   responses:
     NotFound:

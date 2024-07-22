@@ -1,9 +1,10 @@
 """
 pytest fixtures to be used by unit tests
 """
+
 import pytest
 
-from ska_oso_slt_services.rest import init_app, get_openapi_spec
+from ska_oso_slt_services.rest import get_openapi_spec, init_app
 
 
 @pytest.fixture(scope="module")
@@ -19,13 +20,11 @@ def test_app(spec):  # pylint: disable=redefined-outer-name
     """
     Fixture to configure a test app instance
     """
-    connexion = init_app(spec)
-    connexion.app.config.update(
-        {
-            "TESTING": True,
-        }
-    )
-    yield connexion.app
+    app = init_app(spec)
+    app.config.update({
+        "TESTING": True,
+    })
+    yield app
 
 
 @pytest.fixture()

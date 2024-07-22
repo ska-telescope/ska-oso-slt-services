@@ -3,17 +3,9 @@ The flask_SLT module contains code used to interface Flask applications with
 the SLT.
 """
 
-import logging
-from os import getenv
-
 from flask import _app_ctx_stack  # pylint: disable=no-name-in-module
 
 from ska_oso_slt_services.infrastructure.postgresql import Postgresql
-
-LOGGER = logging.getLogger(__name__)
-
-ODA_BACKEND_TYPE = getenv("ODA_BACKEND_TYPE", "postgres")
-BACKEND_VAR = "ODA_BACKEND_TYPE"
 
 
 class FlaskSLT(object):

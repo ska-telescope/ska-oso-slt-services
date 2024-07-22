@@ -1,11 +1,23 @@
 import json
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from psycopg import DatabaseError
 from ska_db_oda.unit_of_work.postgresunitofwork import create_connection_pool
+
+from ska_oso_slt_services.models.metadata import _set_new_metadata, update_metadata
+from ska_oso_slt_services.models.slt import SLT
+
+skuid_entity_type = "slt"
+
+
+def conn_pool():
+    """
+    Creates a connection pool for the PostgreSQL database.
+    """
+    return create_connection_pool()
 
 
 class QueryType(Enum):
@@ -21,19 +33,17 @@ def convert_value(value):
     """
     if isinstance(value, dict):
         return json.dumps(value)
-    elif isinstance(value, list):
-        return "{" + ",".join(f'"{item}"' for item in value) + "}"
     return value
 
 
 class Postgresql:
     def __init__(self, table_name: str = None):
         """
-        Initializes the BaseRepository with a table name and connection pool.
+        Initializes the Postgresql Base Class with a table name.
 
         :param table_name: The name of the database table.
         """
-        self.pool = create_connection_pool()
+        self.pool = conn_pool()
         self.table_name = table_name
 
     def _execute_query_or_update(
@@ -97,24 +107,41 @@ class Postgresql:
             or []
         )
 
-    def insert(self, record: Dict[str, Any]):
+    def insert(self, slt_entity: Dict[str, Any]):
         """
-        Inserts a new record into the table.
+        Inserts a new slt_entity into the table.
 
-        :param record: Dictionary containing the record data to be inserted.
+        :param slt_entity: Dictionary containing the slt_entity data to be inserted.
         """
+
+        slt_entity = _set_new_metadata(slt_entity)
+
+        if isinstance(slt_entity, SLT):
+
+            slt_entity.shift_start = datetime.now(tz=timezone.utc)
+            metadata_dict = json.loads(slt_entity.metadata.model_dump_json())
+
+            slt_entity = json.loads(slt_entity.model_dump_json())
+            slt_entity_without_metadata = {**slt_entity, **metadata_dict}
+            slt_entity_without_metadata.pop("metadata")
+            time_now = datetime.now().strftime("%m%d%Y")
+            slt_entity_without_metadata["id"] = (
+                f"{skuid_entity_type}-mvp01-{time_now}-{str(random.randint(0, 10000))}"
+            )
+
+        else:
+
+            slt_entity_without_metadata["id"] = datetime.now(tz=timezone.utc)
+
         try:
-            metadata_dict = json.loads(record.metadata.model_dump_json())
 
-            record = json.loads(record.model_dump_json())
-            all_record = {**record, **metadata_dict}
-            all_record.pop("metadata")
-            all_record["id"] = random.randint(0, 10000)
-            # Convert all values in the record to the appropriate types
-            converted_record = {k: convert_value(v) for k, v in all_record.items()}
+            # Convert all values in the slt_entity to the appropriate types
+            converted_slt_entity = {
+                k: convert_value(v) for k, v in slt_entity_without_metadata.items()
+            }
 
-            columns = ", ".join(converted_record.keys())
-            placeholders = ", ".join(["%s"] * len(converted_record))
+            columns = ", ".join(converted_slt_entity.keys())
+            placeholders = ", ".join(["%s"] * len(converted_slt_entity))
             query = (
                 f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders} )"
                 " RETURNING id"
@@ -123,34 +150,44 @@ class Postgresql:
             return self._execute_query_or_update(
                 query=query,
                 query_type=QueryType.POST,
-                params=tuple(converted_record.values()),
+                params=tuple(converted_slt_entity.values()),
             )
 
         except (Exception, DatabaseError) as error:
             raise DatabaseError(
-                f"Error inserting record into table: {self.table_name}. Error:"
+                f"Error inserting slt entity into table: {self.table_name}. Error:"
                 f" {str(error)}"
             )
 
-    def update_record_by_id_or_slt_ref(self, record, slt_ref=None, record_id=None):
+    def update(self, slt_entity, slt_ref=None, slt_entity_id=None):
+
+        slt_entity = update_metadata(slt_entity)
+
         try:
-            record["last_modified_on"] = datetime.utcnow()
-            set_clause = ", ".join([f"{col} = %s" for col in record.keys()])
+
+            slt_entity = {**slt_entity, **slt_entity["metadata"]}
+            slt_entity.pop("metadata")
+
+            set_clause = ", ".join([f"{col} = %s" for col in slt_entity.keys()])
             base_query = f"UPDATE {self.table_name} SET {set_clause}"
 
             if slt_ref:
                 query = base_query + f" WHERE slt_ref = {slt_ref}"
-            else:  # record
-                query = base_query + f" WHERE id = {record_id}"
+            else:  # slt_entity
+                query = base_query + " WHERE id = %s"
 
-            onverted_record = {k: convert_value(v) for k, v in record.items()}
-            params = tuple(onverted_record[col] for col in onverted_record.keys())
+            converted_slt_entity = {k: convert_value(v) for k, v in slt_entity.items()}
+            params = list(
+                converted_slt_entity[col] for col in converted_slt_entity.keys()
+            )
+            params.append(slt_entity_id)
+
             self._execute_query_or_update(
                 query=query, query_type=QueryType.PUT, params=params
             )
         except (Exception, DatabaseError) as error:
             raise DatabaseError(
-                f"Error updating record in table: {self.table_name}. Error:"
+                f"Error updating slt entity in table: {self.table_name}. Error:"
                 f" {str(error)}"
             )
 
@@ -169,6 +206,6 @@ class Postgresql:
             )
         except (Exception, DatabaseError) as error:
             raise DatabaseError(
-                f"Error deleting record from table: {self.table_name}. Error:"
+                f"Error deleting slt entity from table: {self.table_name}. Error:"
                 f" {str(error)}"
             )

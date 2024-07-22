@@ -31,3 +31,10 @@ class ODAConfig:
     )
     DB_URL = f"{DB_HOST}:{DB_PORT}/{DB_BASE_URL}"
     STATUS_API = "/status/sbis/"
+
+
+class SLTConfig:
+
+    SLT_TABLE_NAME = "tab_oda_slt"
+    SLT_LOG_TABLE_NAME = "tab_oda_slt_log"
+    SLT_IMAGE_TABLE_NAME = "tab_oda_slt_image"

@@ -1,12 +1,15 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from ska_oso_slt_services.database.config import SLTConfig
 from ska_oso_slt_services.infrastructure.postgresql import Postgresql, QueryType
+
+slt_config = SLTConfig()
 
 
 class SLTRepository(Postgresql):
     def __init__(self):
-        super().__init__(table_name="tab_oda_slt")
+        super().__init__(table_name=slt_config.SLT_TABLE_NAME)
 
     def _get_base_query(self) -> str:
         """
@@ -47,7 +50,7 @@ class SLTRepository(Postgresql):
             self._execute_query_or_update(
                 query=query, query_type=QueryType.GET, params=params
             )
-            or []
+            or "No Record Found"
         )
 
     def get_records_with_logs_and_image(
@@ -69,7 +72,7 @@ class SLTRepository(Postgresql):
             self._execute_query_or_update(
                 query=query, query_type=QueryType.GET, params=params
             )
-            or []
+            or "No Record Found"
         )
 
     def get_records_by_shift_time_with_logs_and_image(
@@ -91,15 +94,15 @@ class SLTRepository(Postgresql):
             self._execute_query_or_update(
                 query=query, query_type=QueryType.GET, params=params
             )
-            or []
+            or "No Record Found"
         )
 
 
 class SLTLogRepository(Postgresql):
     def __init__(self):
-        super().__init__(table_name="tab_oda_slt_log")
+        super().__init__(table_name=slt_config.SLT_LOG_TABLE_NAME)
 
 
 class SLTImageRepository(Postgresql):
     def __init__(self):
-        super().__init__(table_name="tab_oda_slt_image")
+        super().__init__(table_name=slt_config.SLT_IMAGE_TABLE_NAME)
