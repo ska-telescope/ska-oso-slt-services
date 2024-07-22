@@ -12,12 +12,8 @@ from ska_oso_slt_services.models.slt import SLT
 
 skuid_entity_type = "slt"
 
+conn_pool = create_connection_pool()
 
-def conn_pool():
-    """
-    Creates a connection pool for the PostgreSQL database.
-    """
-    return create_connection_pool()
 
 
 class QueryType(Enum):
@@ -43,7 +39,7 @@ class Postgresql:
 
         :param table_name: The name of the database table.
         """
-        self.pool = conn_pool()
+        self.pool = conn_pool
         self.table_name = table_name
 
     def _execute_query_or_update(

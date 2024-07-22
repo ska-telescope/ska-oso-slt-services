@@ -14,6 +14,8 @@ from typing import Callable, Tuple, TypeVar, Union
 
 import requests
 from pydantic import ValidationError
+from ska_db_oda.domain.query import QueryParams
+from ska_db_oda.rest.api.resources import get_qry_params
 from ska_db_oda.unit_of_work.postgresunitofwork import PostgresUnitOfWork
 
 from ska_oso_slt_services.database.config import EDAConfig, LogDBConfig, ODAConfig
@@ -42,7 +44,7 @@ eda_db = EDADB(EDAConfig)
 oda_db = ODAConfig()
 # oda = FlaskODA()
 
-oda = PostgresUnitOfWork(conn_pool())
+uow = PostgresUnitOfWork(conn_pool)
 
 slt_repo = SLTRepository()
 slt_log_repo = SLTLogRepository()
@@ -283,3 +285,24 @@ def error_response(
     }
 
     return response_body, http_status
+
+
+
+@error_handler
+def get_eb_sbi_status(**kwargs) -> Response:
+    if not isinstance(maybe_qry_params := get_qry_params(kwargs), QueryParams):
+        return maybe_qry_params
+
+    with uow:
+        ebs = uow.ebs.query(maybe_qry_params)
+
+        info = {}
+        for eb in ebs:
+            info_single_record = eb.model_dump(mode="json")
+            sbi_current_status = uow.sbis_status_history.get(entity_id=eb.sbi_ref).model_dump(mode="json")["current_status"]
+            info_single_record["sbi_status"] = sbi_current_status
+            info_single_record["source"] = "ODA"
+            info_single_record["request_responses"][:] = [record for record in info_single_record["request_responses"] if record.get('status') in ('observed', 'failed',)]
+            info[eb.eb_id] = info_single_record
+    return info, HTTPStatus.OK
+
