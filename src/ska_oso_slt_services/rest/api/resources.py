@@ -71,16 +71,8 @@ def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response
             return api_fn(*args, **kwargs)
         except KeyError as err:
 
-            is_not_found_in_slt = any(
-                "not found" in str(arg).lower() for arg in err.args
-            )
-            if is_not_found_in_slt:
-                return {
-                    "detail": (
-                        "Not Found. The requested identifier"
-                        f" {next(iter(kwargs.values()))} could not be found."
-                    ),
-                }, HTTPStatus.NOT_FOUND
+            return {"detail": str(err.args[0])}, HTTPStatus.NOT_FOUND
+
         except (ValueError, ValidationError) as e:
             LOGGER.exception(
                 "ValueError occurred when adding entity, likely some semantic"
@@ -171,7 +163,7 @@ def put_shift_data(shift_id: str, body: dict) -> Response:
 
     except KeyError as err:
 
-        return error_response(err, HTTPStatus.UNPROCESSABLE_ENTITY)
+        raise KeyError(err)
 
     slt_entity = json.loads(slt_entity.model_dump_json())
     slt_entity_without_id = {**slt_entity}
