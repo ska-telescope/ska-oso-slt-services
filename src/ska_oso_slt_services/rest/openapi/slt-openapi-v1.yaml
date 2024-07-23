@@ -106,20 +106,15 @@ paths:
         "500":
           $ref: '#/components/responses/InternalServerError'
 
-  /shift_log/{shift_id}:
-    parameters:
-      - name: shift_id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
+  /shift_log:
     get:
       summary: Get SLT data filter by the query parameter
       description: |
         Retrieves the SLT data for the given shift start time and shift end time. 
       operationId: ska_oso_slt_services.rest.api.resources.get_eb_data_with_sbi_status
+      parameters:
+        - $ref: '#/components/parameters/created_after'
+        - $ref: '#/components/parameters/created_before'
       
       responses:
           "200":
@@ -179,6 +174,22 @@ components:
     shift_end_time:
       in: query
       name: shift_end_time
+      schema:
+        type: string
+      required: false
+      example: 2024-07-12T15:43:53.971548+00:00
+
+    created_after:
+      in: query
+      name: created_after
+      schema:
+        type: string
+      required: true
+      example: 2024-07-12T15:43:53.971548+00:00
+
+    created_before:
+      in: query
+      name: created_before
       schema:
         type: string
       required: false
