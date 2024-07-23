@@ -1,0 +1,242 @@
+[
+    {
+      "eb_id": "eb-mvp01-20240426-8481",
+      "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
+      "metadata": {
+        "created_by": "DefaultUser",
+        "created_on": "2024-07-01T10:00:49.094768Z",
+        "last_modified_by": "DefaultUser",
+        "last_modified_on": "2024-07-01T10:00:49.094768Z",
+        "version": 1
+      },
+      "request_responses": [
+        {
+          "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
+          "request_args": {
+            "kwargs": {
+              "subarray_id": "1"
+            }
+          },
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "response": {
+            "result": "this is a result"
+          },
+          "response_received_at": "2022-09-23T15:43:53.971548Z",
+          "status": "OK"
+        },
+        {
+          "error": {
+            "detail": "this is an error"
+          },
+          "request": "ska_oso_scripting.functions.devicecontrol.scan",
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "status": "ERROR"
+        }
+      ],
+      "sbd_ref": "sbd-mvp01-20220923-00001",
+      "sbd_version": 1,
+      "sbi_ref": "sbi-mvp01-20220923-00001",
+      "status": "fully_observed",
+      "telescope": "ska_mid"
+    },
+    {
+      "eb_id": "eb-mvp01-20240426-3226",
+      "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
+      "metadata": {
+        "created_by": "DefaultUser",
+        "created_on": "2024-07-01T10:01:23.601783Z",
+        "last_modified_by": "DefaultUser",
+        "last_modified_on": "2024-07-01T10:01:23.601783Z",
+        "version": 1
+      },
+      "request_responses": [
+        {
+          "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
+          "request_args": {
+            "kwargs": {
+              "subarray_id": "1"
+            }
+          },
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "response": {
+            "result": "this is a result"
+          },
+          "response_received_at": "2022-09-23T15:43:53.971548Z",
+          "status": "OK"
+        },
+        {
+          "error": {
+            "detail": "this is an error"
+          },
+          "request": "ska_oso_scripting.functions.devicecontrol.scan",
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "status": "ERROR"
+        }
+      ],
+      "sbd_ref": "sbd-mvp01-20220923-00001",
+      "sbd_version": 1,
+      "sbi_ref": "sbi-mvp01-20220923-00001",
+      "status": "fully_observed",
+      "telescope": "ska_mid"
+    },
+    {
+      "eb_id": "eb-mvp01-20240426-9099",
+      "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
+      "metadata": {
+        "created_by": "DefaultUser",
+        "created_on": "2024-07-01T10:01:26.799811Z",
+        "last_modified_by": "DefaultUser",
+        "last_modified_on": "2024-07-01T10:01:26.799811Z",
+        "version": 1
+      },
+      "request_responses": [
+        {
+          "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
+          "request_args": {
+            "kwargs": {
+              "subarray_id": "1"
+            }
+          },
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "response": {
+            "result": "this is a result"
+          },
+          "response_received_at": "2022-09-23T15:43:53.971548Z",
+          "status": "OK"
+        },
+        {
+          "error": {
+            "detail": "this is an error"
+          },
+          "request": "ska_oso_scripting.functions.devicecontrol.scan",
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "status": "ERROR"
+        }
+      ],
+      "sbd_ref": "sbd-mvp01-20220923-00001",
+      "sbd_version": 1,
+      "sbi_ref": "sbi-mvp01-20220923-00001",
+      "status": "fully_observed",
+      "telescope": "ska_mid"
+    },
+    {
+      "eb_id": "eb-mvp01-20240426-3893",
+      "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
+      "metadata": {
+        "created_by": "DefaultUser",
+        "created_on": "2024-07-01T10:01:28.230500Z",
+        "last_modified_by": "DefaultUser",
+        "last_modified_on": "2024-07-01T10:01:28.230500Z",
+        "version": 1
+      },
+      "request_responses": [
+        {
+          "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
+          "request_args": {
+            "kwargs": {
+              "subarray_id": "1"
+            }
+          },
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "response": {
+            "result": "this is a result"
+          },
+          "response_received_at": "2022-09-23T15:43:53.971548Z",
+          "status": "OK"
+        },
+        {
+          "error": {
+            "detail": "this is an error"
+          },
+          "request": "ska_oso_scripting.functions.devicecontrol.scan",
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "status": "ERROR"
+        }
+      ],
+      "sbd_ref": "sbd-mvp01-20220923-00001",
+      "sbd_version": 1,
+      "sbi_ref": "sbi-mvp01-20220923-00001",
+      "status": "fully_observed",
+      "telescope": "ska_mid"
+    },
+    {
+      "eb_id": "eb-mvp01-20240426-5004",
+      "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
+      "metadata": {
+        "created_by": "DefaultUser",
+        "created_on": "2024-07-01T10:01:29.084428Z",
+        "last_modified_by": "DefaultUser",
+        "last_modified_on": "2024-07-01T10:01:29.084428Z",
+        "version": 1
+      },
+      "request_responses": [
+        {
+          "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
+          "request_args": {
+            "kwargs": {
+              "subarray_id": "1"
+            }
+          },
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "response": {
+            "result": "this is a result"
+          },
+          "response_received_at": "2022-09-23T15:43:53.971548Z",
+          "status": "OK"
+        },
+        {
+          "error": {
+            "detail": "this is an error"
+          },
+          "request": "ska_oso_scripting.functions.devicecontrol.scan",
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "status": "ERROR"
+        }
+      ],
+      "sbd_ref": "sbd-mvp01-20220923-00001",
+      "sbd_version": 1,
+      "sbi_ref": "sbi-mvp01-20220923-00001",
+      "status": "fully_observed",
+      "telescope": "ska_mid"
+    },
+    {
+      "eb_id": "eb-mvp01-20240426-8121",
+      "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
+      "metadata": {
+        "created_by": "DefaultUser",
+        "created_on": "2024-07-01T10:01:29.771128Z",
+        "last_modified_by": "DefaultUser",
+        "last_modified_on": "2024-07-01T10:01:29.771128Z",
+        "version": 1
+      },
+      "request_responses": [
+        {
+          "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
+          "request_args": {
+            "kwargs": {
+              "subarray_id": "1"
+            }
+          },
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "response": {
+            "result": "this is a result"
+          },
+          "response_received_at": "2022-09-23T15:43:53.971548Z",
+          "status": "OK"
+        },
+        {
+          "error": {
+            "detail": "this is an error"
+          },
+          "request": "ska_oso_scripting.functions.devicecontrol.scan",
+          "request_sent_at": "2022-09-23T15:43:53.971548Z",
+          "status": "ERROR"
+        }
+      ],
+      "sbd_ref": "sbd-mvp01-20220923-00001",
+      "sbd_version": 1,
+      "sbi_ref": "sbi-mvp01-20220923-00001",
+      "status": "fully_observed",
+      "telescope": "ska_mid"
+    }
+  ]

@@ -166,6 +166,8 @@ def put_shift_data(shift_id: str, body: dict) -> Response:
     except KeyError as err:
 
         raise KeyError(err)  # pylint: disable=raise-missing-from
+    
+    import pdb; set_trace()
 
     slt_entity = json.loads(slt_entity.model_dump_json())
     slt_entity_without_id = {**slt_entity}
