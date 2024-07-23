@@ -137,6 +137,8 @@ def put_shift_data(shift_id: str, body: dict) -> Response:
     """
     try:
 
+        # import pdb;pdb.set_trace()
+
         slt_entity = slt_repo.get_records_by_id_or_by_slt_ref(record_id=shift_id)
 
         if not slt_entity:
@@ -166,8 +168,6 @@ def put_shift_data(shift_id: str, body: dict) -> Response:
     except KeyError as err:
 
         raise KeyError(err)  # pylint: disable=raise-missing-from
-    
-    import pdb; set_trace()
 
     slt_entity = json.loads(slt_entity.model_dump_json())
     slt_entity_without_id = {**slt_entity}
@@ -235,6 +235,8 @@ def get_eb_data_with_sbi_status(**kwargs) -> Response:
 
     if not isinstance(maybe_qry_params := get_qry_params(kwargs), QueryParams):
         return maybe_qry_params
+    
+    # import pdb;pdb.set_trace()
 
     with uow:
 
