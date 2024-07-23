@@ -1,3 +1,4 @@
+# pylint: disable=no-member,
 from ssl import create_default_context
 
 from elasticsearch import Elasticsearch
@@ -9,7 +10,9 @@ class LogDB:
         self.config = config
 
     def read_api_key(self) -> str:
-        with open(self.config.DB_API_KEY_PATH, "r") as file:
+        with open(  # pylint: disable=unspecified-encoding
+            self.config.DB_API_KEY_PATH, "r"
+        ) as file:
             return file.read().strip()
 
     def create_ssl_context(self) -> None:
