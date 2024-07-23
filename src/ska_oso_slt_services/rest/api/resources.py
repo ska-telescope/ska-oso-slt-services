@@ -14,6 +14,8 @@ from typing import Callable, Tuple, TypeVar, Union
 
 import requests
 from pydantic import ValidationError
+from ska_db_oda.domain.query import QueryParams
+from ska_db_oda.rest.api.resources import get_qry_params
 from ska_db_oda.unit_of_work.postgresunitofwork import PostgresUnitOfWork
 
 from ska_oso_slt_services.database.config import EDAConfig, LogDBConfig, ODAConfig
@@ -40,9 +42,8 @@ T = TypeVar("T")
 log_db = LogDB(LogDBConfig)
 eda_db = EDADB(EDAConfig)
 oda_db = ODAConfig()
-# oda = FlaskODA()
 
-oda = PostgresUnitOfWork(conn_pool())
+uow = PostgresUnitOfWork(conn_pool)
 
 slt_repo = SLTRepository()
 slt_log_repo = SLTLogRepository()
@@ -220,48 +221,45 @@ def get_shift_history_data_with_date(
 
 
 @error_handler
-def get_eb_data_with_sbi_status(shift_id: str) -> Response:
+def get_eb_data_with_sbi_status(**kwargs) -> Response:
     """
-    Function that a GET /ebs request is routed to.
+    Function that a GET /shift_log request is routed to.
 
     :param kwargs: Parameters to query the ODA by.
     :return: All ExecutionBlocks present with status wrapped in a Response,
          or appropriate error Response
     """
 
-    slt_log_records = slt_log_repo.get_records_by_id_or_by_slt_ref(slt_ref=shift_id)
+    if not isinstance(maybe_qry_params := get_qry_params(kwargs), QueryParams):
+        return maybe_qry_params
 
-    if slt_log_records:
+    with uow:
 
-        for entity in slt_log_records:
+        ebs = uow.ebs.query(maybe_qry_params)
 
-            sbi_id = entity["info"]["sbi_ref"]
+        info = {}
 
-            status = oda.sbis_status_history.get(
-                entity_id=sbi_id, version=1, is_status_history=False
+        for eb in ebs:
+
+            info_single_record = eb.model_dump(mode="json")
+            sbi_current_status = uow.sbis_status_history.get(
+                entity_id=eb.sbi_ref
+            ).model_dump(mode="json")["current_status"]
+            info_single_record["sbi_status"], info_single_record["source"] = (
+                sbi_current_status,
+                "ODA",
             )
-            print(f"#################### {status}")
-
-    #         entity["info"]["sbi_status"] = get_response(
-    #             url=f"{ODAConfig.DB_URL}{ODAConfig.STATUS_API}{sbi_id}?version=1"
-    #         )["current_status"]
-
-    # else:
-
-    #     raise KeyError("No EB found")
-
-    # try:
-
-    #     with oda.uow as uow:
-
-    #         status = uow.sbis_status_history.get(
-    #         entity_id=sbi_id, version=1, is_status_history=False)
-    #         print(f"#################### {status}")
-
-    # except Exception as e:
-    #     return error_response(e, HTTPStatus.UNPROCESSABLE_ENTITY)
-
-    return slt_log_records, HTTPStatus.OK
+            info_single_record["request_responses"][:] = [
+                record
+                for record in info_single_record["request_responses"]
+                if record.get("status")
+                in (
+                    "observed",
+                    "failed",
+                )
+            ]
+            info[eb.eb_id] = info_single_record
+    return info, HTTPStatus.OK
 
 
 def error_response(
