@@ -1,3 +1,4 @@
+# pylint: disable=raise-missing-from
 import json
 import random
 from datetime import datetime, timezone

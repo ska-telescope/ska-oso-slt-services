@@ -4,6 +4,7 @@ Functions which the HTTP requests to individual resources are mapped to.
 See the operationId fields of the Open API spec for the specific mappings.
 """
 
+# pylint: disable=broad-exception-caught
 import json
 import logging
 import traceback
@@ -164,7 +165,9 @@ def put_shift_data(shift_id: str, body: dict) -> Response:
 
     except KeyError as err:
 
-        raise KeyError(err)
+        raise KeyError(err)  # pylint: disable=raise-missing-from
+    
+    import pdb; set_trace()
 
     slt_entity = json.loads(slt_entity.model_dump_json())
     slt_entity_without_id = {**slt_entity}

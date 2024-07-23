@@ -23,8 +23,8 @@ class EDAConfig:
 
 class ODAConfig:
 
-    DB_HOST = os.environ.get("DB_HOST", "http://192.168.1.102")
-    DB_PORT = os.environ.get("DB_PORT", 5000)
+    DB_HOST = os.environ.get("DB_HOST", "http://192.168.1.9")
+    DB_PORT = os.environ.get("DB_PORT", 5002)
     ODA_MAJOR_VERSION = 5
     DB_BASE_URL = os.environ.get(
         "DB_BASE_URL", f"ska-db-oda/oda/api/v{ODA_MAJOR_VERSION}/"
