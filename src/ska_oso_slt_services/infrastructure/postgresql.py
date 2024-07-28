@@ -13,7 +13,6 @@ from ska_oso_slt_services.models.slt import SLT
 
 skuid_entity_type = "slt"
 
-
 conn_pool = create_connection_pool()
 
 

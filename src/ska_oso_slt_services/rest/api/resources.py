@@ -13,7 +13,6 @@ from functools import wraps
 from http import HTTPStatus
 from typing import Callable, Tuple, TypeVar, Union
 
-import requests
 from pydantic import ValidationError
 from ska_db_oda.domain.query import QueryParams
 from ska_db_oda.rest.api.resources import get_qry_params
@@ -49,10 +48,6 @@ uow = PostgresUnitOfWork(conn_pool)
 slt_repo = SLTRepository()
 slt_log_repo = SLTLogRepository()
 slt_image_repo = SLTImageRepository()
-
-
-def get_response(url):
-    return requests.get(url).json()
 
 
 def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response]:
@@ -235,8 +230,6 @@ def get_eb_data_with_sbi_status(**kwargs) -> Response:
 
     if not isinstance(maybe_qry_params := get_qry_params(kwargs), QueryParams):
         return maybe_qry_params
-    
-    # import pdb;pdb.set_trace()
 
     with uow:
 
