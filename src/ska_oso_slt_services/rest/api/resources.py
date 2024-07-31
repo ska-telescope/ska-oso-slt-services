@@ -1,53 +1,91 @@
-"""
-Functions which the HTTP requests to individual resources are mapped to.
-
-See the operationId fields of the Open API spec for the specific mappings.
-"""
-
-# pylint: disable=broad-exception-caught
-import json
 import logging
-import traceback
-from datetime import datetime, timezone
+from datetime import datetime
 from functools import wraps
 from http import HTTPStatus
-from typing import Callable, Tuple, TypeVar, Union
-
+from typing import Optional, Callable, Tuple, Union
+import time
+from deepdiff import DeepDiff
 from pydantic import ValidationError
 from ska_db_oda.domain.query import QueryParams
-from ska_db_oda.rest.api.resources import get_qry_params
+from ska_db_oda.rest.api.resources import get_qry_params, error_response
 from ska_db_oda.unit_of_work.postgresunitofwork import PostgresUnitOfWork
 
-from ska_oso_slt_services.database.config import EDAConfig, LogDBConfig, ODAConfig
-from ska_oso_slt_services.database.eda_db import EDADB
-from ska_oso_slt_services.database.log_db import LogDB
-from ska_oso_slt_services.infrastructure.mapping import (
-    SLTImageRepository,
-    SLTLogRepository,
-    SLTRepository,
-)
-from ska_oso_slt_services.infrastructure.postgresql import conn_pool
-from ska_oso_slt_services.models.slt import SLT
+from ska_oso_slt_services.data_access.postgres_data_acess import PostgresDataAccess, PostgresConnection
+from ska_oso_slt_services.models.data_models import Shift, ShiftLogs
+from ska_oso_slt_services.repositories.postgres_shift_repository import PostgresShiftRepository
+from ska_oso_slt_services.services.shift_service import ShiftService
 
-# from ska_oso_slt_services.models.slt_image import SLTImage
-# from ska_oso_slt_services.models.slt_log import SLTLog
-# from ska_oso_slt_services.rest import slt
 
 LOGGER = logging.getLogger(__name__)
-
 Response = Tuple[Union[dict, list], int]
 
-T = TypeVar("T")
+shift_repository = PostgresShiftRepository()
+shift_service = ShiftService(crud_shift_repository=shift_repository,shift_repositories=None)
 
-log_db = LogDB(LogDBConfig)
-eda_db = EDADB(EDAConfig)
-oda_db = ODAConfig()
 
-uow = PostgresUnitOfWork(conn_pool)
+uow = PostgresUnitOfWork(PostgresConnection().get_connection())
 
-slt_repo = SLTRepository()
-slt_log_repo = SLTLogRepository()
-slt_image_repo = SLTImageRepository()
+dummy_data_insert = {
+  "shift_start": "2024-07-01T08:00:00",
+  "shift_end": "2024-07-01T16:00:00",
+  "shift_operator": {
+    "name": "John Doe"
+  },
+  "shift_logs": [
+    {
+      "info": {"detail": "Initial log entry."},
+      "source": "system",
+      "log_time": "2024-07-01T08:30:00"
+    }
+  ],
+  "media": [
+    {
+      "type": "image",
+      "path": "/path/to/image1.png"
+    }
+  ],
+  "annotations": "Routine maintenance shift.",
+  "comments": "All systems operational.",
+  "created_by": "admin",
+  "created_time": "2024-07-01T07:50:00",
+  "last_modified_by": "admin",
+  "last_modified_time": "2024-07-01T15:00:00"
+}
+
+
+dummy_data_update = {
+    "id": 12,
+  "shift_start": "2024-07-01T08:00:00",
+  "shift_end": "2024-07-01T16:00:00",
+  "shift_operator": {
+    "name": "John Doe"
+  },
+  "shift_logs": [
+    {
+      "info": {"detail": "Initial log entry."},
+      "source": "system",
+      "log_time": "2024-07-01T08:30:00"
+    }
+  ],
+  "media": [
+    {
+      "type": "image",
+      "path": "/path/to/image1.png"
+    },
+{
+      "type": "image",
+      "path": "/path/to/image2.png"
+    }
+
+  ],
+  "annotations": "UpdatedRoutine maintenance shift.",
+  "comments": "Updated All systems operational.",
+  "created_by": "admin",
+  "created_time": "2024-07-01T07:50:00",
+  "last_modified_by": "admin",
+  "last_modified_time": "2024-07-01T15:00:00"
+}
+
 
 
 def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response]:
@@ -87,203 +125,65 @@ def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response
     return wrapper
 
 
-@error_handler
-def post_shift_data(body: dict) -> Response:
-    """
-    Function that a POST /shift/{shift_id} request is routed to.
 
-    :param shift_id: Requested identifier from the path parameter
-    :return: The Shift History Data with status wrapped in a Response,
-             or appropriate error
-     Response
-    """
-    try:
+def get_shifts(shift_start:Optional[str]=None, shift_end:Optional[str]=None):
 
-        slt_entity = SLT(
-            annotation=body["annotation"],
-            comments=body["comments"],
-            metadata={
-                "created_by": body["created_by"],
-                "last_modified_by": body["last_modified_by"],
-            },
-        )
+  
+    shift_start = datetime.fromisoformat(shift_start) if shift_start else None
+    shift_end = datetime.fromisoformat(shift_end) if shift_end else None
 
-    except KeyError as err:
-
-        return error_response(err, HTTPStatus.UNPROCESSABLE_ENTITY)
-
-    slt_entity_id = slt_repo.insert(slt_entity=slt_entity)
-    persisted_entity = slt_repo.get_records_by_id_or_by_slt_ref(
-        record_id=slt_entity_id["id"]
-    )
-
-    return persisted_entity, HTTPStatus.OK
+    shifts = shift_service.getShifts(shift_start, shift_end)
+    return [shift.model_dump(mode="JSON") for shift in shifts], HTTPStatus.OK
 
 
-@error_handler
-def put_shift_data(shift_id: str, body: dict) -> Response:
-    """
-    Function that a PUT /shift/{shift_id} request is routed to.
 
-    :param shift_id: Requested identifier from the path parameter
-    :return: The Shift History Data with status wrapped in a Response,
-             or appropriate error
-     Response
-    """
-    try:
-
-        # import pdb;pdb.set_trace()
-
-        slt_entity = slt_repo.get_records_by_id_or_by_slt_ref(record_id=shift_id)
-
-        if not slt_entity:
-            raise KeyError(
-                f"Not found. The requested Shift Id {shift_id} could not be found."
-            )
-
-        else:
-
-            comments = f"{body['comments']}, {slt_entity[0]['comments']}"
-            annotation = f"{body['annotation']}, {slt_entity[0]['annotation']}"
-
-            slt_entity = SLT(
-                id=slt_entity[0]["id"],
-                shift_start=slt_entity[0]["shift_start"].astimezone(tz=timezone.utc),
-                annotation=annotation,
-                comments=comments,
-                metadata={
-                    "created_by": slt_entity[0]["created_by"],
-                    "created_on": slt_entity[0]["created_on"].astimezone(
-                        tz=timezone.utc
-                    ),
-                    "last_modified_by": slt_entity[0]["last_modified_by"],
-                },
-            )
-
-    except KeyError as err:
-
-        raise KeyError(err)  # pylint: disable=raise-missing-from
-
-    slt_entity = json.loads(slt_entity.model_dump_json())
-    slt_entity_without_id = {**slt_entity}
-    slt_entity_without_id.pop("id")
-
-    slt_repo.update(slt_entity=slt_entity_without_id, slt_entity_id=shift_id)
-    persisted_entity = slt_repo.get_records_by_id_or_by_slt_ref(record_id=shift_id)
-
-    return persisted_entity, HTTPStatus.OK
-
-
-# @error_handler
-# def get_shift_history_data_with_id(shift_id: str) -> Response:
-#     """
-#     Function that a GET /shift/history/<shift_id> request is routed to.
-
-#     :param shift_id: Requested identifier from the path parameter
-#     :return: The Shift History Data with status wrapped in a Response,
-#              or appropriate error
-#      Response
-#     """
-
-#     slt_records = slt_repo.get_records_by_id_or_by_slt_ref(record_id=shift_id)
-
-#     return slt_records, HTTPStatus.OK
-
-
-@error_handler
-def get_shift_history_data_with_date(
-    shift_start_time: datetime, shift_end_time: datetime, shift_id: str = None
-) -> Response:
-    """
-    Function that a GET /shift/history request is routed to.
-
-    :param shift_start_time: Start time of the shift Required
-    :param shift_end_time: End time of the shift
-    :param shift_id: Unique Shift Id
-    :return: The Shift History Data with status wrapped in a Response,
-             or appropriate error
-     Response
-    """
-
-    if shift_id:
-
-        slt_records = slt_repo.get_records_by_id_or_by_slt_ref(record_id=shift_id)
-
+def get_shift(shift_id):
+    # Fetch shift data using the service layer
+    shift = shift_service.get_shift(id=shift_id)
+    if shift is None:
+        return {"error": "Shift not found"}, 404
     else:
-
-        slt_records = slt_repo.get_records_by_shift_time(
-            start_time=shift_start_time, end_time=shift_end_time
-        )
-
-    return slt_records, HTTPStatus.OK
+        return shift.model_dump(mode="JSON"),HTTPStatus.OK
 
 
-@error_handler
-def get_eb_data_with_sbi_status(**kwargs) -> Response:
-    """
-    Function that a GET /shift_log request is routed to.
+def create_shift():
+    #data = request.get_json()
+    #data = dummy_data_insert
+    data = {}
+    try:
+        shift = Shift(**data)
+    except ValidationError as e:
+        return {"errors": e.errors()}, HTTPStatus.BAD_REQUEST
 
-    :param kwargs: Parameters to query the ODA by.
-    :return: All ExecutionBlocks present with status wrapped in a Response,
-         or appropriate error Response
-    """
-
-    if not isinstance(maybe_qry_params := get_qry_params(kwargs), QueryParams):
-        return maybe_qry_params
-
-    with uow:
-
-        ebs = uow.ebs.query(maybe_qry_params)
-
-        info = {}
-
-        for eb in ebs:
-
-            info_single_record = eb.model_dump(mode="json")
-            sbi_current_status = uow.sbis_status_history.get(
-                entity_id=eb.sbi_ref
-            ).model_dump(mode="json")["current_status"]
-            info_single_record["sbi_status"], info_single_record["source"] = (
-                sbi_current_status,
-                "ODA",
-            )
-            info_single_record["request_responses"][:] = [
-                record
-                for record in info_single_record["request_responses"]
-                if record.get("status")
-                in (
-                    "observed",
-                    "failed",
-                )
-            ]
-            info[eb.eb_id] = info_single_record
-    return info, HTTPStatus.OK
+    created_shift = shift_service.create_shift(shift)
+    return created_shift.model_dump(mode="JSON"), HTTPStatus.CREATED
 
 
-def error_response(
-    err: Exception, http_status: HTTPStatus = HTTPStatus.INTERNAL_SERVER_ERROR
-) -> Response:
-    """
-    Creates a general server error response from an exception
+def update_shift(**kwargs):
+    #data = request.get_json()
+    data = dummy_data_update
+    try:
+        shift = Shift(**data)
+    except ValidationError as e:
+        return {"errors": e.errors()}, HTTPStatus.BAD_REQUEST
 
-    :return: HTTP response server error
-    """
-    response_body = {
-        "title": http_status.phrase,
-        "detail": f"{repr(err)} with args {err.args}",
-        "traceback": {
-            "key": "Internal Server Error",
-            "type": str(type(err)),
-            "full_traceback": traceback.format_exc(),
-        },
-    }
+    updated_shift = shift_service.update_shift(shift)
+    return updated_shift.model_dump(mode="JSON"), HTTPStatus.CREATED
 
-    return response_body, http_status
+
+# def update_info_for_shift(shift_id):
+#     shift = shift_service.get_shift(id=shift_id)
+#     if shift is None:
+#         return {"error": "Shift not found"}, 404
+#     current_info_in_db =  shift.shift_logs...
+#     params_dict = {'match_type': 'equals', 'created_after': '2022-03-28T15:43:53.971548+00:00'}
+#     new_info_in_db = get_eb_sbi_status(params_dict)
+#     #compare old and new data
+#     #and if new data found then update and update record
 
 
 
-@error_handler
-def get_eb_sbi_status(**kwargs) -> Response:
+def get_eb_sbi_status(**kwargs):
     if not isinstance(maybe_qry_params := get_qry_params(kwargs), QueryParams):
         return maybe_qry_params
 
@@ -292,11 +192,96 @@ def get_eb_sbi_status(**kwargs) -> Response:
 
         info = {}
         for eb in ebs:
+            # import pdb
+            #  pdb.set_trace()
             info_single_record = eb.model_dump(mode="json")
             sbi_current_status = uow.sbis_status_history.get(entity_id=eb.sbi_ref).model_dump(mode="json")["current_status"]
             info_single_record["sbi_status"] = sbi_current_status
-            info_single_record["source"] = "ODA"
+            #info_single_record["source"] = "ODA"
             info_single_record["request_responses"][:] = [record for record in info_single_record["request_responses"] if record.get('status') in ('observed', 'failed',)]
             info[eb.eb_id] = info_single_record
-    return info, HTTPStatus.OK
+    return info
 
+
+def update_info_for_shift(shift_id: int, poll_interval: int = 5):
+
+   # last_check_time = datetime.utcnow()  # Keep track of the last check time
+    last_check_time = datetime(2024, 7, 1, 12, 0, 0)  # July 1, 2024, 12:00 PM UTC
+
+    while True:
+        shift = shift_service.get_shift(id=shift_id)
+        if shift is None:
+            print("Shift not found")
+            return {"error": "Shift not found"}, 404
+
+        current_info_in_db = {log.info.get("eb_id"): log for log in shift.shift_logs} if shift.shift_logs else {}
+
+
+        params_dict = {
+           # 'created_after': last_check_time.isoformat(),
+            'last_modified_after': last_check_time.isoformat(),
+
+            # 'created_before': some_datetime.isoformat(),
+            # 'last_modified_before': some_datetime.isoformat(),
+        }
+        new_info = get_eb_sbi_status(**params_dict)
+
+
+        params_dict = {
+             'created_after': last_check_time.isoformat(),
+            #'last_modified_after': last_check_time.isoformat(),
+            # 'created_before': some_datetime.isoformat(),
+            # 'last_modified_before': some_datetime.isoformat(),
+        }
+        new_info1 = get_eb_sbi_status(**params_dict)
+
+        new_info.update(new_info1)
+        import pdb
+        pdb.set_trace()
+        print("--------",type(new_info))
+
+        last_check_time = datetime.utcnow()
+
+
+        diff = DeepDiff(current_info_in_db, new_info, ignore_order=True)
+
+        if diff:
+            print("Differences found, updating shift logs...")
+
+           # import pdb
+           #  pdb.set_trace()
+            for eb_id, new_data in new_info.items():
+                if eb_id in current_info_in_db:
+
+                    current_log = current_info_in_db[eb_id]
+                    current_log.info.update(new_data)
+                    current_log.log_time = datetime.now()
+                else:
+
+                    new_log = ShiftLogs(info=new_data, log_time=datetime.now(), source="ODA")
+                    if shift.shift_logs:
+                        shift.shift_logs.append(new_log)
+                    else:
+                        shift.shift_logs = [new_log]
+
+
+            shift_service.update_shift(shift)
+
+        else:
+            print("No new data found")
+
+        #demo polling
+        time.sleep(poll_interval)
+
+
+
+
+if __name__ == "__main__":
+    #print(create_shift())
+    print(get_shifts())
+    #print(update_shift())
+    #print(get_shifts())
+    #params_dict = {'match_type': 'equals', 'created_after': '2022-03-28T15:43:53.971548+00:00'}
+    #print(get_eb_sbi_status(**params_dict))
+    #print(update_info_for_shift())
+    #print(update_info_for_shift(shift_id=15))
