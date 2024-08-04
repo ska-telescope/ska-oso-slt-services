@@ -1,0 +1,285 @@
+openapi: 3.0.0
+info:
+  title: Shift Log Tool API
+  description: 'This OpenAPI document defines the API for the Shift Log Tool REST service'
+  license:
+    name: BSD-3-Clause
+    url: https://opensource.org/licenses/BSD-3-Clause
+  version: 1.0.0
+servers:
+# This default is overwritten when the application is deployed to include the actual namespace if it is different to the 'ska-SLT' default
+- url: ska-oso-slt-services/slt/api/v1/
+
+paths:
+
+  /shift:
+    post:
+      summary: Updates an Shift Data by identifier
+      description: |
+        Updates the Shift Data with the given identifier
+        in the underlying data store, creating a new version.
+        If the identifier does not exist in the data store, a not found error will be returned.
+      operationId: ska_oso_slt_services.rest.api.resources.create_shift
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: './slt-schema-openapi-v1.yaml#/SLT'
+        required: true
+      responses:
+        "200":
+          description: OK, the Shift Data was created or updated
+          content:
+            application/json:
+              schema:
+                type: object
+
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Updates an Shift Data by identifier
+      description: |
+        Updates the Shift Data with the given identifier
+        in the underlying data store, creating a new version.
+        If the identifier does not exist in the data store, a not found error will be returned.
+      operationId: ska_oso_slt_services.rest.api.resources.update_shift
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: './slt-dbschema-openapi-v1.yaml#/SLTDB'
+        required: true
+      responses:
+        "200":
+          description: OK, the Shift Data was created or updated
+          content:
+            application/json:
+              schema:
+                type: object
+
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      summary: Get SLT data filter by the query parameter
+      description: |
+        Retrieves the SLT data for the given shift start time and shift end time.
+      operationId: ska_oso_slt_services.rest.api.resources.get_shift
+      parameters:
+        #- $ref: '#/components/parameters/shift_start_time'
+        #- $ref: '#/components/parameters/shift_end_time'
+        - $ref: '#/components/parameters/shift_id'
+
+      responses:
+        "200":
+          description: OK, the Shift Data was created or updated
+          content:
+            application/json:
+              schema:
+                type: object
+
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+
+#
+#
+#  /shift/{shift_id}:
+#    parameters:
+#    - name: shift_id
+#      in: path
+#      required: true
+#      style: simple
+#      explode: false
+#      schema:
+#        type: string
+#    # get:
+#    #   summary: Get SLT data filter by the query parameter
+#    #   description: |
+#    #     Retrieves the SLT data for the given start time and end time.
+#    #   operationId: ska_oso_slt_services.rest.api.resources.get_shift_history_data_with_id
+#
+#    #   responses:
+#    #     "200":
+#    #       description: OK
+#    #       content:
+#    #         application/json:
+#    #           schema:
+#    #             type: array
+#    #             items:
+#    #               type: object
+#    #     "400":
+#    #       $ref: '#/components/responses/BadRequest'
+#    #     "404":
+#    #       $ref: '#/components/responses/NotFound'
+#    #     "422":
+#    #       $ref: '#/components/responses/UnprocessableEntity'
+#    #     "500":
+#    #       $ref: '#/components/responses/InternalServerError'
+#
+#
+#
+#  /shift_log:
+#    get:
+#      summary: Get SLT data filter by the query parameter
+#      description: |
+#        Retrieves the SLT data for the given shift start time and shift end time.
+#      operationId: ska_oso_slt_services.rest.api.resources.get_eb_data_with_sbi_status
+#      parameters:
+#        - $ref: '#/components/parameters/created_after'
+#        - $ref: '#/components/parameters/created_before'
+#
+#      responses:
+#          "200":
+#            description: OK, the Shift Data was created or updated
+#            content:
+#              application/json:
+#                schema:
+#                  type: object
+#
+#          "400":
+#            $ref: '#/components/responses/BadRequest'
+#          "404":
+#            $ref: '#/components/responses/NotFound'
+#          "422":
+#            $ref: '#/components/responses/UnprocessableEntity'
+#          "500":
+#            $ref: '#/components/responses/InternalServerError'
+#
+#  /shift/history:
+#    get:
+#      summary: Get SLT data filter by the query parameter
+#      description: |
+#        Retrieves the SLT data for the given shift start time and shift end time.
+#      operationId: ska_oso_slt_services.rest.api.resources.get_shift_history_data_with_date
+#      parameters:
+#        - $ref: '#/components/parameters/shift_start_time'
+#        - $ref: '#/components/parameters/shift_end_time'
+#        - $ref: '#/components/parameters/shift_id'
+#
+#      responses:
+#        "200":
+#          description: OK, the Shift Data was created or updated
+#          content:
+#            application/json:
+#              schema:
+#                type: object
+#
+#        "400":
+#          $ref: '#/components/responses/BadRequest'
+#        "404":
+#          $ref: '#/components/responses/NotFound'
+#        "422":
+#          $ref: '#/components/responses/UnprocessableEntity'
+#        "500":
+#          $ref: '#/components/responses/InternalServerError'
+#
+components:
+  parameters:
+    shift_start_time:
+      in: query
+      name: shift_start_time
+      schema:
+        type: string
+      required: true
+      example: 2024-07-12T15:43:53.971548+00:00
+
+    shift_end_time:
+      in: query
+      name: shift_end_time
+      schema:
+        type: string
+      required: false
+      example: 2024-07-12T15:43:53.971548+00:00
+
+    created_after:
+      in: query
+      name: created_after
+      schema:
+        type: string
+      required: true
+      example: 2024-07-12T15:43:53.971548+00:00
+
+    created_before:
+      in: query
+      name: created_before
+      schema:
+        type: string
+      required: false
+      example: 2024-07-12T15:43:53.971548+00:00
+
+    shift_id:
+      in: query
+      name: shift_id
+      schema:
+        type: string
+      required: false
+      example: slt-mvp001-42000
+
+  responses:
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Bad Request, eg validation of against OpenAPI spec failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BadRequestResponse'
+    UnprocessableEntity:
+      description: Unprocessable Entity, semantic error in request eg mismatched IDs
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    BadRequestResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+        title:
+          type: string
+        detail:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        title:
+          type: string
+        detail:
+          type: string
+        traceback:
+          type: object
+          properties:
+            key:
+              type: string
+            type:
+              type: string
+            full_traceback:
+              type: string
