@@ -27,7 +27,6 @@ elasticsearch = "^8.14.0"
 pyhdbpp = "^1.5.12"
 pydantic-core = "^2.20.1"
 annotated-types = "^0.7.0"
-deepdiff = "^7.0.1"
 pydantic = {version = "^2.8.2", extras = ["email"]}
 
 
@@ -41,6 +40,7 @@ pycodestyle = "^2.8.0"
 isort = "^5.10.1"
 pylint-junit = "^0.3.2"
 flake8 = "^7.0.0"
+deepdiff = "^7.0.1"
 
 
 [tool.poetry.group.docs.dependencies]
