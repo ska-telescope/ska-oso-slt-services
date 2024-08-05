@@ -41,10 +41,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         query = """
         SELECT id, shift_start, shift_end, shift_operator, shift_logs, media, 
-        annotations,
-               comments, created_by, created_time, last_modified_by, last_modified_time
-        FROm tab_oda_slt
-        """
+        annotations, comments, created_by, created_time, last_modified_by,
+         last_modified_time FROM tab_oda_slt
+        """  # noqa: W291
         params = []
         if shift_start and shift_end:
             query += " WHERE shift_start >= %s AND shift_end <= %s"
@@ -100,9 +99,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         SELECT id, shift_start, shift_end, shift_operator, shift_logs, media,
          annotations,
                comments, created_by, created_time, last_modified_by, last_modified_time
-        FROm tab_oda_slt
+        FROM tab_oda_slt
         WHERE id = %s
-        """
+        """  # noqa: W291
         params = (shift_id,)
         rows = self.postgresDataAccess.execute_query_or_update(
             query=query, params=params, query_type=QueryType.GET

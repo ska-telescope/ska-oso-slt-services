@@ -2,13 +2,9 @@ from datetime import datetime, timezone
 from http import HTTPStatus
 from unittest.mock import patch
 
-import pytest
-from dateutil.parser import isoparse
-from deepdiff import DeepDiff
 from flask import json
 
-from ska_oso_slt_services.models.data_models import Shift, ShiftLogs
-from ska_oso_slt_services.rest import get_openapi_spec, init_app
+from ska_oso_slt_services.models.data_models import Shift
 from tests.unit.ska_oso_slt_services.util import assert_json_is_equal
 
 
@@ -160,7 +156,8 @@ class TestShiftCRUD:
         ]
         mock_get_shifts.return_value = mock_shifts
         response = client.get(
-            f"/ska-oso-slt-services/slt/api/v1/shifts?shift_start={shift_start}&shift_end={shift_end}"
+            "/ska-oso-slt-services/slt/api/v1/shifts?shift_start="
+            f"{shift_start}&shift_end={shift_end}"
         )
 
         expected_response = [

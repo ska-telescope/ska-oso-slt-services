@@ -163,6 +163,7 @@ def mock_db():
             "ska_oso_slt_services.data_access.postgres_data_acess.PostgresConnection"
         ) as mock_connection:
             with patch(
-                "ska_oso_slt_services.data_access.postgres_data_acess.PostgresConnection.get_connection"
+                "ska_oso_slt_services.data_access.postgres_data_acess."
+                "PostgresConnection.get_connection"
             ) as mock_add_conn:
                 yield mock_data_access, mock_connection, mock_add_conn
