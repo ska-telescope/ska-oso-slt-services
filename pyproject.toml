@@ -28,6 +28,7 @@ pyhdbpp = "^1.5.12"
 pydantic-core = "^2.20.1"
 annotated-types = "^0.7.0"
 pydantic = {version = "^2.8.2", extras = ["email"]}
+email-validator = "^2.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
