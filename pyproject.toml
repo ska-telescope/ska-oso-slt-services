@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-oso-slt-services"
-version = "1.0.0"
+version = "0.1.0"
 description = "Shift log tool"
 authors = ["Team Nakshatra"]
 license= "BSD-3-Clause"
@@ -22,7 +22,7 @@ gunicorn = "^20.1.0"
 ska-ser-logging = "^0.4.1"
 ska-ser-skuid = "^3.3.3"
 prance = {version = "^23.6.21.0", extras = ["osv"]}
-ska-db-oda  = "^5.2.0"
+ska-db-oda  = "^5.3.3"
 elasticsearch = "^8.14.0"
 pyhdbpp = "^1.5.12"
 pydantic-core = "^2.20.1"
