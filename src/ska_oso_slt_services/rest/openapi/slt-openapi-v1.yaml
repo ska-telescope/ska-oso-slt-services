@@ -144,6 +144,48 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         "500":
           $ref: '#/components/responses/InternalServerError'
+    
+  /shifts/image/{shift_id}:
+    post:
+      summary: Update image with ID
+      description: Update the details of an existing shift.
+      operationId: ska_oso_slt_services.rest.api.resources.upload_image
+      parameters:
+        - in: path
+          name: shift_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                filename:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "204":
+          description: Success, no new EB found in ODA.
+        "201":
+          description: SHift Logs Info updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shift'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+    
+
 components:
   schemas:
     CreateShift:
@@ -181,7 +223,7 @@ components:
             type: object
             properties:
               type:
-                type: string
+                type: array
                 example: "image"
               path:
                 type: string

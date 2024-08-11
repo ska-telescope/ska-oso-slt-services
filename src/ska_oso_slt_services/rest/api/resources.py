@@ -16,6 +16,7 @@ from ska_oso_slt_services.repositories.postgres_shift_repository import (
     PostgresShiftRepository,
 )
 from ska_oso_slt_services.services.shift_service import ShiftService
+from ska_oso_slt_services.common.file_upload import upload_image_to_folder
 
 LOGGER = logging.getLogger(__name__)
 Response = Tuple[Union[dict, list], int]
@@ -261,3 +262,25 @@ def updated_shift_log_info(current_shift_id: int):
         updated_shift_with_info = shift_service.update_shift(shift=updated_shift)
 
         return updated_shift_with_info.model_dump(mode="JSON"), HTTPStatus.CREATED
+
+from PIL import Image
+import os
+
+@error_handler
+def upload_image(**kwargs):
+    """
+    Upload an image to a specific folder.
+
+    :param image_data: The image data to be uploaded.
+    :returns: A success message and an HTTP status code.
+    """
+    try:
+        # Get the uploaded file
+        file = kwargs['filename']
+        import pdb;pdb.set_trace()
+        upload_image_to_folder(media_content=file)
+        # Save the file to the upload folder
+        return 'Image uploaded and resized successfully!'
+
+    except Exception as e:
+        return {"error": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
