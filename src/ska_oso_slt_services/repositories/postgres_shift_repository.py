@@ -278,3 +278,55 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
     def delete_shift(self, id: str) -> bool:
         pass
+
+    def get_media(self, shift_id: str) -> List[Media]:
+        """
+        Retrieve the media data associated with a specific shift.
+
+        :param shift_id: The unique identifier of the shift.
+        :return: A list of Media objects associated with the shift.
+        """
+        query = """
+        SELECT media
+        FROM tab_oda_slt
+        WHERE id = %s;
+        """
+        params = (shift_id,)
+        rows = self.postgresDataAccess.execute_query_or_update(
+            query=query, params=params, query_type=QueryType.GET
+        )
+
+        if not rows:
+            return []
+
+        media_data = rows[0]["media"]
+        if media_data is None:
+            return []
+
+        return media_data
+        
+
+    def add_media(self, shift_id: str, media: Media) -> bool:
+        query = """
+        UPDATE tab_oda_slt
+        SET media = CASE
+            WHEN media IS NULL THEN %s::jsonb
+            ELSE media || %s::jsonb
+        END
+        WHERE id = %s
+        RETURNING media;
+        """
+
+        params = (json.dumps(media), json.dumps(media), shift_id)
+        rows = self.postgresDataAccess.execute_query_or_update(
+            query=query, params=params, query_type=QueryType.PUT
+        )
+
+        if not rows:
+            return False
+        
+        return True
+
+        
+        
+        

@@ -1,6 +1,9 @@
 import logging
 from datetime import datetime
 from functools import wraps
+from typing import List
+from werkzeug.datastructures import FileStorage
+
 from http import HTTPStatus
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
@@ -16,7 +19,7 @@ from ska_oso_slt_services.repositories.postgres_shift_repository import (
     PostgresShiftRepository,
 )
 from ska_oso_slt_services.services.shift_service import ShiftService
-from ska_oso_slt_services.common.file_upload import upload_image_to_folder
+from ska_oso_slt_services.common.file_upload import upload_image_to_folder, read_image_from_folder
 
 LOGGER = logging.getLogger(__name__)
 Response = Tuple[Union[dict, list], int]
@@ -25,6 +28,9 @@ shift_repository = PostgresShiftRepository()
 shift_service = ShiftService(
     crud_shift_repository=shift_repository, shift_repositories=None
 )
+
+from flask import request
+
 
 uow = PostgresUnitOfWork(PostgresConnection().get_connection())
 
@@ -263,8 +269,6 @@ def updated_shift_log_info(current_shift_id: int):
 
         return updated_shift_with_info.model_dump(mode="JSON"), HTTPStatus.CREATED
 
-from PIL import Image
-import os
 
 @error_handler
 def upload_image(**kwargs):
@@ -276,11 +280,40 @@ def upload_image(**kwargs):
     """
     try:
         # Get the uploaded file
-        file = kwargs['filename']
-        import pdb;pdb.set_trace()
-        upload_image_to_folder(media_content=file)
-        # Save the file to the upload folder
-        return 'Image uploaded and resized successfully!'
+        shift_id: str = kwargs.get('shift_id', '')
+        if not shift_id:
+            # Handle the case when shift_id is not provided
+            raise ValueError("shift_id is required")
+        
+        files: List[FileStorage] = request.files.getlist('files')
+        if not files:
+            # Handle the case when no files are provided
+            raise ValueError("No files provided")
+        file_path_to_store: List[str] = []
+        for file in files:
+            _,path = upload_image_to_folder(media_content=file, file_id=shift_id)
+            file_path_to_store.append({"img":path})
+        shift_service.add_media(shift_id=shift_id, media=file_path_to_store)
+        return "Images uploaded successfully"
 
     except Exception as e:
-        return {"error": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+        print(e)
+        return 'Error uploading image!', 500
+    
+@error_handler
+def get_shift_media(shift_id: str):
+    """
+    Retrieve the media associated with a specific shift.
+
+    :param shift_id str: The unique identifier of the shift.
+    :returns: A list of media URLs and an HTTP status code.
+    """
+    shift_data = shift_service.get_media(shift_id=shift_id)
+    media_data = []
+    for media in shift_data:
+        data = read_image_from_folder(media["img"])
+        media_data.append(data)
+    if media_data:
+        return media_data, HTTPStatus.OK
+    else:
+        return {"error": "Shift not found"}, HTTPStatus.NOT_FOUND

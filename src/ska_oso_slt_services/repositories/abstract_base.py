@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import List, Optional
 
-from ska_oso_slt_services.models.data_models import Shift
+from ska_oso_slt_services.models.data_models import Shift, Media
 
 
 class ShiftRepository(ABC):
@@ -76,6 +76,33 @@ class CRUDShiftRepository(ShiftRepository):
         :param shift: The Shift object to update.
 
         :returns: The updated Shift object.
+
+        :raises: NotImplementedError if the method is not implemented by a subclass.
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def get_media(self, shift_id: str) -> List[Media]:
+        """
+        Retrieve a list of media associated with a shift.
+
+        :param id: The ID of the shift to retrieve media for.
+
+        :returns: A list of Media objects associated with the specified shift.
+
+        :raises: NotImplementedError if the method is not implemented by a subclass.
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def add_media(self, shift_id: str, media: Media) -> bool:
+        """
+        Add media to a shift.
+
+        :param id: The ID of the shift to add media to.
+        :param media: The Media object to add.
+
+        :returns: True if the media was added successfully, False otherwise.
 
         :raises: NotImplementedError if the method is not implemented by a subclass.
         """
