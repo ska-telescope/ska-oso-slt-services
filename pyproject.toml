@@ -41,7 +41,7 @@ pycodestyle = "^2.8.0"
 isort = "^5.10.1"
 pylint-junit = "^0.3.2"
 flake8 = "^7.0.0"
-deepdiff = "^7.0.1"
+deepdiff = "7.0.0"
 
 
 [tool.poetry.group.docs.dependencies]
