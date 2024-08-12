@@ -50,13 +50,13 @@ def init_app(open_api_spec=None):
         "body": CustomRequestBodyValidator,
     }
     connexion = App(__name__, specification_dir="openapi/")
-    def set_default_headers_on_response(response):
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "*"
-        return response
+    # def set_default_headers_on_response(response):
+    #     response.headers["Access-Control-Allow-Origin"] = "*"
+    #     response.headers["Access-Control-Allow-Headers"] = "*"
+    #     response.headers["Access-Control-Allow-Methods"] = "*"
+    #     return response
 
-    connexion.app.after_request(set_default_headers_on_response)
+    # connexion.app.after_request(set_default_headers_on_response)
 
     connexion.add_api(
         open_api_spec,
