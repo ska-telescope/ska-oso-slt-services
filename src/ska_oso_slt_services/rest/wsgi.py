@@ -28,6 +28,6 @@ else:
     # presume being run from gunicorn
     # use gunicorn logging level for app and module loggers
     gunicorn_logger = logging.getLogger("gunicorn.error")
-    app.logger.setLevel(gunicorn_logger.level)
+    app.app.logger.setLevel(gunicorn_logger.level)
     logger = logging.getLogger("ska_db_oda")
     logger.setLevel(gunicorn_logger.level)
