@@ -4,7 +4,7 @@ from functools import wraps
 from http import HTTPStatus
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
-from deepdiff import DeepDiff
+# from deepdiff import DeepDiff
 from pydantic import ValidationError
 from ska_db_oda.domain.query import QueryParams
 from ska_db_oda.rest.api.resources import error_response, get_qry_params
@@ -231,33 +231,33 @@ def updated_shift_log_info(current_shift_id: int):
 
     created_after_eb_sbi_info.update(last_modified_after_eb_sbi_info)
 
-    diff = DeepDiff(shift_logs_info, created_after_eb_sbi_info, ignore_order=True)
+    # diff = DeepDiff(shift_logs_info, created_after_eb_sbi_info, ignore_order=True)
 
-    new_eb_ids = [
-        _extract_eb_id_from_key(key) for key in diff.get("dictionary_item_added", [])
-    ]
-    changed_eb_ids = [
-        _extract_eb_id_from_key(key) for key in diff.get("values_changed", {}).keys()
-    ]
+    # new_eb_ids = [
+    #     _extract_eb_id_from_key(key) for key in diff.get("dictionary_item_added", [])
+    # ]
+    # changed_eb_ids = [
+    #     _extract_eb_id_from_key(key) for key in diff.get("values_changed", {}).keys()
+    # ]
 
-    new_eb_ids_merged = []
-    new_eb_ids_merged.extend(new_eb_ids)
-    new_eb_ids_merged.extend(changed_eb_ids)
+    # new_eb_ids_merged = []
+    # new_eb_ids_merged.extend(new_eb_ids)
+    # new_eb_ids_merged.extend(changed_eb_ids)
 
-    if new_eb_ids_merged:
-        new_shift_logs = []
-        for new_or_updated_eb_id in new_eb_ids_merged:
-            new_info = created_after_eb_sbi_info[new_or_updated_eb_id]
-            new_shift_log = ShiftLogs(
-                info=new_info, log_time=datetime.now(), source="ODA"
-            )
-            new_shift_logs.append(new_shift_log)
+    # if new_eb_ids_merged:
+    #     new_shift_logs = []
+    #     for new_or_updated_eb_id in new_eb_ids_merged:
+    #         new_info = created_after_eb_sbi_info[new_or_updated_eb_id]
+    #         new_shift_log = ShiftLogs(
+    #             info=new_info, log_time=datetime.now(), source="ODA"
+    #         )
+    #         new_shift_logs.append(new_shift_log)
 
-        if current_shift_data.shift_logs:
-            new_shift_logs.extend(current_shift_data.shift_logs)
+    #     if current_shift_data.shift_logs:
+    #         new_shift_logs.extend(current_shift_data.shift_logs)
 
-        updated_shift = Shift(id=current_shift_id, shift_logs=new_shift_logs)
+    #     updated_shift = Shift(id=current_shift_id, shift_logs=new_shift_logs)
 
-        updated_shift_with_info = shift_service.update_shift(shift=updated_shift)
+    #     updated_shift_with_info = shift_service.update_shift(shift=updated_shift)
 
-        return updated_shift_with_info.model_dump(mode="JSON"), HTTPStatus.CREATED
+    #     return updated_shift_with_info.model_dump(mode="JSON"), HTTPStatus.CREATED
