@@ -104,8 +104,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
         WHERE id = %s
         """  # noqa: W291
 
-        import pdb
-        pdb.set_trace()
+        # import pdb
+        # pdb.set_trace()
 
         params = (shift_id,)
         rows = self.postgresDataAccess.execute_query_or_update(query=query, params=params, query_type=QueryType.GET)
@@ -285,9 +285,55 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
 
 
+
+    def get_oda_data(self,filter_date):
+        #query for EB
+        #        ebs = uow.ebs.query(maybe_qry_params)
+        eb_query = f"""SELECT eb_id, info,sbd_id,sbi_id,sbd_version,version,created_on,created_by,last_modified_on,last_modified_by
+                    FROM tab_oda_eb
+                    WHERE last_modified_on >= %s
+        """
+        eb_params = [filter_date]
+        eb_rows = self.postgresDataAccess.execute_query_or_update(
+            query=eb_query, params=tuple(eb_params), query_type=QueryType.GET
+        )
+        print(f"\n\n\n\n========================== Printing Data =============================\n{eb_rows} {type(eb_rows[0])}")
+
+        info = {}
+        for eb in eb_rows:
+            # sbi_status_query = """
+            #     SELECT sbi_ref, previous_status, current_status, version, created_on, created_by, last_modified_on, last_modified_by
+            #     FROM tab_oda_sbi_status_history
+            #     WHERE sbi_ref = sbi-t0001-20240810-00003
+            #     ORDER BY version DESC, id DESC
+            #     LIMIT 1
+            # """
+
+            sbi_status_query = """
+                            SELECT current_status
+                            FROM tab_oda_sbi_status_history
+                            WHERE sbi_ref = %s
+                            ORDER BY version DESC, id DESC 
+                            LIMIT 1
+                        """
+            sbi_status_params = [eb["sbi_id"]]
+            sbi_current_status = self.postgresDataAccess.execute_query_or_update(
+                query=sbi_status_query, params=tuple(sbi_status_params), query_type=QueryType.GET
+            )
+            info[eb["eb_id"]] = eb["info"]
+            info[eb["eb_id"]]["sbi_status"] = sbi_current_status[0]["current_status"]
+            print(f"\n\n\n\n========================== Printing sbi_current_status Data =============================\n{sbi_current_status} {type(sbi_current_status[0])}")
+
+            #sbi_current_status =
+
+        # #query for SB
+        # query = """"""
+        return info
+
 def update_shift_log():
     pass
 
 #
 # class POStgresODARepositiry
 #     pass
+
