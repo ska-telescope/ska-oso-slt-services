@@ -32,7 +32,7 @@ stages:
       echo "Status of pods in $KUBE_NAMESPACE namespace:"
       kubectl get pods -n $KUBE_NAMESPACE -o jsonpath="{range .items[*]}{'Pod: '}{.metadata.name}:{'\n'}{'\t'}{'Image: '}{.spec.containers[*].image}{'\n'}{'\t'}{'Status: '}{.status.phase}{'\n'}{end}{'\n'}"
       echo "Address to connect to the deployment of the SLT API: "
-      echo "  https://k8s.stfc.skao.int/$KUBE_NAMESPACE/slt/api/v1"
+      echo "  https://k8s.stfc.skao.int/$KUBE_NAMESPACE/slt/api/v0"
       echo "Address to connect to the Swagger UI for the deployment: "
       echo "  https://k8s.stfc.skao.int/$KUBE_NAMESPACE/slt/api/v0/ui/"
 
