@@ -21,17 +21,17 @@ POSTGRES_HOST ?= $(RELEASE_NAME)-postgresql
 K8S_CHART_PARAMS += \
   --set ska-db-oda-umbrella.pgadmin4.serverDefinitions.servers.firstServer.Host=$(POSTGRES_HOST)
 
+ # Set cluster_domain to minikube default (cluster.local) in local development
+# (CI_ENVIRONMENT_SLUG should only be defined when running on the CI/CD pipeline)
+ifeq ($(CI_ENVIRONMENT_SLUG),)
+K8S_CHART_PARAMS += --set global.cluster_domain="cluster.local"
+endif
+
 # For the test, dev and integration environment, use the freshly built image in the GitLab registry
 ENV_CHECK := $(shell echo $(CI_ENVIRONMENT_SLUG) | egrep 'test|dev|integration')
 ifneq ($(ENV_CHECK),)
 K8S_CHART_PARAMS += --set ska-oso-slt-services.rest.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA) \
 	--set ska-oso-slt-services.rest.image.registry=$(CI_REGISTRY)/ska-telescope/oso/ska-oso-slt-services
-endif
-
-# Set cluster_domain to minikube default (cluster.local) in local development
-# (CI_ENVIRONMENT_SLUG should only be defined when running on the CI/CD pipeline)
-ifeq ($(CI_ENVIRONMENT_SLUG),)
-K8S_CHART_PARAMS += --set global.cluster_domain="cluster.local"
 endif
 
 # For the staging environment, make k8s-install-chart-car will pull the chart from CAR so we do not need to
@@ -60,7 +60,6 @@ PYTHON_TEST_FILE = tests/unit/
 -include .make/python.mk
 -include .make/oci.mk
 -include .make/k8s.mk
-
 -include .make/helm.mk
 
 # include your own private variables for custom deployment configuration
