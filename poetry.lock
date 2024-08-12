@@ -547,13 +547,13 @@ reference = "PyPI-public"
 
 [[package]]
 name = "deepdiff"
-version = "7.0.0"
+version = "7.0.1"
 description = "Deep Difference and Search of any Python object/data. Recreate objects by adding adding deltas to each other."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "deepdiff-7.0.0-py3-none-any.whl", hash = "sha256:f7bbb845f83ad6b9453a4ab07c579bdc6f1df712edc515740455a9b88c2bc41a"},
-    {file = "deepdiff-7.0.0.tar.gz", hash = "sha256:4e07da4f2a1ae069b7465d264715764f3b36ce181ec89f47050ead61711b1e9a"},
+    {file = "deepdiff-7.0.1-py3-none-any.whl", hash = "sha256:447760081918216aa4fd4ca78a4b6a848b81307b2ea94c810255334b759e1dc3"},
+    {file = "deepdiff-7.0.1.tar.gz", hash = "sha256:260c16f052d4badbf60351b4f77e8390bee03a0b516246f6839bc813fb429ddf"},
 ]
 
 [package.dependencies]
@@ -2834,4 +2834,4 @@ reference = "PyPI-public"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "01893679dbee6a5dd7726ff4919ca58d9009b5a6cf328e53e9dfe94c01ee787f"
+content-hash = "fbfd5f12533520157b18b913e0dd7714fb1ea22597d232c39bcf291048072203"
