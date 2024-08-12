@@ -67,6 +67,7 @@ class Shift(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: Optional[int] = None
+    shift_id: Optional[str] = None
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None
     shift_operator: Optional[Operator] = None

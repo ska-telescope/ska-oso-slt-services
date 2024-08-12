@@ -40,7 +40,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
 
         query = """
-        SELECT id, shift_start, shift_end, shift_operator, shift_logs, media, 
+        SELECT id,shift_id, shift_start, shift_end, shift_operator, shift_logs, media, 
         annotations, comments, created_by, created_time, last_modified_by,
          last_modified_time FROM tab_oda_slt
         """  # noqa: W291
@@ -69,6 +69,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
             shift = Shift(
                 id=row["id"],
+                shift_id=row["shift_id"],
                 shift_start=row["shift_start"],
                 shift_end=row["shift_end"],
                 shift_operator=operator,
@@ -96,16 +97,18 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
 
         query = """
-        SELECT id, shift_start, shift_end, shift_operator, shift_logs, media,
+        SELECT id, shift_id, shift_start, shift_end, shift_operator, shift_logs, media,
          annotations,
                comments, created_by, created_time, last_modified_by, last_modified_time
         FROM tab_oda_slt
         WHERE id = %s
         """  # noqa: W291
+
+        import pdb
+        pdb.set_trace()
+
         params = (shift_id,)
-        rows = self.postgresDataAccess.execute_query_or_update(
-            query=query, params=params, query_type=QueryType.GET
-        )
+        rows = self.postgresDataAccess.execute_query_or_update(query=query, params=params, query_type=QueryType.GET)
 
         if not rows:
             return None
@@ -124,6 +127,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         shift = Shift(
             id=row["id"],
+            shift_id=row["shift_id"],
             shift_start=row["shift_start"],
             shift_end=row["shift_end"],
             shift_operator=operator,
@@ -278,3 +282,12 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
     def delete_shift(self, id: str) -> bool:
         pass
+
+
+
+def update_shift_log():
+    pass
+
+#
+# class POStgresODARepositiry
+#     pass
