@@ -5,7 +5,7 @@ minikube: true
 
 system: TM-mid
 telescope: SKA-mid
-subsystem: ska-oso-slt-services
+subsystem: ska-oso-services
 
 global:
   minikube: true
@@ -20,7 +20,7 @@ rest:
   image:
     registry: registry.gitlab.com   
     image: ska-telescope/oso/ska-oso-slt-services/ska-oso-slt-services  
-    tag: 0.1.0-dev.c7f9c307e # Defaults to the chart appVersion if not set
+    tag: 0.1.0-dev.cf30c0bf5 # Defaults to the chart appVersion if not set working 0.1.0-dev.cf30c0bf5 
     pullPolicy: IfNotPresent
   oda:
     backendType: postgres
