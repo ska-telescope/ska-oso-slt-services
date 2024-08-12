@@ -1,4 +1,6 @@
 import os
+
+
 class LogDBConfig:
     API_KEY_PATH = os.getenv("LOGDB_API_KEY_PATH", "nakshatra.token")
     CA_CERTIFICATE_PATH = os.getenv("LOGDB_CA_CERT_PATH", "ca-certificate.crt")
@@ -6,7 +8,6 @@ class LogDBConfig:
     CLIENT_KEY_PATH = os.getenv("LOGDB_CLIENT_KEY_PATH", "apikey.nakshatra.key")
     HOST = os.getenv("LOGDB_HOST", "https://logging.stfc.skao.int:9200")
     CONNECTIONS_PER_NODE = int(os.getenv("LOGDB_CONNECTIONS_PER_NODE", 10))
-
 
 
 class EDADBConfig:

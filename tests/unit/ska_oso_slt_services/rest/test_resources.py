@@ -16,7 +16,7 @@ class TestShiftCRUD:
         mock_create_shift.return_value = mock_shift
 
         response = client.post(
-            "/ska-oso-slt-services/slt/api/v1/shifts",
+            "/ska-oso-slt-services/slt/api/v0/shifts",
             data=json.dumps(valid_shift_data),
             content_type="application/json",
         )
@@ -37,7 +37,7 @@ class TestShiftCRUD:
     ):
         """Verify that an invalid shift cannot be created."""
         response = client.post(
-            "/ska-oso-slt-services/slt/api/v1/shifts",
+            "/ska-oso-slt-services/slt/api/v0/shifts",
             data=json.dumps(invalid_shift_data),
             content_type="application/json",
         )
@@ -62,7 +62,7 @@ class TestShiftCRUD:
         mock_update_shift.return_value = mock_shift_after_update
 
         response = client.put(
-            f"/ska-oso-slt-services/slt/api/v1/shifts/{shift_id}",
+            f"/ska-oso-slt-services/slt/api/v0/shifts/{shift_id}",
             data=json.dumps(valid_update_shift_data),
             content_type="application/json",
         )
@@ -86,7 +86,7 @@ class TestShiftCRUD:
         )
         mock_get_shift.return_value = mock_shift
 
-        response = client.get(f"/ska-oso-slt-services/slt/api/v1/shifts/{shift_id}")
+        response = client.get(f"/ska-oso-slt-services/slt/api/v0/shifts/{shift_id}")
 
         assert response.status_code == HTTPStatus.OK
         assert_json_is_equal(
@@ -100,7 +100,7 @@ class TestShiftCRUD:
         shift_id = 999
         mock_get_shift.return_value = None
 
-        response = client.get(f"/ska-oso-slt-services/slt/api/v1/shifts/{shift_id}")
+        response = client.get(f"/ska-oso-slt-services/slt/api/v0/shifts/{shift_id}")
 
         assert response.status_code == HTTPStatus.NOT_FOUND
         assert_json_is_equal(response.data, json.dumps({"error": "Shift not found"}))
@@ -125,7 +125,7 @@ class TestShiftCRUD:
         ]
         mock_get_shifts.return_value = mock_shifts
 
-        response = client.get("/ska-oso-slt-services/slt/api/v1/shifts")
+        response = client.get("/ska-oso-slt-services/slt/api/v0/shifts")
 
         assert response.status_code == HTTPStatus.OK
         assert_json_is_equal(
@@ -156,7 +156,7 @@ class TestShiftCRUD:
         ]
         mock_get_shifts.return_value = mock_shifts
         response = client.get(
-            "/ska-oso-slt-services/slt/api/v1/shifts?shift_start="
+            "/ska-oso-slt-services/slt/api/v0/shifts?shift_start="
             f"{shift_start}&shift_end={shift_end}"
         )
 
@@ -208,7 +208,7 @@ class TestShiftCRUD:
         mock_update_shift.return_value = updated_shift_data_with_logs
 
         response = client.put(
-            f"/ska-oso-slt-services/slt/api/v1/shifts/{shift_id}/logs_update"
+            f"/ska-oso-slt-services/slt/api/v0/shifts/{shift_id}/logs_update"
         )
 
         assert response.status_code == HTTPStatus.CREATED
