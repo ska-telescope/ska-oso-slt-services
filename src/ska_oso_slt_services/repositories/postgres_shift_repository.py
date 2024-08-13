@@ -297,14 +297,17 @@ class PostgresShiftRepository(CRUDShiftRepository):
                     WHERE last_modified_on >= %s
         """
         eb_params = [filter_date_tz]
-        print(f"{eb_query=},{eb_params=}")
+        ###ml print(f"{eb_query=},{eb_params=}")
         eb_rows = self.postgresDataAccess.execute_query_or_update(
             query=eb_query, params=tuple(eb_params), query_type=QueryType.GET
         )
-        print(f"\n\n\n\n========================== Printing Data =============================\n{eb_rows}")
+        #print(f"\n\n\n\n========================== Printing Data =============================\n{eb_rows}")
 
         info = {}
         if eb_rows:
+            # import pdb
+            # pdb.set_trace()
+            #sbi_current_status = []
             for eb in eb_rows:
                 # sbi_status_query = """
                 #     SELECT sbi_ref, previous_status, current_status, version, created_on, created_by, last_modified_on, last_modified_by
@@ -314,20 +317,36 @@ class PostgresShiftRepository(CRUDShiftRepository):
                 #     LIMIT 1
                 # """
 
-                sbi_status_query = """
-                                SELECT current_status
-                                FROM tab_oda_sbi_status_history
-                                WHERE sbi_ref = %s
-                                ORDER BY version DESC, id DESC 
-                                LIMIT 1
-                            """
-                sbi_status_params = [eb["sbi_id"]]
-                sbi_current_status = self.postgresDataAccess.execute_query_or_update(
-                    query=sbi_status_query, params=tuple(sbi_status_params), query_type=QueryType.GET
-                )
+                # sbi_status_query = """
+                #                 SELECT current_status
+                #                 FROM tab_oda_sbi_status_history
+                #                 WHERE sbi_ref = %s
+                #                 ORDER BY version DESC, id DESC
+                #                 LIMIT 1
+                #             """
+                # sbi_status_params = [eb["sbi_id"]]
+                # sbi_current_status = self.postgresDataAccess.execute_query_or_update(
+                #     query=sbi_status_query, params=tuple(sbi_status_params), query_type=QueryType.GET
+                # )
+                request_responses = eb["info"].get("request_responses", [])
+
+                if not request_responses:
+                    sbi_current_status = "Created"
+                else:
+                    ok_count = sum(1 for response in request_responses if response["status"] == "OK")
+                    error_count = sum(1 for response in request_responses if response["status"] == "ERROR")
+
+                    if error_count > 0:
+                        sbi_current_status = "failed"
+                    elif ok_count == 5:  # Assuming the total number of blocks is 5
+                        sbi_current_status = "completed"
+                    else:
+                        sbi_current_status = "executing"
+
+
                 info[eb["eb_id"]] = eb["info"]
-                info[eb["eb_id"]]["sbi_status"] = sbi_current_status[0]["current_status"]
-                print(f"\n\n\n\n========================== Printing sbi_current_status Data =============================\n{sbi_current_status} {type(sbi_current_status[0])}")
+                info[eb["eb_id"]]["sbi_status"] = sbi_current_status
+                #print(f"\n\n\n\n========================== Printing sbi_current_status Data =============================\n{sbi_current_status} {type(sbi_current_status[0])}")
 
             #sbi_current_status =
 

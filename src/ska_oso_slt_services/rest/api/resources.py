@@ -124,14 +124,20 @@ def updated_shift_log_info(current_shift_id: int):
     # created_after_eb_sbi_info.update(last_modified_after_eb_sbi_info)
     if created_after_eb_sbi_info:
         diff = DeepDiff(shift_logs_info, created_after_eb_sbi_info, ignore_order=True)
+        import pdb
+        pdb.set_trace()
 
         new_eb_ids = [
             _extract_eb_id_from_key(key) for key in diff.get("dictionary_item_added", [])
         ]
-        changed_eb_ids = [
-            _extract_eb_id_from_key(key) for key in diff.get("values_changed", {}).keys()
-        ]
 
+        print(f"\n\n\n\n========================== New Eb found in ODA =============================\n{new_eb_ids}")
+        changed_eb_ids = list(set([
+            _extract_eb_id_from_key(key) for key in diff.get("values_changed", {}).keys()
+        ]))
+        import pdb
+        pdb.set_trace()
+        print(f"========================== Changed Eb found in ODA =============================\n{changed_eb_ids}")
         new_eb_ids_merged = []
         new_eb_ids_merged.extend(new_eb_ids)
         new_eb_ids_merged.extend(changed_eb_ids)
@@ -174,13 +180,15 @@ class ShiftLogUpdater:
         while True:
             with self.lock:
                 if self.current_shift_id is not None:
-                    print(f"CHecking Updated ODA LOGS for SHIFT ID {self.current_shift_id}")
+                    print(f"------> Checking Updated ODA LOGS for SHIFT ID {self.current_shift_id}")
                     updated_shift_log_info(self.current_shift_id)
             time.sleep(5)  # Wait for 10 seconds before running again
 
     def start(self):
-        print("\n\n\n\n==========Starting Thread if not started==========\n\n\n")
+        #print("\n\n\n\n--- >Starting Thread if not started==========\n\n\n")
+        #time.sleep(2)
         if not self.thread_started:
+            print("\n\n ---> Polling Started")
             self.thread.start()
             self.thread_started = True
 
@@ -282,7 +290,7 @@ def create_shift(body: Dict[str, Any]):
     #update shift_id
     shift_id = f"shift-{created_shift.shift_start.strftime('%Y%m%d')}-{created_shift.id}"
     updating_shift_id = shift_service.update_shift(shift=Shift(shift_id=shift_id,id=created_shift.id))
-    shift_log_updater.update_shift_id(created_shift.id)
+   ### shift_log_updater.update_shift_id(created_shift.id)
     #shift_service.get_shift(id=created_shift.id)
     return shift_service.get_shift(id=created_shift.id).model_dump(mode="JSON", exclude_unset=True,exclude_none=True), HTTPStatus.CREATED
 
