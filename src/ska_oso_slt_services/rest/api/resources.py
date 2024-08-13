@@ -92,26 +92,7 @@ def updated_shift_log_info(current_shift_id: int):
     # pdb.set_trace()
     ####in third call error befor calling _get function
     shift_logs_info = {}
-    ###error
-    """
-    > /home/manish/temp/ska-oso-slt-services/src/ska_oso_slt_services/rest/api/resources.py(95)updated_shift_log_info()
--> current_shift_data = shift_service.get_shift(id=current_shift_id)
-(Pdb) n
-psycopg.DatabaseError: Error executing GET query: 
-        SELECT id, shift_start, shift_end, shift_operator, shift_logs, media,
-         annotations,
-               comments, created_by, created_time, last_modified_by, last_modified_time
-        FROM tab_oda_slt
-        WHERE id = %s
-         with params: (3,). Error: 1 validation error for SBIStatusHistory
-sbi_ref
-  Field required [type=missing, input_value={'name': 'John Doe'}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.8/v/missing
-> /home/manish/temp/ska-oso-slt-services/src/ska_oso_slt_services/rest/api/resources.py(95)updated_shift_log_info()
--> current_shift_data = shift_service.get_shift(id=current_shift_id)
-(Pdb) 
 
-    """
     current_shift_data = shift_service.get_shift(id=current_shift_id) ###this line is causing issue on third call
     if current_shift_data.shift_logs:
         for x in current_shift_data.shift_logs:
@@ -134,48 +115,52 @@ sbi_ref
     # )
 
     created_after_eb_sbi_info = shift_repository.get_oda_data(
-        filter_date= datetime(2024, 7, 1, 12, 0, 0).isoformat()        #datetime.now().isoformat()
+        filter_date= current_shift_data.shift_start.isoformat()    #datetime(2024, 7, 1, 12, 0, 0).isoformat()
     )
 
     # import pdb
     # pdb.set_trace()
 
     # created_after_eb_sbi_info.update(last_modified_after_eb_sbi_info)
+    if created_after_eb_sbi_info:
+        diff = DeepDiff(shift_logs_info, created_after_eb_sbi_info, ignore_order=True)
 
-    diff = DeepDiff(shift_logs_info, created_after_eb_sbi_info, ignore_order=True)
+        new_eb_ids = [
+            _extract_eb_id_from_key(key) for key in diff.get("dictionary_item_added", [])
+        ]
+        changed_eb_ids = [
+            _extract_eb_id_from_key(key) for key in diff.get("values_changed", {}).keys()
+        ]
 
-    new_eb_ids = [
-        _extract_eb_id_from_key(key) for key in diff.get("dictionary_item_added", [])
-    ]
-    changed_eb_ids = [
-        _extract_eb_id_from_key(key) for key in diff.get("values_changed", {}).keys()
-    ]
+        new_eb_ids_merged = []
+        new_eb_ids_merged.extend(new_eb_ids)
+        new_eb_ids_merged.extend(changed_eb_ids)
 
-    new_eb_ids_merged = []
-    new_eb_ids_merged.extend(new_eb_ids)
-    new_eb_ids_merged.extend(changed_eb_ids)
+        if new_eb_ids_merged:
+            new_shift_logs = []
+            for new_or_updated_eb_id in new_eb_ids_merged:
+                new_info = created_after_eb_sbi_info[new_or_updated_eb_id]
+                new_shift_log = ShiftLogs(
+                    info=new_info, log_time=datetime.now(), source="ODA"
+                )
+                new_shift_logs.append(new_shift_log)
 
-    if new_eb_ids_merged:
-        new_shift_logs = []
-        for new_or_updated_eb_id in new_eb_ids_merged:
-            new_info = created_after_eb_sbi_info[new_or_updated_eb_id]
-            new_shift_log = ShiftLogs(
-                info=new_info, log_time=datetime.now(), source="ODA"
-            )
-            new_shift_logs.append(new_shift_log)
+            if current_shift_data.shift_logs:
+                new_shift_logs.extend(current_shift_data.shift_logs)
 
-        if current_shift_data.shift_logs:
-            new_shift_logs.extend(current_shift_data.shift_logs)
+            updated_shift = Shift(id=current_shift_id, shift_logs=new_shift_logs)
 
-        updated_shift = Shift(id=current_shift_id, shift_logs=new_shift_logs)
-
-        updated_shift_with_info = shift_service.update_shift(shift=updated_shift)
-        print("Shift LOgs have been updated successfully")
-        print(updated_shift_with_info)
-        return updated_shift_with_info.model_dump(mode="JSON"), HTTPStatus.CREATED
+            updated_shift_with_info = shift_service.update_shift(shift=updated_shift)
+            print("Shift LOgs have been updated successfully")
+            print(updated_shift_with_info)
+            return updated_shift_with_info.model_dump(mode="JSON"), HTTPStatus.CREATED
+        else:
+            print("NO New Logs found in ODA")
+            return "",HTTPStatus.NO_CONTENT
     else:
         print("NO New Logs found in ODA")
-        return "",HTTPStatus.NO_CONTENT
+        return "", HTTPStatus.NO_CONTENT
+
 
 
 class ShiftLogUpdater:
@@ -262,7 +247,7 @@ def get_shifts(shift_start: Optional[str] = None, shift_end: Optional[str] = Non
 
     shifts = shift_service.getShifts(shift_start, shift_end)
     return [
-        shift.model_dump(mode="JSON", exclude_unset=True) for shift in shifts
+        shift.model_dump(mode="JSON", exclude_unset=True,exclude_none=True) for shift in shifts
     ], HTTPStatus.OK
 
 
@@ -278,7 +263,7 @@ def get_shift(shift_id):
     if shift is None:
         return {"error": "Shift not found"}, 404
     else:
-        return shift.model_dump(mode="JSON", exclude_unset=True), HTTPStatus.OK
+        return shift.model_dump(mode="json", exclude_unset=True,exclude_none=True), HTTPStatus.OK
 
 
 def create_shift(body: Dict[str, Any]):
@@ -331,7 +316,7 @@ def update_shift(shift_id, body):
         return {"errors": e.errors()}, HTTPStatus.BAD_REQUEST
 
     updated_shift = shift_service.update_shift(shift)
-    return updated_shift.model_dump(mode="JSON", exclude_unset=True), HTTPStatus.CREATED
+    return updated_shift.model_dump(mode="JSON", exclude_unset=True,exclude_none=True), HTTPStatus.CREATED
 
 
 
