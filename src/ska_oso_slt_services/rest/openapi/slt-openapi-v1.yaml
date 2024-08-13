@@ -155,7 +155,7 @@ paths:
           name: shift_id
           required: true
           schema:
-            type: integer
+            type: string
       requestBody:
         content:
           multipart/form-data:
@@ -194,7 +194,7 @@ paths:
           name: shift_id
           required: true
           schema:
-            type: integer
+            type: string
       responses:
         "200":
           description: The image of the shift.
