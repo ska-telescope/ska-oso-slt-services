@@ -44,41 +44,41 @@ def _extract_eb_id_from_key(key: str) -> str:
         return eb_id
     except IndexError:
         raise ValueError(f"Unexpected key format: {key}")
-def _get_eb_sbi_status(**kwargs):
-    """
-    Retrieve the EB and SBI status based on the provided query parameters.
-
-    :param kwargs: The query parameters for retrieving the status.
-    :returns: A dictionary containing the status information.
-    """
-    if not isinstance(maybe_qry_params := get_qry_params(kwargs), QueryParams):
-        return maybe_qry_params
-
-    with uow:
-        # import pdb
-        # pdb.set_trace()
-        ebs = uow.ebs.query(maybe_qry_params)
-
-        info = {}
-        for eb in ebs:
-            info_single_record = eb.model_dump(mode="json")
-            sbi_current_status = uow.sbis_status_history.get(
-                entity_id=eb.sbi_ref
-            ).model_dump(mode="json")["current_status"]
-
-            info_single_record["sbi_status"] = sbi_current_status
-
-            # info_single_record["request_responses"][:] = [
-            #     record
-            #     for record in info_single_record["request_responses"]
-            #     if record.get("status")
-            #     in (
-            #         "OK",
-            #         "ERROR",
-            #     )
-            # ]
-            info[eb.eb_id] = info_single_record
-    return info
+# def _get_eb_sbi_status(**kwargs):
+#     """
+#     Retrieve the EB and SBI status based on the provided query parameters.
+#
+#     :param kwargs: The query parameters for retrieving the status.
+#     :returns: A dictionary containing the status information.
+#     """
+#     if not isinstance(maybe_qry_params := get_qry_params(kwargs), QueryParams):
+#         return maybe_qry_params
+#
+#     with uow:
+#         # import pdb
+#         # pdb.set_trace()
+#         ebs = uow.ebs.query(maybe_qry_params)
+#
+#         info = {}
+#         for eb in ebs:
+#             info_single_record = eb.model_dump(mode="json")
+#             sbi_current_status = uow.sbis_status_history.get(
+#                 entity_id=eb.sbi_ref
+#             ).model_dump(mode="json")["current_status"]
+#
+#             info_single_record["sbi_status"] = sbi_current_status
+#
+#             # info_single_record["request_responses"][:] = [
+#             #     record
+#             #     for record in info_single_record["request_responses"]
+#             #     if record.get("status")
+#             #     in (
+#             #         "OK",
+#             #         "ERROR",
+#             #     )
+#             # ]
+#             info[eb.eb_id] = info_single_record
+#     return info
 
 def updated_shift_log_info(current_shift_id: int):
     """
@@ -124,8 +124,8 @@ def updated_shift_log_info(current_shift_id: int):
     # created_after_eb_sbi_info.update(last_modified_after_eb_sbi_info)
     if created_after_eb_sbi_info:
         diff = DeepDiff(shift_logs_info, created_after_eb_sbi_info, ignore_order=True)
-        import pdb
-        pdb.set_trace()
+        # import pdb
+        # pdb.set_trace()
 
         new_eb_ids = [
             _extract_eb_id_from_key(key) for key in diff.get("dictionary_item_added", [])
@@ -135,8 +135,8 @@ def updated_shift_log_info(current_shift_id: int):
         changed_eb_ids = list(set([
             _extract_eb_id_from_key(key) for key in diff.get("values_changed", {}).keys()
         ]))
-        import pdb
-        pdb.set_trace()
+        # import pdb
+        # pdb.set_trace()
         print(f"========================== Changed Eb found in ODA =============================\n{changed_eb_ids}")
         new_eb_ids_merged = []
         new_eb_ids_merged.extend(new_eb_ids)
@@ -157,14 +157,14 @@ def updated_shift_log_info(current_shift_id: int):
             updated_shift = Shift(id=current_shift_id, shift_logs=new_shift_logs)
 
             updated_shift_with_info = shift_service.update_shift(shift=updated_shift)
-            print("Shift LOgs have been updated successfully")
+            print("------> Shift Logs have been updated successfully")
             print(updated_shift_with_info)
-            return updated_shift_with_info.model_dump(mode="JSON"), HTTPStatus.CREATED
+            return updated_shift_with_info.model_dump(mode="JSON",exclude_unset=True,exclude_none=True), HTTPStatus.CREATED
         else:
-            print("NO New Logs found in ODA")
+            print("------> NO New Logs found in ODA")
             return "",HTTPStatus.NO_CONTENT
     else:
-        print("NO New Logs found in ODA")
+        print("------> NO New Logs found in ODA")
         return "", HTTPStatus.NO_CONTENT
 
 
@@ -290,7 +290,7 @@ def create_shift(body: Dict[str, Any]):
     #update shift_id
     shift_id = f"shift-{created_shift.shift_start.strftime('%Y%m%d')}-{created_shift.id}"
     updating_shift_id = shift_service.update_shift(shift=Shift(shift_id=shift_id,id=created_shift.id))
-   ### shift_log_updater.update_shift_id(created_shift.id)
+    shift_log_updater.update_shift_id(created_shift.id)
     #shift_service.get_shift(id=created_shift.id)
     return shift_service.get_shift(id=created_shift.id).model_dump(mode="JSON", exclude_unset=True,exclude_none=True), HTTPStatus.CREATED
 

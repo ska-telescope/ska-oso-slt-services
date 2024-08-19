@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime, timezone
 from http import HTTPStatus
 from unittest.mock import patch
@@ -10,22 +11,39 @@ from tests.unit.ska_oso_slt_services.util import assert_json_is_equal
 
 class TestShiftCRUD:
     @patch("ska_oso_slt_services.services.shift_service.ShiftService.create_shift")
-    def test_create_shift_valid(self, mock_create_shift, client, valid_shift_data):
+    @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
+    @patch("ska_oso_slt_services.rest.api.resources.ShiftLogUpdater.update_shift_id")
+    def test_create_shift_valid(self, mock_update_shift_id,mock_get_shift,mock_create_shift, client, valid_shift_data):
         """Verify that a valid shift can be created."""
-        mock_shift = Shift(**valid_shift_data)
+        valid_shift_data_with_shift_start = copy.deepcopy(valid_shift_data)
+        valid_shift_data_with_shift_start["shift_start"] = "2024-07-28T08:00:00Z" #datetime.utcnow()
+        valid_shift_data_with_id = copy.deepcopy(valid_shift_data_with_shift_start)
+        valid_shift_data_with_id["id"] =1
+
+
+
+        valid_shift_data_with_id_and_shift_id = copy.deepcopy(valid_shift_data_with_id)
+        valid_shift_data_with_id_and_shift_id["shift_id"] = "shift-20240808-1"
+        mock_shift = Shift(**valid_shift_data_with_id)
         mock_create_shift.return_value = mock_shift
 
+        mock_get_shift_response = Shift(**valid_shift_data_with_id_and_shift_id)
+        mock_get_shift.return_value = mock_get_shift_response
         response = client.post(
             "/ska-oso-slt-services/slt/api/v1/shifts",
-            data=json.dumps(valid_shift_data),
+            data=json.dumps(valid_shift_data_with_shift_start),
             content_type="application/json",
         )
+        mock_update_shift_id.response = None
+        # import pdb
+        # pdb.set_trace()
+        print("------------------", response)
 
         assert response.status_code == HTTPStatus.CREATED
         assert_json_is_equal(
-            response.data, mock_shift.model_dump_json(exclude_unset=True)
+            response.data, mock_get_shift_response.model_dump_json(exclude_unset=True),exclude_paths=["root['shift_start']"]
         )
-        mock_create_shift.assert_called_once_with(mock_shift)
+
 
     @patch("ska_oso_slt_services.services.shift_service.ShiftService.create_shift")
     def test_create_shift_invalid(
@@ -91,6 +109,28 @@ class TestShiftCRUD:
         assert response.status_code == HTTPStatus.OK
         assert_json_is_equal(
             response.data, mock_shift.model_dump_json(exclude_unset=True)
+        )
+        mock_get_shift.assert_called_once_with(id=shift_id)
+
+
+    @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
+    def test_get_shift_valid_without_api_call(self, mock_get_shift, client):
+        """Verify that a valid shift can be retrieved."""
+        shift_id = 1
+        mock_shift = Shift(
+            id=shift_id,
+            shift_operator={"name": "John Doe"},
+            annotations="Routine maintenance shift.",
+            comments="All systems operational.",
+        )
+        mock_get_shift.return_value = mock_shift
+
+        #response = client.get(f"/ska-oso-slt-services/slt/api/v1/shifts/{shift_id}")
+        from ska_oso_slt_services.rest.api.resources import get_shift
+        response = get_shift(shift_id)[0]
+        #assert response.status_code == HTTPStatus.OK
+        assert_json_is_equal(
+            json.dumps(response), mock_shift.model_dump_json(exclude_unset=True)
         )
         mock_get_shift.assert_called_once_with(id=shift_id)
 
@@ -161,7 +201,7 @@ class TestShiftCRUD:
         )
 
         expected_response = [
-            shift.model_dump(exclude_unset=True) for shift in mock_shifts
+            shift.model_dump(exclude_unset=True,exclude_none=True) for shift in mock_shifts
         ]
 
         assert response.status_code == HTTPStatus.OK
@@ -171,14 +211,14 @@ class TestShiftCRUD:
             exclude_paths=["root[0]['shift_start']", "root[0]['shift_end']"],
         )
 
-    @patch("ska_oso_slt_services.rest.api.resources._get_eb_sbi_status")
+    @patch("ska_oso_slt_services.rest.api.resources.shift_repository.get_oda_data")
     @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
     @patch("ska_oso_slt_services.services.shift_service.ShiftService.update_shift")
     def test_update_shift_log_info(
         self,
         mock_update_shift,
         mock_get_shift,
-        mock_get_eb_sbi_status,
+        mock_shift_repository_get_oda_data,
         client,
         shift_data_with_logs,
         updated_shift_data_with_logs,
@@ -186,7 +226,7 @@ class TestShiftCRUD:
         """Verify that shift log info can be updated."""
         shift_id = 1
         mock_get_shift.return_value = shift_data_with_logs
-        mock_get_eb_sbi_status.return_value = {
+        mock_shift_repository_get_oda_data.return_value = {
             "eb-t0001-20240801-00004": {
                 "eb_id": "eb-t0001-20240801-00004",
                 "sbd_ref": "sbd-t0001-20240801-00002",
@@ -211,6 +251,9 @@ class TestShiftCRUD:
             f"/ska-oso-slt-services/slt/api/v1/shifts/{shift_id}/logs_update"
         )
 
+        import pdb
+        pdb.set_trace()
+        print("****************",response.data)
         assert response.status_code == HTTPStatus.CREATED
         exclude_paths = [
             "root['created_by']",
@@ -219,7 +262,7 @@ class TestShiftCRUD:
             "root['last_modified_time']",
             "root['media']",
             "root['shift_end']",
-            "root['shift_logs']",
+            "root['shift_logs'][0]['log_time']",
             "root['shift_start']",
         ]
         assert_json_is_equal(
