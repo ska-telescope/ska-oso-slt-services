@@ -4,33 +4,40 @@ import pytest
 from psycopg import DatabaseError
 
 from ska_oso_slt_services.models.data_models import Shift
-from ska_oso_slt_services.repositories.postgres_shift_repository import PostgresShiftRepository
+from ska_oso_slt_services.repositories.postgres_shift_repository import (
+    PostgresShiftRepository,
+)
+
+# class TestShiftService:
+#     #  @patch("ska_oso_slt_services.services.shift_service.ShiftService.create_shift")
+#     @patch("ska_oso_slt_services.repositories.postgres_shift_repository
+#     .PostgresShiftRepository.get_shifts")
+#     #@patch("ska_oso_slt_services.data_access.postgres_data_access.")
+#     #patch db connection get connection
+#     def test_get_shifts(self,mock_postgres_shift_repository,valid_shift_data):
+#         mock_get_shifts = Shift(**valid_shift_data)
+#         mock_postgres_shift_repository.return_value = mock_get_shifts
 #
+#         shift_repository = PostgresShiftRepository()
+#         # shift_service = ShiftService(
+#         #     crud_shift_repository=shift_repository, shift_repositories=None
+#         # )
 #
-# # class TestShiftService:
-# #     #  @patch("ska_oso_slt_services.services.shift_service.ShiftService.create_shift")
-# #     @patch("ska_oso_slt_services.repositories.postgres_shift_repository.PostgresShiftRepository.get_shifts")
-# #     #@patch("ska_oso_slt_services.data_access.postgres_data_access.")#patch db connection get connection
-# #     def test_get_shifts(self,mock_postgres_shift_repository,valid_shift_data):
-# #         mock_get_shifts = Shift(**valid_shift_data)
-# #         mock_postgres_shift_repository.return_value = mock_get_shifts
-# #
-# #         shift_repository = PostgresShiftRepository()
-# #         # shift_service = ShiftService(
-# #         #     crud_shift_repository=shift_repository, shift_repositories=None
-# #         # )
-# #
-# #         response = shift_repository.get_shifts()
-# #         # import pdb
-# #         # pdb.set_trace()
-# #         assert valid_shift_data == response.model_dump(mode="JSON",exclude_none=True)
-#
-#
+#         response = shift_repository.get_shifts()
+#         # import pdb
+#         # pdb.set_trace()
+#         assert valid_shift_data == response.model_dump(mode="JSON",exclude_none=True)
+
+
 class TestPostgresShiftRepository:
-    #@patch("ska_oso_slt_services.data_access.postgres_data_acess.PostgresDataAccess.execute_query_or_update")
-    @patch("ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess.execute_query_or_update")
-    def test_get_shifts(self,mock_execute_or_update_query):
-        #mock_get_shifts = Shift(**valid_shift_data)
+    # @patch("ska_oso_slt_services.data_access.postgres_data_acess.PostgresDataAccess
+    # .execute_query_or_update")
+    @patch(
+        "ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess"
+        ".execute_query_or_update"
+    )
+    def test_get_shifts(self, mock_execute_or_update_query):
+        # mock_get_shifts = Shift(**valid_shift_data)
 
         shift_data = [{
             "id": 1,
@@ -47,24 +54,32 @@ class TestPostgresShiftRepository:
         }]
 
         mock_execute_or_update_query.return_value = shift_data
-        #valid_shift_data["id"] = 1
-        #mock_execute_or_update_query.return_value = [valid_shift_data]
+        # valid_shift_data["id"] = 1
+        # mock_execute_or_update_query.return_value = [valid_shift_data]
 
-        #print("*********\n",mock_get_shifts)
-        #mock_execute_or_update_query.return_value = mock_get_shifts
+        # print("*********\n",mock_get_shifts)
+        # mock_execute_or_update_query.return_value = mock_get_shifts
         # import pdb
         # pdb.set_trace()
-        print(1)
+        # print(1)
         shift_repository = PostgresShiftRepository()
         # import pdb
         # pdb.set_trace()
         response = shift_repository.get_shifts()
         # import pdb
         # pdb.set_trace()
-        assert shift_data == [x.model_dump(mode="json", exclude_none=True,exclude_unset=True) for x in response]
-        #assert shift_data == response.model_dump(mode="json", exclude_none=True,exclude_unset=True)
-    @patch("ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess.execute_query_or_update")
-    def test_get_shift(self,mock_execute_or_update_query):
+        assert shift_data == [
+            x.model_dump(mode="json", exclude_none=True, exclude_unset=True)
+            for x in response
+        ]
+        # assert shift_data == response.model_dump(mode="json",
+        # exclude_none=True,exclude_unset=True)
+
+    @patch(
+        "ska_oso_slt_services.repositories.postgres_shift_repository."
+        "PostgresDataAccess.execute_query_or_update"
+    )
+    def test_get_shift(self, mock_execute_or_update_query):
         shift_data = [{
             "id": 1,
             "shift_id": "shift-001",
@@ -82,12 +97,16 @@ class TestPostgresShiftRepository:
         mock_execute_or_update_query.return_value = shift_data
         shift_repository = PostgresShiftRepository()
         response = shift_repository.get_shift(1)
-        #assert shift_data == [x.model_dump(mode="json", exclude_none=True,exclude_unset=True) for x in response]
-        assert shift_data[0] == response.model_dump(mode="json", exclude_none=True, exclude_unset=True)
+        # assert shift_data == [x.model_dump(mode="json", exclude_none=True
+        # ,exclude_unset=True) for x in response]
+        assert shift_data[0] == response.model_dump(
+            mode="json", exclude_none=True, exclude_unset=True
+        )
 
-
-
-    @patch("ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess.execute_query_or_update")
+    @patch(
+        "ska_oso_slt_services.repositories.postgres_shift_repository."
+        "PostgresDataAccess.execute_query_or_update"
+    )
     def test_create_shift(self, mock_execute_or_update_query):
         shift_data = {
             "id": 1,
@@ -108,9 +127,14 @@ class TestPostgresShiftRepository:
         shift_repository = PostgresShiftRepository()
         response = shift_repository.create_shift(shift)
 
-        assert shift_data == response.model_dump(mode="json", exclude_none=True, exclude_unset=True)
+        assert shift_data == response.model_dump(
+            mode="json", exclude_none=True, exclude_unset=True
+        )
 
-    @patch("ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess.execute_query_or_update")
+    @patch(
+        "ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess"
+        ".execute_query_or_update"
+    )
     def test_update_shift(self, mock_execute_or_update_query):
         shift_data = {
             "id": 1,
@@ -131,18 +155,28 @@ class TestPostgresShiftRepository:
         shift_repository = PostgresShiftRepository()
         response = shift_repository.update_shift(shift)
 
-        assert shift_data == response.model_dump(mode="json", exclude_none=True, exclude_unset=True)
+        assert shift_data == response.model_dump(
+            mode="json", exclude_none=True, exclude_unset=True
+        )
 
-    @patch("ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess.execute_query_or_update")
+    @patch(
+        "ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess"
+        ".execute_query_or_update"
+    )
     def test_get_shifts_invalid(self, mock_execute_or_update_query):
-        mock_execute_or_update_query.side_effect = DatabaseError("Database connection error")
+        mock_execute_or_update_query.side_effect = DatabaseError(
+            "Database connection error"
+        )
 
         shift_repository = PostgresShiftRepository()
 
         with pytest.raises(DatabaseError, match="Database connection error"):
             shift_repository.get_shifts()
 
-    @patch("ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess.execute_query_or_update")
+    @patch(
+        "ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess"
+        ".execute_query_or_update"
+    )
     def test_get_shift_invalid(self, mock_execute_or_update_query):
         mock_execute_or_update_query.return_value = []
 
@@ -151,10 +185,14 @@ class TestPostgresShiftRepository:
         response = shift_repository.get_shift(999)  # Non-existing ID
         assert response is None
 
-
-    @patch("ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess.execute_query_or_update")
+    @patch(
+        "ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess"
+        ".execute_query_or_update"
+    )
     def test_create_shift_invalid(self, mock_execute_or_update_query):
-        mock_execute_or_update_query.side_effect = DatabaseError("Failed to insert shift")
+        mock_execute_or_update_query.side_effect = DatabaseError(
+            "Failed to insert shift"
+        )
 
         shift_data = {
             "shift_id": "shift-001",
@@ -169,9 +207,10 @@ class TestPostgresShiftRepository:
         with pytest.raises(DatabaseError, match="Failed to insert shift"):
             shift_repository.create_shift(shift)
 
-
-
-    @patch("ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess.execute_query_or_update")
+    @patch(
+        "ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess"
+        ".execute_query_or_update"
+    )
     def test_update_shift_invalid(self, mock_execute_or_update_query):
         shift_data = {
             "shift_id": "shift-001",
@@ -183,11 +222,15 @@ class TestPostgresShiftRepository:
         shift = Shift(**shift_data)
         shift_repository = PostgresShiftRepository()
 
-        with pytest.raises(ValueError, match="Shift ID is required for update operation"):
+        with pytest.raises(
+            ValueError, match="Shift ID is required for update operation"
+        ):
             shift_repository.update_shift(shift)
 
-
-    @patch("ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess.execute_query_or_update")
+    @patch(
+        "ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess"
+        ".execute_query_or_update"
+    )
     def test_update_shift_db_error(self, mock_execute_or_update_query):
 
         shift_data = {
@@ -198,7 +241,9 @@ class TestPostgresShiftRepository:
             "shift_operator": {"name": "John Doe"},
         }
 
-        mock_execute_or_update_query.side_effect = DatabaseError("Failed to update shift")
+        mock_execute_or_update_query.side_effect = DatabaseError(
+            "Failed to update shift"
+        )
 
         shift = Shift(**shift_data)
         shift_repository = PostgresShiftRepository()

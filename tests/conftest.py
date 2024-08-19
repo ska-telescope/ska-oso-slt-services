@@ -1,6 +1,7 @@
 """
 pytest fixtures to be used by unit tests
 """
+
 import datetime
 from unittest.mock import patch
 
@@ -136,7 +137,7 @@ def shift_data_with_logs(shift_logs_data):
         annotations="Routine maintenance shift.",
         comments="All systems operational.",
         shift_logs=[ShiftLogs(**shift_logs_data)],
-        shift_start = datetime.datetime.utcnow()
+        shift_start=datetime.datetime.utcnow(),
     )
 
 

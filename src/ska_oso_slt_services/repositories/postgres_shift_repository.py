@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from ska_oso_slt_services.data_access.postgres_data_acess import (
@@ -54,6 +54,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             query=query, params=tuple(params), query_type=QueryType.GET
         )
         import pdb
+
         pdb.set_trace()
 
         shifts = []
@@ -110,7 +111,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         # pdb.set_trace()
 
         params = (shift_id,)
-        rows = self.postgresDataAccess.execute_query_or_update(query=query, params=params, query_type=QueryType.GET)
+        rows = self.postgresDataAccess.execute_query_or_update(
+            query=query, params=params, query_type=QueryType.GET
+        )
 
         if not rows:
             return None
@@ -285,34 +288,36 @@ class PostgresShiftRepository(CRUDShiftRepository):
     def delete_shift(self, id: str) -> bool:
         pass
 
-
-
-
-    def get_oda_data(self,filter_date):
+    def get_oda_data(self, filter_date):
         # import pdb
         # pdb.set_trace()
-        filter_date_tz = datetime.fromisoformat(filter_date).replace(tzinfo=timezone(timedelta(hours=5, minutes=30)))
-        #query for EB
+        filter_date_tz = datetime.fromisoformat(filter_date).replace(
+            tzinfo=timezone(timedelta(hours=5, minutes=30))
+        )
+        # query for EB
         #        ebs = uow.ebs.query(maybe_qry_params)
-        eb_query = f"""SELECT eb_id, info,sbd_id,sbi_id,sbd_version,version,created_on,created_by,last_modified_on,last_modified_by
+        eb_query = """SELECT eb_id, info,sbd_id,sbi_id,sbd_version,version,created_on,
+                        created_by,last_modified_on,last_modified_by
                     FROM tab_oda_eb
                     WHERE last_modified_on >= %s
         """
         eb_params = [filter_date_tz]
-        ###ml print(f"{eb_query=},{eb_params=}")
+        # ml print(f"{eb_query=},{eb_params=}")
         eb_rows = self.postgresDataAccess.execute_query_or_update(
             query=eb_query, params=tuple(eb_params), query_type=QueryType.GET
         )
-        #print(f"\n\n\n\n========================== Printing Data =============================\n{eb_rows}")
+        # print(f"\n\n\n\n========================== Printing Data =============
+        # ================\n{eb_rows}")
 
         info = {}
         if eb_rows:
             # import pdb
             # pdb.set_trace()
-            #sbi_current_status = []
+            # sbi_current_status = []
             for eb in eb_rows:
                 # sbi_status_query = """
-                #     SELECT sbi_ref, previous_status, current_status, version, created_on, created_by, last_modified_on, last_modified_by
+                #     SELECT sbi_ref, previous_status, current_status, version,
+                #     created_on, created_by, last_modified_on, last_modified_by
                 #     FROM tab_oda_sbi_status_history
                 #     WHERE sbi_ref = sbi-t0001-20240810-00003
                 #     ORDER BY version DESC, id DESC
@@ -328,15 +333,24 @@ class PostgresShiftRepository(CRUDShiftRepository):
                 #             """
                 # sbi_status_params = [eb["sbi_id"]]
                 # sbi_current_status = self.postgresDataAccess.execute_query_or_update(
-                #     query=sbi_status_query, params=tuple(sbi_status_params), query_type=QueryType.GET
+                #     query=sbi_status_query, params=tuple(sbi_status_params),
+                #     query_type=QueryType.GET
                 # )
                 request_responses = eb["info"].get("request_responses", [])
 
                 if not request_responses:
                     sbi_current_status = "Created"
                 else:
-                    ok_count = sum(1 for response in request_responses if response["status"] == "OK")
-                    error_count = sum(1 for response in request_responses if response["status"] == "ERROR")
+                    ok_count = sum(
+                        1
+                        for response in request_responses
+                        if response["status"] == "OK"
+                    )
+                    error_count = sum(
+                        1
+                        for response in request_responses
+                        if response["status"] == "ERROR"
+                    )
 
                     if error_count > 0:
                         sbi_current_status = "failed"
@@ -345,21 +359,23 @@ class PostgresShiftRepository(CRUDShiftRepository):
                     else:
                         sbi_current_status = "executing"
 
-
                 info[eb["eb_id"]] = eb["info"]
                 info[eb["eb_id"]]["sbi_status"] = sbi_current_status
-                #print(f"\n\n\n\n========================== Printing sbi_current_status Data =============================\n{sbi_current_status} {type(sbi_current_status[0])}")
+                # print(f"\n\n\n\n========================== Printing sbi_current_status
+                # Data =============================\n{sbi_current_status}
+                # {type(sbi_current_status[0])}")
 
-            #sbi_current_status =
+            # sbi_current_status =
 
         # #query for SB
         # query = """"""
         return info
 
+
 def update_shift_log():
     pass
+
 
 #
 # class POStgresODARepositiry
 #     pass
-

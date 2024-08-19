@@ -8,8 +8,7 @@ from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 from deepdiff import DeepDiff
 from pydantic import ValidationError
-from ska_db_oda.domain.query import QueryParams
-from ska_db_oda.rest.api.resources import error_response, get_qry_params
+from ska_db_oda.rest.api.resources import error_response
 from ska_db_oda.unit_of_work.postgresunitofwork import PostgresUnitOfWork
 
 from ska_oso_slt_services.data_access.postgres_data_acess import PostgresConnection
@@ -17,7 +16,6 @@ from ska_oso_slt_services.models.data_models import Shift, ShiftLogs
 from ska_oso_slt_services.repositories.postgres_shift_repository import (
     PostgresShiftRepository,
 )
-# from ska_oso_slt_services.rest.api.shift_logs_update import ShiftLogUpdater
 from ska_oso_slt_services.services.shift_service import ShiftService
 
 LOGGER = logging.getLogger(__name__)
@@ -28,7 +26,6 @@ shift_service = ShiftService(
     crud_shift_repository=shift_repository, shift_repositories=None
 )
 uow = PostgresUnitOfWork(PostgresConnection().get_connection())
-
 
 
 def _extract_eb_id_from_key(key: str) -> str:
@@ -44,6 +41,8 @@ def _extract_eb_id_from_key(key: str) -> str:
         return eb_id
     except IndexError:
         raise ValueError(f"Unexpected key format: {key}")
+
+
 # def _get_eb_sbi_status(**kwargs):
 #     """
 #     Retrieve the EB and SBI status based on the provided query parameters.
@@ -80,6 +79,7 @@ def _extract_eb_id_from_key(key: str) -> str:
 #             info[eb.eb_id] = info_single_record
 #     return info
 
+
 def updated_shift_log_info(current_shift_id: int):
     """
     Update the shift log information based on new information from external data
@@ -90,10 +90,12 @@ def updated_shift_log_info(current_shift_id: int):
     """
     # import pdb
     # pdb.set_trace()
-    ####in third call error befor calling _get function
+    # in third call error befor calling _get function
     shift_logs_info = {}
 
-    current_shift_data = shift_service.get_shift(id=current_shift_id) ###this line is causing issue on third call
+    current_shift_data = shift_service.get_shift(
+        id=current_shift_id
+    )  # this line is causing issue on third call
     if current_shift_data.shift_logs:
         for x in current_shift_data.shift_logs:
             if x.info["eb_id"] not in shift_logs_info:
@@ -115,7 +117,8 @@ def updated_shift_log_info(current_shift_id: int):
     # )
 
     created_after_eb_sbi_info = shift_repository.get_oda_data(
-        filter_date= current_shift_data.shift_start.isoformat()    #datetime(2024, 7, 1, 12, 0, 0).isoformat()
+        filter_date=current_shift_data.shift_start.isoformat()
+        # datetime(2024, 7, 1, 12, 0, 0).isoformat()
     )
 
     # import pdb
@@ -128,16 +131,26 @@ def updated_shift_log_info(current_shift_id: int):
         # pdb.set_trace()
 
         new_eb_ids = [
-            _extract_eb_id_from_key(key) for key in diff.get("dictionary_item_added", [])
+            _extract_eb_id_from_key(key)
+            for key in diff.get("dictionary_item_added", [])
         ]
 
-        print(f"\n\n\n\n========================== New Eb found in ODA =============================\n{new_eb_ids}")
-        changed_eb_ids = list(set([
-            _extract_eb_id_from_key(key) for key in diff.get("values_changed", {}).keys()
-        ]))
+        print(
+            "\n\n\n\n========================== New Eb found in ODA"
+            f" =============================\n{new_eb_ids}"
+        )
+        changed_eb_ids = list(
+            set([
+                _extract_eb_id_from_key(key)
+                for key in diff.get("values_changed", {}).keys()
+            ])
+        )
         # import pdb
         # pdb.set_trace()
-        print(f"========================== Changed Eb found in ODA =============================\n{changed_eb_ids}")
+        print(
+            "========================== Changed Eb found in ODA"
+            f" =============================\n{changed_eb_ids}"
+        )
         new_eb_ids_merged = []
         new_eb_ids_merged.extend(new_eb_ids)
         new_eb_ids_merged.extend(changed_eb_ids)
@@ -159,14 +172,18 @@ def updated_shift_log_info(current_shift_id: int):
             updated_shift_with_info = shift_service.update_shift(shift=updated_shift)
             print("------> Shift Logs have been updated successfully")
             print(updated_shift_with_info)
-            return updated_shift_with_info.model_dump(mode="JSON",exclude_unset=True,exclude_none=True), HTTPStatus.CREATED
+            return (
+                updated_shift_with_info.model_dump(
+                    mode="JSON", exclude_unset=True, exclude_none=True
+                ),
+                HTTPStatus.CREATED,
+            )
         else:
             print("------> NO New Logs found in ODA")
-            return "",HTTPStatus.NO_CONTENT
+            return "", HTTPStatus.NO_CONTENT
     else:
         print("------> NO New Logs found in ODA")
         return "", HTTPStatus.NO_CONTENT
-
 
 
 class ShiftLogUpdater:
@@ -180,13 +197,16 @@ class ShiftLogUpdater:
         while True:
             with self.lock:
                 if self.current_shift_id is not None:
-                    print(f"------> Checking Updated ODA LOGS for SHIFT ID {self.current_shift_id}")
+                    print(
+                        "------> Checking Updated ODA LOGS for SHIFT ID"
+                        f" {self.current_shift_id}"
+                    )
                     updated_shift_log_info(self.current_shift_id)
             time.sleep(5)  # Wait for 10 seconds before running again
 
     def start(self):
-        #print("\n\n\n\n--- >Starting Thread if not started==========\n\n\n")
-        #time.sleep(2)
+        # print("\n\n\n\n--- >Starting Thread if not started==========\n\n\n")
+        # time.sleep(2)
         if not self.thread_started:
             print("\n\n ---> Polling Started")
             self.thread.start()
@@ -198,9 +218,8 @@ class ShiftLogUpdater:
             self.start()
 
 
-
-
 shift_log_updater = ShiftLogUpdater()
+
 
 def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response]:
     """
@@ -255,7 +274,8 @@ def get_shifts(shift_start: Optional[str] = None, shift_end: Optional[str] = Non
 
     shifts = shift_service.getShifts(shift_start, shift_end)
     return [
-        shift.model_dump(mode="JSON", exclude_unset=True,exclude_none=True) for shift in shifts
+        shift.model_dump(mode="JSON", exclude_unset=True, exclude_none=True)
+        for shift in shifts
     ], HTTPStatus.OK
 
 
@@ -271,7 +291,10 @@ def get_shift(shift_id):
     if shift is None:
         return {"error": "Shift not found"}, 404
     else:
-        return shift.model_dump(mode="json", exclude_unset=True,exclude_none=True), HTTPStatus.OK
+        return (
+            shift.model_dump(mode="json", exclude_unset=True, exclude_none=True),
+            HTTPStatus.OK,
+        )
 
 
 def create_shift(body: Dict[str, Any]):
@@ -287,12 +310,19 @@ def create_shift(body: Dict[str, Any]):
         return {"errors": e.errors()}, HTTPStatus.BAD_REQUEST
 
     created_shift = shift_service.create_shift(shift)
-    #update shift_id
-    shift_id = f"shift-{created_shift.shift_start.strftime('%Y%m%d')}-{created_shift.id}"
-    updating_shift_id = shift_service.update_shift(shift=Shift(shift_id=shift_id,id=created_shift.id))
+    # update shift_id
+    shift_id = (
+        f"shift-{created_shift.shift_start.strftime('%Y%m%d')}-{created_shift.id}"
+    )
+    shift_service.update_shift(shift=Shift(shift_id=shift_id, id=created_shift.id))
     shift_log_updater.update_shift_id(created_shift.id)
-    #shift_service.get_shift(id=created_shift.id)
-    return shift_service.get_shift(id=created_shift.id).model_dump(mode="JSON", exclude_unset=True,exclude_none=True), HTTPStatus.CREATED
+    # shift_service.get_shift(id=created_shift.id)
+    return (
+        shift_service.get_shift(id=created_shift.id).model_dump(
+            mode="JSON", exclude_unset=True, exclude_none=True
+        ),
+        HTTPStatus.CREATED,
+    )
 
 
 def update_shift(shift_id, body):
@@ -324,8 +354,10 @@ def update_shift(shift_id, body):
         return {"errors": e.errors()}, HTTPStatus.BAD_REQUEST
 
     updated_shift = shift_service.update_shift(shift)
-    return updated_shift.model_dump(mode="JSON", exclude_unset=True,exclude_none=True), HTTPStatus.CREATED
-
+    return (
+        updated_shift.model_dump(mode="JSON", exclude_unset=True, exclude_none=True),
+        HTTPStatus.CREATED,
+    )
 
 
 #
@@ -409,7 +441,3 @@ def update_shift(shift_id, body):
 #         print("Shift LOgs have been updated successfully")
 #         print(updated_shift_with_info)
 #         #return updated_shift_with_info.model_dump(mode="JSON"), HTTPStatus.CREATED
-################################################################3
-
-
-
