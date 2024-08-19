@@ -53,15 +53,17 @@ class PostgresShiftRepository(CRUDShiftRepository):
         rows = self.postgresDataAccess.execute_query_or_update(
             query=query, params=tuple(params), query_type=QueryType.GET
         )
+        import pdb
+        pdb.set_trace()
 
         shifts = []
         for row in rows:
 
             operator_data = (
-                row["shift_operator"] if row["shift_operator"] is not None else {}
+                row["shift_operator"] if row.get("shift_operator") is not None else {}
             )
-            logs_data = row["shift_logs"] if row["shift_logs"] is not None else []
-            media_data = row["media"] if row["media"] is not None else []
+            logs_data = row["shift_logs"] if row.get("shift_logs") is not None else []
+            media_data = row["media"] if row.get("media") is not None else []
 
             operator = Operator(**operator_data) if operator_data else None
             shift_logs = [ShiftLogs(**log) for log in logs_data] if logs_data else None
@@ -116,10 +118,10 @@ class PostgresShiftRepository(CRUDShiftRepository):
         row = rows[0]
 
         operator_data = (
-            row["shift_operator"] if row["shift_operator"] is not None else {}
+            row["shift_operator"] if row.get("shift_operator") is not None else {}
         )
-        logs_data = row["shift_logs"] if row["shift_logs"] is not None else []
-        media_data = row["media"] if row["media"] is not None else []
+        logs_data = row["shift_logs"] if row.get("shift_logs") is not None else []
+        media_data = row["media"] if row.get("media") is not None else []
 
         operator = Operator(**operator_data) if operator_data else None
         shift_logs = [ShiftLogs(**log) for log in logs_data] if logs_data else None
