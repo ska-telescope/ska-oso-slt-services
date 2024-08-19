@@ -3,7 +3,7 @@ from threading import Lock
 
 from elasticsearch import Elasticsearch
 
-from ska_oso_slt_services.database.config import LogDBConfig
+from ska_oso_slt_services.data_access.config import LogDBConfig
 
 
 class LOGDBConnection:

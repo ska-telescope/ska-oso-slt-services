@@ -42,10 +42,6 @@ class TestShiftCRUD:
             content_type="application/json",
         )
         mock_update_shift_id.response = None
-        # import pdb
-        # pdb.set_trace()
-        print("------------------", response)
-
         assert response.status_code == HTTPStatus.CREATED
         assert_json_is_equal(
             response.data,
@@ -260,10 +256,6 @@ class TestShiftCRUD:
             f"/ska-oso-slt-services/slt/api/v1/shifts/{shift_id}/logs_update"
         )
 
-        import pdb
-
-        pdb.set_trace()
-        print("****************", response.data)
         assert response.status_code == HTTPStatus.CREATED
         exclude_paths = [
             "root['created_by']",
