@@ -9,10 +9,8 @@ from typing import Any, Callable, Dict, Optional, Tuple, Union
 from deepdiff import DeepDiff
 from pydantic import ValidationError
 from ska_db_oda.rest.api.resources import error_response
-from ska_db_oda.unit_of_work.postgresunitofwork import PostgresUnitOfWork
 
-from ska_oso_slt_services.data_access.postgres_data_acess import PostgresConnection
-from ska_oso_slt_services.models.data_models import Shift, ShiftLogs
+from ska_oso_slt_services.domain.models import Shift, ShiftLogs
 from ska_oso_slt_services.repositories.postgres_shift_repository import (
     PostgresShiftRepository,
 )
@@ -25,7 +23,6 @@ shift_repository = PostgresShiftRepository()
 shift_service = ShiftService(
     crud_shift_repository=shift_repository, shift_repositories=None
 )
-uow = PostgresUnitOfWork(PostgresConnection().get_connection())
 
 
 def _extract_eb_id_from_key(key: str) -> str:
@@ -53,9 +50,7 @@ def updated_shift_log_info(current_shift_id: int):
     """
     shift_logs_info = {}
 
-    current_shift_data = shift_service.get_shift(
-        id=current_shift_id
-    )
+    current_shift_data = shift_service.get_shift(id=current_shift_id)
     if current_shift_data.shift_logs:
         for x in current_shift_data.shift_logs:
             if x.info["eb_id"] not in shift_logs_info:
@@ -175,8 +170,7 @@ def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response
     def wrapper(*args, **kwargs):
         try:
             LOGGER.debug(
-                "Request to %s with args: %s and kwargs: %s", api_fn, args,
-                kwargs
+                "Request to %s with args: %s and kwargs: %s", api_fn, args, kwargs
             )
             return api_fn(*args, **kwargs)
         except KeyError as err:

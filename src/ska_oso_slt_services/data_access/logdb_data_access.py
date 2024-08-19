@@ -55,10 +55,3 @@ class LOGDBConnection:
         :return: Log DB Connection
         """
         return self._es
-
-
-if __name__ == "__main__":
-    logdb_connection = LOGDBConnection()
-    es_client = logdb_connection.get_client()
-
-    print(f"Health: {es_client.cluster.health()['status']}")

@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from ska_oso_slt_services.models.data_models import Shift, ShiftLogs
+from ska_oso_slt_services.domain.models import Shift, ShiftLogs
 from ska_oso_slt_services.rest import get_openapi_spec, init_app
 
 

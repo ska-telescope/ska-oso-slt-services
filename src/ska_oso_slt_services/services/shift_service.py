@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from ska_oso_slt_services.models.data_models import Shift
+from ska_oso_slt_services.domain.models import Shift
 from ska_oso_slt_services.repositories.abstract_base import (
     CRUDShiftRepository,
     ShiftRepository,

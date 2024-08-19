@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from flask import json
 
-from ska_oso_slt_services.models.data_models import Shift
+from ska_oso_slt_services.domain.models import Shift
 from tests.unit.ska_oso_slt_services.util import assert_json_is_equal
 
 

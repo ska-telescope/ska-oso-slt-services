@@ -106,4 +106,4 @@ ENV/
 .idea/
 
 # Database settings
-/src/ska_oso_slt_services/database/files/*
+/infrastructure/temp_ref_files/database/files/*

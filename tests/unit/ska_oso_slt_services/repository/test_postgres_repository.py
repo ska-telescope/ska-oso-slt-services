@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 from psycopg import DatabaseError
 
-from ska_oso_slt_services.models.data_models import Shift
+from ska_oso_slt_services.domain.models import Shift
 from ska_oso_slt_services.repositories.postgres_shift_repository import (
     PostgresShiftRepository,
 )

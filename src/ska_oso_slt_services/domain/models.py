@@ -26,8 +26,8 @@ class Media(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    type: Optional[str] = None
-    path: Optional[str] = None
+    type: str
+    path: str
 
 
 class ShiftLogs(BaseModel):
@@ -41,9 +41,9 @@ class ShiftLogs(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    info: Optional[dict] = None
-    source: Optional[str] = None
-    log_time: Optional[datetime] = None
+    info: dict
+    source: str
+    log_time: datetime
 
 
 class Shift(BaseModel):
