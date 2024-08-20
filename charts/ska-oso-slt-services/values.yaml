@@ -19,7 +19,7 @@ rest:
   enabled: true
   image:
     registry: registry.gitlab.com
-    image: ska-oso-slt-services
+    image: ska-telescope/oso/ska-oso-slt-services/ska-oso-slt-services
     tag: 0.1.0-dev.c87eda3ec # Defaults to the chart appVersion if not set
     pullPolicy: IfNotPresent
   oda:
