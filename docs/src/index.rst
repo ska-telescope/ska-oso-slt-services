@@ -8,9 +8,28 @@ used at any of the three SKA sites. Its intention is to collate and then provide
 
 .. toctree::
    :maxdepth: 1
-   :caption: Usage
+   :caption: ChangeLog
+   :hidden:
+
+   CHANGELOG.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Introduction
+
+   overview/introduction.rst
+
+.. toctree::
+   :maxdepth: 3
+   :caption: API Usage
 
    api/rest_api.rst
+
+.. toctree::
+   :maxdepth: 4
+   :caption: API Usage
+
+   python/poll_oda_log_data.rst
 
 
 Indices and tables
