@@ -4,6 +4,8 @@ SLT REST server entry point.
 
 import logging
 
+from ska_db_oda.rest.wsgi import UniformLogger  # noqa: F401
+
 from ska_oso_slt_services.rest import init_app
 
 app = init_app()
