@@ -29,8 +29,8 @@ pydantic-core = "2.21.0"
 annotated-types = "^0.7.0"
 pydantic = {version = "^2.8.2", extras = ["email"]}
 email-validator = "^2.2.0"
-psycopg2 = "^2.9.9"
 elastic-transport = "^8.15.0"
+psycopg2-binary = "^2.9.9"
 
 
 [tool.poetry.group.dev.dependencies]
