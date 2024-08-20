@@ -53,9 +53,7 @@ def updated_shift_log_info(current_shift_id: int):
     """
     shift_logs_info = {}
 
-    current_shift_data = shift_service.get_shift(
-        id=current_shift_id
-    )
+    current_shift_data = shift_service.get_shift(id=current_shift_id)
     if current_shift_data.shift_logs:
         for x in current_shift_data.shift_logs:
             if x.info["eb_id"] not in shift_logs_info:
@@ -175,8 +173,7 @@ def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response
     def wrapper(*args, **kwargs):
         try:
             LOGGER.debug(
-                "Request to %s with args: %s and kwargs: %s", api_fn, args,
-                kwargs
+                "Request to %s with args: %s and kwargs: %s", api_fn, args, kwargs
             )
             return api_fn(*args, **kwargs)
         except KeyError as err:

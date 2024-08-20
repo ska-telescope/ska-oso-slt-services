@@ -4,7 +4,7 @@ info:
   description: API for managing shifts, including creating, updating, and retrieving shift information.
   version: 0.1.0
 servers:
-- url: ska-oso-slt-services/slt/api/v1/
+- url: ska-oso-slt-services/slt/api/v0/
 paths:
   /shifts:
     get:

@@ -57,7 +57,7 @@ Install the Helm umbrella chart into a Kubernetes cluster with ingress enabled:
 make k8s-install-chart
 ```
 
-The Swagger UI should be available external to the cluster at `http://<KUBE_HOST>/<KUBE_NAMESPACE>/slt/api/v1/ui/` and the API accesible via the same URL.
+The Swagger UI should be available external to the cluster at `http://<KUBE_HOST>/<KUBE_NAMESPACE>/slt/api/v0/ui/` and the API accesible via the same URL.
 
 If using minikube, `KUBE_HOST` can be found by running `minikube ip`. 
 `KUBE_NAMESPACE` is the namespace the chart was deployed to, likely `ska-oso-slt-services`
@@ -80,7 +80,7 @@ There are 3 different environments which are defined through the standard pipeli
 3. `staging` - a permanent deployment of the latest published artefact from CAR
 
 To find the URL for the environment, see the 'info' job of the CICD pipeline stage, which should output the URL alongside the status of the Kubernetes pods.
-Generally the API URL should be available at  `https://k8s.stfc.skao.int/$KUBE_NAMESPACE/slt/api/v1`
+Generally the API URL should be available at  `https://k8s.stfc.skao.int/$KUBE_NAMESPACE/slt/api/v0`
 
 
 # Development
