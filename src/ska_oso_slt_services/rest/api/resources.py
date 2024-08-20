@@ -4,13 +4,19 @@ import time
 from datetime import datetime
 from functools import wraps
 from http import HTTPStatus
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from urllib import request
 
 from deepdiff import DeepDiff
 from pydantic import ValidationError
 from ska_db_oda.rest.api.resources import error_response
 from ska_db_oda.unit_of_work.postgresunitofwork import PostgresUnitOfWork
+from werkzeug.datastructures import FileStorage
 
+from ska_oso_slt_services.common.file_upload import (
+    read_image_from_folder,
+    upload_image_to_folder,
+)
 from ska_oso_slt_services.data_access.postgres_data_acess import PostgresConnection
 from ska_oso_slt_services.models.data_models import Shift, ShiftLogs
 from ska_oso_slt_services.repositories.postgres_shift_repository import (
@@ -51,6 +57,9 @@ def updated_shift_log_info(current_shift_id: int):
     :param current_shift_id int: The unique identifier of the current shift.
     :returns: The updated Shift object in JSON format and an HTTP status code.
     """
+    # import pdb
+    # pdb.set_trace()
+
     shift_logs_info = {}
 
     current_shift_data = shift_service.get_shift(id=current_shift_id)
@@ -60,6 +69,7 @@ def updated_shift_log_info(current_shift_id: int):
                 shift_logs_info[x.info["eb_id"]] = x.info
                 shift_logs_info[x.info["eb_id"]]["log_time"] = x.log_time
             else:
+
                 if shift_logs_info[x.info["eb_id"]]["log_time"] < x.log_time:
                     shift_logs_info[x.info["eb_id"]] = x.info
 
@@ -72,30 +82,23 @@ def updated_shift_log_info(current_shift_id: int):
 
     if created_after_eb_sbi_info:
         diff = DeepDiff(shift_logs_info, created_after_eb_sbi_info, ignore_order=True)
-        new_eb_ids = [
+        new_eb_ids = set(
             _extract_eb_id_from_key(key)
             for key in diff.get("dictionary_item_added", [])
-        ]
-
-        LOGGER.info(
-            "\n\n\n\n========================== New Eb found in ODA"
-            f" =============================\n{new_eb_ids}"
-        )
-        changed_eb_ids = list(
-            set([
-                _extract_eb_id_from_key(key)
-                for key in diff.get("values_changed", {}).keys()
-            ])
         )
 
-        LOGGER.info(
-            "========================== Changed Eb found in ODA"
-            f" =============================\n{changed_eb_ids}"
-        )
-        new_eb_ids_merged = []
-        new_eb_ids_merged.extend(new_eb_ids)
-        new_eb_ids_merged.extend(changed_eb_ids)
+        changed_eb_ids = set([
+            _extract_eb_id_from_key(key)
+            for key in diff.get("values_changed", {}).keys()
+        ])
 
+        new_eb_ids_merged_set = set()
+        new_eb_ids_merged_set.update(new_eb_ids)
+        new_eb_ids_merged_set.update(changed_eb_ids)
+
+        new_eb_ids_merged = list(new_eb_ids_merged_set)
+
+        LOGGER.info(f"------>New or Modified EB found in ODA {new_eb_ids_merged}")
         if new_eb_ids_merged:
             new_shift_logs = []
             for new_or_updated_eb_id in new_eb_ids_merged:
@@ -287,3 +290,53 @@ def update_shift(shift_id, body):
         updated_shift.model_dump(mode="JSON", exclude_unset=True, exclude_none=True),
         HTTPStatus.CREATED,
     )
+
+
+@error_handler
+def upload_image(**kwargs):
+    """
+    Upload an image to a specific folder.
+
+    :param image_data: The image data to be uploaded.
+    :returns: A success message and an HTTP status code.
+    """
+    try:
+        # Get the uploaded file
+        shift_id: str = kwargs.get("shift_id", "")
+        if not shift_id:
+            # Handle the case when shift_id is not provided
+            raise ValueError("shift_id is required")
+
+        files: List[FileStorage] = request.files.getlist("files")
+        if not files:
+            # Handle the case when no files are provided
+            raise ValueError("No files provided")
+        file_path_to_store: List[str] = []
+        for file in files:
+            _, path = upload_image_to_folder(media_content=file, file_id=shift_id)
+            file_path_to_store.append({"type": "img", "path": path})
+        shift_service.add_media(shift_id=shift_id, media=file_path_to_store)
+        return "Images uploaded successfully"
+
+    except Exception as e:
+        print(e)
+        return "Error uploading image!", 500
+
+
+@error_handler
+def get_shift_media(shift_id: str):
+    """
+    Retrieve the media associated with a specific shift.
+
+    :param shift_id str: The unique identifier of the shift.
+    :returns: A list of media URLs and an HTTP status code.
+    """
+    shift_data = shift_service.get_media(shift_id=shift_id)
+    media_data = []
+    for media in shift_data:
+        data = read_image_from_folder(media["path"])
+        media_data.append(data)
+    if media_data:
+        return media_data, HTTPStatus.OK
+    else:
+        return {"error": "Shift not found"}, HTTPStatus.NOT_FOUND

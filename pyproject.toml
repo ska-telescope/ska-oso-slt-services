@@ -31,6 +31,7 @@ pydantic = {version = "^2.8.2", extras = ["email"]}
 email-validator = "^2.2.0"
 elastic-transport = "^8.15.0"
 psycopg2-binary = "^2.9.9"
+pillow = "^10.4.0"
 
 
 [tool.poetry.group.dev.dependencies]
