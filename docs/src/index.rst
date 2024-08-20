@@ -1,11 +1,13 @@
-Welcome to ska-oso-slt-services documentation!
-===============================================
+=====================================
+SKA OSO Shift Log Tool Documentation!
+=====================================
 
 .. toctree::
    :maxdepth: 1
    :caption: Usage
 
-   api/index
+   api/rest_api.rst
+
 
 Indices and tables
 ==================

@@ -45,10 +45,9 @@ deepdiff = "^7.0.1"
 
 
 [tool.poetry.group.docs.dependencies]
-recommonmark = "^0.7.1"
-sphinxcontrib-openapi = "^0.8.1"
+sphinxcontrib-openapi= "^0.7.0"
+myst-parser = "^1.0.0"
 ska-ser-sphinx-theme = "^0.1.2"
-sphinx_autodoc_typehints = "^2.0.0"
 
 
 [tool.pytest.ini_options]
