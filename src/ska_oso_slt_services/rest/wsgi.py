@@ -35,7 +35,7 @@ def create_oda_slt_table():
         );
                 """
     table_exist_query = """ 
-    SELECT EXISTS ( SELECT 1 FROM pg_tables WHERE tablename = 'tab_oda_eb' )
+    SELECT EXISTS ( SELECT 1 FROM pg_tables WHERE tablename = 'tab_oda_slt' )
      AS table_existence; 
                         """
 
