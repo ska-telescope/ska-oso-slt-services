@@ -4,12 +4,14 @@ SLT REST server entry point.
 
 import logging
 
+from flask_cors import CORS
 from ska_db_oda.rest.wsgi import UniformLogger  # noqa: F401
 
 from ska_oso_slt_services.data_access.postgres_data_acess import PostgresDataAccess, PostgresConnection
 from ska_oso_slt_services.rest import init_app
 
 app = init_app()
+CORS(app)
 
 
 def create_oda_slt_table():
