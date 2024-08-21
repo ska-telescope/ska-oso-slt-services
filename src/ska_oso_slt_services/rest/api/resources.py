@@ -340,3 +340,21 @@ def get_shift_media(shift_id: str):
         return media_data, HTTPStatus.OK
     else:
         return {"error": "Shift not found"}, HTTPStatus.NOT_FOUND
+
+
+@error_handler
+def get_current_shift():
+    """
+    Retrieve a single shift by its unique identifier.
+
+    :param shift_id int: The unique identifier of the shift.
+    :returns: The Shift object in JSON format and an HTTP status code.
+    """
+    shift = shift_service.get_current_shift()
+    if shift is None:
+        return {"error": "Shift not found"}, 404
+    else:
+        return (
+            shift.model_dump(mode="json", exclude_unset=True, exclude_none=True),
+            HTTPStatus.OK,
+        )

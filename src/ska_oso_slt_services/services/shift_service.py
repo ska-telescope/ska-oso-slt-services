@@ -38,3 +38,7 @@ class ShiftService:
 
     def delete_shift(self, id: str):
         pass
+
+    def get_current_shift(self):
+        current_shift = self.crud_shift_repository.get_current_shift()
+        return current_shift

@@ -372,3 +372,59 @@ class PostgresShiftRepository(CRUDShiftRepository):
             return False
 
         return True
+
+    def get_current_shift(self) -> Optional[Shift]:
+        """
+        Retrieve a single shift by its unique identifier.
+
+        :param shift_id int: The unique identifier of the shift.
+
+        :returns: The Shift object with the specified identifier, or None if not found.
+        :raises: NotImplementedError if the method is not implemented by a subclass.
+        """
+
+        query = """
+        SELECT id, shift_id, shift_start, shift_end, shift_operator, shift_logs, media,
+         annotations,
+               comments, created_by, created_time, last_modified_by, last_modified_time
+        FROM tab_oda_slt
+        ORDER BY id DESC
+        LIMIT 1;
+        """  # noqa: W291
+
+        rows = self.postgresDataAccess.execute_query_or_update(
+            query=query, query_type=QueryType.GET
+        )
+
+        if not rows:
+            return None
+
+        row = rows[0]
+
+        operator_data = (
+            row["shift_operator"] if row.get("shift_operator") is not None else {}
+        )
+        logs_data = row["shift_logs"] if row.get("shift_logs") is not None else []
+        media_data = row["media"] if row.get("media") is not None else []
+
+        operator = Operator(**operator_data) if operator_data else None
+        shift_logs = [ShiftLogs(**log) for log in logs_data] if logs_data else None
+        media = [Media(**item) for item in media_data] if media_data else None
+
+        shift = Shift(
+            id=row["id"],
+            shift_id=row["shift_id"],
+            shift_start=row["shift_start"],
+            shift_end=row["shift_end"],
+            shift_operator=operator,
+            shift_logs=shift_logs,
+            media=media,
+            annotations=row["annotations"],
+            comments=row["comments"],
+            created_by=row["created_by"],
+            created_time=row["created_time"],
+            last_modified_by=row["last_modified_by"],
+            last_modified_time=row["last_modified_time"],
+        )
+
+        return shift

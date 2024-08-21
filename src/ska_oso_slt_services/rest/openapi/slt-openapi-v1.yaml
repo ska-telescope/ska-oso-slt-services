@@ -115,6 +115,23 @@ paths:
         "500":
           $ref: '#/components/responses/InternalServerError'
 
+  /current_shifts:
+    get:
+      summary: Get current shift
+      description: Retrieve the details of a shift by its ID.
+      operationId: ska_oso_slt_services.rest.api.resources.get_current_shift
+
+      responses:
+        "200":
+          description: The details of the shift.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shift'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
   /shifts/{current_shift_id}/logs_update:
     put:

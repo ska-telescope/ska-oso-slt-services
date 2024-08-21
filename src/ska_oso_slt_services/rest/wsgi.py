@@ -6,8 +6,9 @@ import logging
 
 from ska_db_oda.rest.wsgi import UniformLogger  # noqa: F401
 
-from ska_oso_slt_services.data_access.postgres_data_acess import PostgresDataAccess, PostgresConnection
+from ska_oso_slt_services.data_access.postgres_data_acess import PostgresConnection
 from ska_oso_slt_services.rest import init_app
+
 LOGGER = logging.getLogger(__name__)
 
 app = init_app()
@@ -46,7 +47,7 @@ def create_oda_slt_table():
             table_exist = cursor.fetchone()["table_existence"]
 
     if table_exist:
-        
+
         LOGGER.error("---------------> Table Already present")
 
     if not table_exist:
