@@ -62,6 +62,7 @@ if __name__ == "__main__":
     create_oda_slt_table()
     app.run(host="0.0.0.0", port=5000)
 else:
+    create_oda_slt_table()
     # presume being run from gunicorn
     # use gunicorn logging level for app and module loggers
     gunicorn_logger = logging.getLogger("gunicorn.error")
