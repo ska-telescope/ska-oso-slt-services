@@ -146,7 +146,7 @@ class ShiftLogUpdater:
                         f" {self.current_shift_id}"
                     )
                     updated_shift_log_info(self.current_shift_id)
-            time.sleep(5)  # Wait for 10 seconds before running again
+            time.sleep(20)  # Wait for 10 seconds before running again
 
     def start(self):
         if not self.thread_started:
