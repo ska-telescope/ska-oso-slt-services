@@ -14,6 +14,7 @@ default:
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  DOCS_RTD_PROJECT_SLUG: ska-telescope-ska-oso-slt-services
 
 stages:
   - build
