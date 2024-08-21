@@ -15,12 +15,12 @@ rest:
   component: rest
   function: oso-services
   domain: operations
-  logLevel: info
+  logLevel: debug
   enabled: true
   image:
     registry: registry.gitlab.com
     image: ska-telescope/oso/ska-oso-slt-services/ska-oso-slt-services
-    tag: 0.1.0-dev.c625dbc4d # Defaults to the chart appVersion if not set
+    tag: 0.1.0-dev.c9d543347 # Defaults to the chart appVersion if not set
     pullPolicy: IfNotPresent
   oda:
     backendType: postgres
