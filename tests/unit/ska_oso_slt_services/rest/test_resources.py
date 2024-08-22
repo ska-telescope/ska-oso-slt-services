@@ -256,10 +256,10 @@ class TestShiftCRUD:
         """Verify that valid image should be upload."""
         shift_id = 1
 
-        mock_save_file.return_value = "test", "test/1_mccs.png"
+        mock_save_file.return_value = "test", "test/test_image.png"
         mock_add_media.return_value = True
         data = {}
-        data["files"] = (io.BytesIO(b"abcdef"), "1_mccs.png")
+        data["files"] = (io.BytesIO(b"abcdef"), "test_image.png")
 
         response = client.post(
             f"/ska-oso-slt-services/slt/api/v0/shifts/images/{shift_id}",
