@@ -50,7 +50,7 @@ class Shift(BaseModel):
     """
     Represents a shift in the SLT Shift Log Tool.
 
-    :param id Optional[int]: The unique identifier of the shift.
+    :param sid Optional[int]: The unique identifier of the shift.
     :param shift_start Optional[datetime]: The start time of the shift.
     :param shift_end Optional[datetime]: The end time of the shift.
     :param shift_operator Optional[Operator]: The operator of the shift.
@@ -66,7 +66,7 @@ class Shift(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    id: Optional[int] = None
+    sid: Optional[int] = None
     shift_id: Optional[str] = None
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None

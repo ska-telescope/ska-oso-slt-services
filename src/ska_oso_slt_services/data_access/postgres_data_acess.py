@@ -80,7 +80,7 @@ class PostgresDataAccess:
                     else:
                         raise ValueError(f"Unsupported query type: {query_type}")
         except (Exception, DatabaseError) as error:
-            raise DatabaseError(
+            raise DatabaseError(  # pylint: disable=raise-missing-from
                 f"Error executing {query_type.value} query: {query} with params:"
                 f" {params}. Error: {str(error)}"
             )

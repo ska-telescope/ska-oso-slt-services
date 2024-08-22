@@ -1,16 +1,23 @@
 import logging
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 from http import HTTPStatus
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from deepdiff import DeepDiff
+from flask import request
 from pydantic import ValidationError
 from ska_db_oda.rest.api.resources import error_response
 from ska_db_oda.unit_of_work.postgresunitofwork import PostgresUnitOfWork
+from werkzeug.datastructures import FileStorage
 
+from ska_oso_slt_services.common.file_upload import (
+    read_image_from_folder,
+    upload_image_to_folder,
+)
+from ska_oso_slt_services.data_access.config import ODA_DATA_POLLING_TIME
 from ska_oso_slt_services.data_access.postgres_data_acess import PostgresConnection
 from ska_oso_slt_services.models.data_models import Shift, ShiftLogs
 from ska_oso_slt_services.repositories.postgres_shift_repository import (
@@ -30,17 +37,19 @@ uow = PostgresUnitOfWork(PostgresConnection().get_connection())
 
 def _extract_eb_id_from_key(key: str) -> str:
     """
-    Extract the EB ID from a given key string.
+    Extract the EB SID from a given key string.
 
-    :param key str: The key string from which to extract the EB ID.
-    :returns: The extracted EB ID.
+    :param key str: The key string from which to extract the EB SID.
+    :returns: The extracted EB SID.
     """
     try:
 
         eb_id = key.split("[")[1].split("]")[0].strip("'")
         return eb_id
-    except IndexError:
-        raise ValueError(f"Unexpected key format: {key}")
+    except IndexError as e:
+        raise ValueError(  # 1pylint: disable=raise-missing-from
+            f"Unexpected key format: {key}"
+        ) from e
 
 
 def updated_shift_log_info(current_shift_id: int):
@@ -51,15 +60,19 @@ def updated_shift_log_info(current_shift_id: int):
     :param current_shift_id int: The unique identifier of the current shift.
     :returns: The updated Shift object in JSON format and an HTTP status code.
     """
+    # import pdb
+    # pdb.set_trace()
+
     shift_logs_info = {}
 
-    current_shift_data = shift_service.get_shift(id=current_shift_id)
+    current_shift_data = shift_service.get_shift(sid=current_shift_id)
     if current_shift_data.shift_logs:
         for x in current_shift_data.shift_logs:
             if x.info["eb_id"] not in shift_logs_info:
                 shift_logs_info[x.info["eb_id"]] = x.info
                 shift_logs_info[x.info["eb_id"]]["log_time"] = x.log_time
             else:
+
                 if shift_logs_info[x.info["eb_id"]]["log_time"] < x.log_time:
                     shift_logs_info[x.info["eb_id"]] = x.info
 
@@ -72,43 +85,36 @@ def updated_shift_log_info(current_shift_id: int):
 
     if created_after_eb_sbi_info:
         diff = DeepDiff(shift_logs_info, created_after_eb_sbi_info, ignore_order=True)
-        new_eb_ids = [
+        new_eb_ids = set(
             _extract_eb_id_from_key(key)
             for key in diff.get("dictionary_item_added", [])
-        ]
-
-        LOGGER.info(
-            "\n\n\n\n========================== New Eb found in ODA"
-            f" =============================\n{new_eb_ids}"
-        )
-        changed_eb_ids = list(
-            set([
-                _extract_eb_id_from_key(key)
-                for key in diff.get("values_changed", {}).keys()
-            ])
         )
 
-        LOGGER.info(
-            "========================== Changed Eb found in ODA"
-            f" =============================\n{changed_eb_ids}"
-        )
-        new_eb_ids_merged = []
-        new_eb_ids_merged.extend(new_eb_ids)
-        new_eb_ids_merged.extend(changed_eb_ids)
+        changed_eb_ids = set([
+            _extract_eb_id_from_key(key)
+            for key in diff.get("values_changed", {}).keys()
+        ])
 
+        new_eb_ids_merged_set = set()
+        new_eb_ids_merged_set.update(new_eb_ids)
+        new_eb_ids_merged_set.update(changed_eb_ids)
+
+        new_eb_ids_merged = list(new_eb_ids_merged_set)
+
+        LOGGER.info("------>New or Modified EB found in ODA %s", new_eb_ids_merged)
         if new_eb_ids_merged:
             new_shift_logs = []
             for new_or_updated_eb_id in new_eb_ids_merged:
                 new_info = created_after_eb_sbi_info[new_or_updated_eb_id]
                 new_shift_log = ShiftLogs(
-                    info=new_info, log_time=datetime.now(), source="ODA"
+                    info=new_info, log_time=datetime.now(tz=timezone.utc), source="ODA"
                 )
                 new_shift_logs.append(new_shift_log)
 
             if current_shift_data.shift_logs:
                 new_shift_logs.extend(current_shift_data.shift_logs)
 
-            updated_shift = Shift(id=current_shift_id, shift_logs=new_shift_logs)
+            updated_shift = Shift(sid=current_shift_id, shift_logs=new_shift_logs)
 
             updated_shift_with_info = shift_service.update_shift(shift=updated_shift)
             LOGGER.info("------> Shift Logs have been updated successfully")
@@ -139,11 +145,13 @@ class ShiftLogUpdater:
             with self.lock:
                 if self.current_shift_id is not None:
                     LOGGER.info(
-                        "------> Checking Updated ODA LOGS for SHIFT ID"
-                        f" {self.current_shift_id}"
+                        "------> Checking Updated ODA LOGS for SHIFT ID %s",
+                        self.current_shift_id,
                     )
                     updated_shift_log_info(self.current_shift_id)
-            time.sleep(5)  # Wait for 10 seconds before running again
+            time.sleep(
+                ODA_DATA_POLLING_TIME
+            )  # Wait for 10 seconds before running again
 
     def start(self):
         if not self.thread_started:
@@ -188,7 +196,7 @@ def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response
 
             return error_response(e, HTTPStatus.UNPROCESSABLE_ENTITY)
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             LOGGER.exception(
                 "Exception occurred when calling the API function %s", api_fn
             )
@@ -227,7 +235,7 @@ def get_shift(shift_id):
     :param shift_id int: The unique identifier of the shift.
     :returns: The Shift object in JSON format and an HTTP status code.
     """
-    shift = shift_service.get_shift(id=shift_id)
+    shift = shift_service.get_shift(sid=shift_id)
     if shift is None:
         return {"error": "Shift not found"}, 404
     else:
@@ -252,13 +260,13 @@ def create_shift(body: Dict[str, Any]):
 
     created_shift = shift_service.create_shift(shift)
     shift_id = (
-        f"shift-{created_shift.shift_start.strftime('%Y%m%d')}-{created_shift.id}"
+        f"shift-{created_shift.shift_start.strftime('%Y%m%d')}-{created_shift.sid}"
     )
-    shift_service.update_shift(shift=Shift(shift_id=shift_id, id=created_shift.id))
-    shift_log_updater.update_shift_id(created_shift.id)
-    # shift_service.get_shift(id=created_shift.id)
+    shift_service.update_shift(shift=Shift(shift_id=shift_id, sid=created_shift.sid))
+    shift_log_updater.update_shift_id(created_shift.sid)
+    # shift_service.get_shift(sid=created_shift.sid)
     return (
-        shift_service.get_shift(id=created_shift.id).model_dump(
+        shift_service.get_shift(sid=created_shift.sid).model_dump(
             mode="JSON", exclude_unset=True, exclude_none=True
         ),
         HTTPStatus.CREATED,
@@ -275,7 +283,7 @@ def update_shift(shift_id, body):
     :returns: The updated Shift object in JSON format and an HTTP status code.
     """
 
-    body["id"] = shift_id
+    body["sid"] = shift_id
     try:
 
         shift = Shift(**body)
@@ -287,3 +295,71 @@ def update_shift(shift_id, body):
         updated_shift.model_dump(mode="JSON", exclude_unset=True, exclude_none=True),
         HTTPStatus.CREATED,
     )
+
+
+@error_handler
+def upload_image(**kwargs):
+    """
+    Upload an image to a specific folder.
+
+    :param image_data: The image data to be uploaded.
+    :returns: A success message and an HTTP status code.
+    """
+    try:
+        # Get the uploaded file
+        shift_id: str = kwargs.get("shift_id", "")
+        if not shift_id:
+            # Handle the case when shift_id is not provided
+            raise ValueError("shift_id is required")
+
+        files: List[FileStorage] = request.files.getlist("files")
+        if not files:
+            # Handle the case when no files are provided
+            raise ValueError("No files provided")
+        file_path_to_store: List[str] = []
+        for file in files:
+            _, path = upload_image_to_folder(media_content=file, file_id=shift_id)
+            file_path_to_store.append({"type": "img", "path": path})
+        shift_service.add_media(shift_id=shift_id, media=file_path_to_store)
+        return {"message": "Image uploaded successfully"}
+
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(e)
+        return "Error uploading image!", 500
+
+
+@error_handler
+def get_shift_media(shift_id: str):
+    """
+    Retrieve the media associated with a specific shift.
+
+    :param shift_id str: The unique identifier of the shift.
+    :returns: A list of media URLs and an HTTP status code.
+    """
+    shift_data = shift_service.get_media(shift_id=shift_id)
+    media_data = []
+    for media in shift_data:
+        data = read_image_from_folder(media["path"])
+        media_data.append(data)
+    if media_data:
+        return media_data, HTTPStatus.OK
+    else:
+        return {"error": "Shift not found"}, HTTPStatus.NOT_FOUND
+
+
+@error_handler
+def get_current_shift():
+    """
+    Retrieve a single shift by its unique identifier.
+
+    :param shift_id int: The unique identifier of the shift.
+    :returns: The Shift object in JSON format and an HTTP status code.
+    """
+    shift = shift_service.get_current_shift()
+    if shift is None:
+        return {"error": "Shift not found"}, 404
+    else:
+        return (
+            shift.model_dump(mode="json", exclude_unset=True, exclude_none=True),
+            HTTPStatus.OK,
+        )

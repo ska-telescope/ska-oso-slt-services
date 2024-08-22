@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Shift Log Tool API
   description: API for managing shifts, including creating, updating, and retrieving shift information.
-  version: 0.1.0
+  version: 0.0.0
 servers:
 - url: ska-oso-slt-services/slt/api/v0/
 paths:
@@ -115,6 +115,23 @@ paths:
         "500":
           $ref: '#/components/responses/InternalServerError'
 
+  /current_shifts:
+    get:
+      summary: Get current shift
+      description: Retrieve the details of a shift by its ID.
+      operationId: ska_oso_slt_services.rest.api.resources.get_current_shift
+
+      responses:
+        "200":
+          description: The details of the shift.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shift'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
   /shifts/{current_shift_id}/logs_update:
     put:
@@ -144,6 +161,70 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         "500":
           $ref: '#/components/responses/InternalServerError'
+
+  /shifts/images/{shift_id}:
+    post:
+      summary: Update image with ID
+      description: Update the details of an existing shift.
+      operationId: ska_oso_slt_services.rest.api.resources.upload_image
+      parameters:
+        - in: path
+          name: shift_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "204":
+          description: Success, no slt id found.
+        "201":
+          description: Image upload successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shift'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      summary: Get image with ID
+      description: Retrieve the image of a shift by its ID.
+      operationId: ska_oso_slt_services.rest.api.resources.get_shift_media
+      parameters:
+        - in: path
+          name: shift_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The image of the shift.
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   schemas:
     CreateShift:
@@ -190,7 +271,7 @@ components:
     Shift:
       type: object
       properties:
-        id:
+        sid:
           type: integer
           example: 1
         shift_start:

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import List, Optional
 
-from ska_oso_slt_services.models.data_models import Shift
+from ska_oso_slt_services.models.data_models import Media, Shift
 
 
 class ShiftRepository(ABC):
@@ -33,13 +33,13 @@ class ShiftRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_shift(self, id: str) -> Shift:
+    def get_shift(self, shift_id: str) -> Shift:
         """
-        Retrieve a shift by its ID.
+        Retrieve a shift by its SID.
 
-        :param id: The ID of the shift to retrieve.
+        :param shift_id: The SID of the shift to retrieve.
 
-        :returns: A Shift object with the specified ID.
+        :returns: A Shift object with the specified SID.
 
         :raises: NotImplementedError if the method is not implemented by a subclass.
         """
@@ -82,13 +82,40 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    def delete_shift(self, id: str) -> bool:
+    def delete_shift(self, sid: str) -> bool:
         """
-        Delete a shift by its ID.
+        Delete a shift by its SID.
 
-        :param id: The ID of the shift to delete.
+        :param sid: The SID of the shift to delete.
 
         :returns: True if the shift was deleted successfully, False otherwise.
+
+        :raises: NotImplementedError if the method is not implemented by a subclass.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_media(self, shift_id: str) -> List[Media]:
+        """
+        Retrieve a list of media associated with a shift.
+
+        :param sid: The SID of the shift to retrieve media for.
+
+        :returns: A list of Media objects associated with the specified shift.
+
+        :raises: NotImplementedError if the method is not implemented by a subclass.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def add_media(self, shift_id: str, media: Media) -> bool:
+        """
+        Add media to a shift.
+
+        :param sid: The SID of the shift to add media to.
+        :param media: The Media object to add.
+
+        :returns: True if the media was added successfully, False otherwise.
 
         :raises: NotImplementedError if the method is not implemented by a subclass.
         """

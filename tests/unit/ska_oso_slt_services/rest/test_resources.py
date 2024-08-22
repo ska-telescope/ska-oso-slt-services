@@ -1,4 +1,5 @@
 import copy
+import io
 from datetime import datetime, timezone
 from http import HTTPStatus
 from unittest.mock import patch
@@ -27,7 +28,7 @@ class TestShiftCRUD:
             "2024-07-28T08:00:00Z"  # datetime.utcnow()
         )
         valid_shift_data_with_id = copy.deepcopy(valid_shift_data_with_shift_start)
-        valid_shift_data_with_id["id"] = 1
+        valid_shift_data_with_id["sid"] = 1
 
         valid_shift_data_with_id_and_shift_id = copy.deepcopy(valid_shift_data_with_id)
         valid_shift_data_with_id_and_shift_id["shift_id"] = "shift-20240808-1"
@@ -76,9 +77,9 @@ class TestShiftCRUD:
         """Verify that a valid shift can be updated."""
         shift_id = 1
         mock_shift_before_update = Shift(
-            id=shift_id, comments="Initial comments", annotations="Initial annotations"
+            sid=shift_id, comments="Initial comments", annotations="Initial annotations"
         )
-        mock_shift_after_update = Shift(id=shift_id, **valid_update_shift_data)
+        mock_shift_after_update = Shift(sid=shift_id, **valid_update_shift_data)
 
         mock_get_shift.return_value = mock_shift_before_update
         mock_update_shift.return_value = mock_shift_after_update
@@ -93,15 +94,13 @@ class TestShiftCRUD:
         assert_json_is_equal(
             response.data, mock_shift_after_update.model_dump_json(exclude_unset=True)
         )
-        # mock_get_shift.assert_called_once_with(id=shift_id)
-        # mock_update_shift.assert_called_once_with(mock_shift_after_update)
 
     @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
     def test_get_shift_valid(self, mock_get_shift, client):
         """Verify that a valid shift can be retrieved."""
         shift_id = 1
         mock_shift = Shift(
-            id=shift_id,
+            sid=shift_id,
             shift_operator={"name": "John Doe"},
             annotations="Routine maintenance shift.",
             comments="All systems operational.",
@@ -114,29 +113,7 @@ class TestShiftCRUD:
         assert_json_is_equal(
             response.data, mock_shift.model_dump_json(exclude_unset=True)
         )
-        mock_get_shift.assert_called_once_with(id=shift_id)
-
-    @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
-    def test_get_shift_valid_without_api_call(self, mock_get_shift, client):
-        """Verify that a valid shift can be retrieved."""
-        shift_id = 1
-        mock_shift = Shift(
-            id=shift_id,
-            shift_operator={"name": "John Doe"},
-            annotations="Routine maintenance shift.",
-            comments="All systems operational.",
-        )
-        mock_get_shift.return_value = mock_shift
-
-        # response = client.get(f"/ska-oso-slt-services/slt/api/v1/shifts/{shift_id}")
-        from ska_oso_slt_services.rest.api.resources import get_shift
-
-        response = get_shift(shift_id)[0]
-        # assert response.status_code == HTTPStatus.OK
-        assert_json_is_equal(
-            json.dumps(response), mock_shift.model_dump_json(exclude_unset=True)
-        )
-        mock_get_shift.assert_called_once_with(id=shift_id)
+        mock_get_shift.assert_called_once_with(sid=shift_id)
 
     @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
     def test_get_shift_not_found(self, mock_get_shift, client):
@@ -148,20 +125,20 @@ class TestShiftCRUD:
 
         assert response.status_code == HTTPStatus.NOT_FOUND
         assert_json_is_equal(response.data, json.dumps({"error": "Shift not found"}))
-        mock_get_shift.assert_called_once_with(id=shift_id)
+        mock_get_shift.assert_called_once_with(sid=shift_id)
 
     @patch("ska_oso_slt_services.services.shift_service.ShiftService.getShifts")
     def test_get_shifts_valid(self, mock_get_shifts, client):
         """Verify that all shifts can be retrieved."""
         mock_shifts = [
             Shift(
-                id=1,
+                sid=1,
                 shift_operator={"name": "John Doe"},
                 annotations="Routine maintenance shift.",
                 comments="All systems operational.",
             ),
             Shift(
-                id=2,
+                sid=2,
                 shift_operator={"name": "Jane Doe"},
                 annotations="System upgrade shift.",
                 comments="Upgrade completed.",
@@ -184,7 +161,7 @@ class TestShiftCRUD:
         shift_end = "2024-07-03T00:00:00"
         mock_shifts = [
             Shift(
-                id=1,
+                sid=1,
                 shift_start=datetime(2024, 7, 1, 8, 0, 0, tzinfo=timezone.utc),
                 shift_end=datetime(2024, 7, 1, 16, 0, 0, tzinfo=timezone.utc),
                 shift_operator={"name": "John Doe"},
@@ -271,4 +248,64 @@ class TestShiftCRUD:
             response.data,
             updated_shift_data_with_logs.model_dump_json(exclude_unset=True),
             exclude_paths,
+        )
+
+    @patch("ska_oso_slt_services.services.shift_service.ShiftService.add_media")
+    @patch("ska_oso_slt_services.rest.api.resources.upload_image_to_folder")
+    def test_add_add_media(self, mock_save_file, mock_add_media, client):
+        """Verify that valid image should be upload."""
+        shift_id = 1
+
+        mock_save_file.return_value = "test", "test/test_image.png"
+        mock_add_media.return_value = True
+        data = {}
+        data["files"] = (io.BytesIO(b"abcdef"), "test_image.png")
+
+        response = client.post(
+            f"/ska-oso-slt-services/slt/api/v0/shifts/images/{shift_id}",
+            headers={"Content-Type": "multipart/form-data"},
+            data=data,
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert_json_is_equal(
+            response.data,
+            json.dumps({"message": "Image uploaded successfully"}),
+        )
+
+    # taking above reference write test case for get media
+    @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_media")
+    @patch("ska_oso_slt_services.rest.api.resources.read_image_from_folder")
+    def test_get_media(self, mock_read_image, mock_get_media, client):
+        """Verify that valid image should be upload."""
+        shift_id = 1
+        mock_get_media.return_value = [{"type": "test", "path": "test"}]
+        mock_read_image.return_value = "test"
+        response = client.get(
+            f"/ska-oso-slt-services/slt/api/v0/shifts/images/{shift_id}"
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert_json_is_equal(
+            response.data.decode("utf-8"),
+            '[\n  "test"\n]\n',
+        )
+
+    @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_current_shift")
+    def test_get_current_shifts_valid(self, mock_get_shifts, client):
+        """Verify that all shifts can be retrieved."""
+        mock_shift = Shift(
+            sid=1,
+            shift_operator={"name": "John Doe"},
+            annotations="Routine maintenance shift.",
+            comments="All systems operational.",
+        )
+
+        mock_get_shifts.return_value = mock_shift
+
+        response = client.get("/ska-oso-slt-services/slt/api/v0/current_shifts")
+        assert response.status_code == HTTPStatus.OK
+        assert_json_is_equal(
+            response.data,
+            mock_shift.model_dump_json(exclude_unset=True),
         )

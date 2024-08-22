@@ -40,7 +40,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
 
         query = """
-        SELECT id,shift_id, shift_start, shift_end, shift_operator, shift_logs, media, 
+        SELECT sid,shift_id, shift_start, shift_end, shift_operator, shift_logs, media, 
         annotations, comments, created_by, created_time, last_modified_by,
          last_modified_time FROM tab_oda_slt
         """  # noqa: W291
@@ -68,7 +68,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             media = [Media(**item) for item in media_data] if media_data else None
 
             shift = Shift(
-                id=row["id"],
+                sid=row["sid"],
                 shift_id=row["shift_id"],
                 shift_start=row["shift_start"],
                 shift_end=row["shift_end"],
@@ -97,11 +97,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
 
         query = """
-        SELECT id, shift_id, shift_start, shift_end, shift_operator, shift_logs, media,
+        SELECT sid, shift_id, shift_start, shift_end, shift_operator, shift_logs, media,
          annotations,
                comments, created_by, created_time, last_modified_by, last_modified_time
         FROM tab_oda_slt
-        WHERE id = %s
+        WHERE sid = %s
         """  # noqa: W291
 
         params = (shift_id,)
@@ -125,7 +125,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         media = [Media(**item) for item in media_data] if media_data else None
 
         shift = Shift(
-            id=row["id"],
+            sid=row["sid"],
             shift_id=row["shift_id"],
             shift_start=row["shift_start"],
             shift_end=row["shift_end"],
@@ -188,16 +188,16 @@ class PostgresShiftRepository(CRUDShiftRepository):
         if "created_time" not in shift_data:
             columns.append("created_time")
             values.append("%s")
-            params.append(datetime.now().isoformat())
+            params.append(datetime.now(tz=timezone.utc).isoformat())
 
         if "shift_start" not in shift_data:
             columns.append("shift_start")
             values.append("%s")
-            params.append(datetime.now().isoformat())
+            params.append(datetime.now(tz=timezone.utc).isoformat())
 
         columns_clause = ", ".join(columns)
         values_clause = ", ".join(values)
-        returning_clause = ", ".join(["id"] + columns)
+        returning_clause = ", ".join(["sid"] + columns)
         query = f"""
         INSERT INTO tab_oda_slt ({columns_clause})
         VALUES ({values_clause})
@@ -210,6 +210,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         if row:
             created_shift = Shift(**row)
+        else:
+            created_shift = None
 
         return created_shift
 
@@ -220,11 +222,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         :param shift Shift: The Shift object with updated information.
 
         :returns: The updated Shift object.
-        :raises: ValueError if the shift ID is not provided.
+        :raises: ValueError if the shift SID is not provided.
         :raises: NotImplementedError if the method is not implemented by a subclass.
         """
-        if not shift.id:
-            raise ValueError("Shift ID is required for update operation")
+        if not shift.sid:
+            raise ValueError("Shift SID is required for update operation")
 
         def serialize_datetime(obj):
             if isinstance(obj, datetime):
@@ -233,7 +235,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         shift_data = shift.model_dump(exclude_unset=True, mode="python")
 
-        shift_id = shift_data.pop("id", None)
+        shift_id = shift_data.pop("sid", None)
 
         set_clauses = []
         params = []
@@ -261,11 +263,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         params.append(shift_id)
 
         set_clause = ", ".join(set_clauses)
-        returning_clause = ", ".join(["id"] + [field for field in shift_data.keys()])
+        returning_clause = ", ".join(["sid"] + [field for field in shift_data.keys()])
         query = f"""
         UPDATE tab_oda_slt
         SET {set_clause}
-        WHERE id = %s
+        WHERE sid = %s
         RETURNING {returning_clause}
         """
 
@@ -274,17 +276,17 @@ class PostgresShiftRepository(CRUDShiftRepository):
         )
 
         if row:
-            shift.id = row["id"]
+            shift.sid = row["sid"]
             shift.last_modified_time = row["last_modified_time"]
 
         return shift
 
-    def delete_shift(self, id: str) -> bool:
+    def delete_shift(self, sid: str) -> bool:
         pass
 
     def get_oda_data(self, filter_date):
         filter_date_tz = datetime.fromisoformat(filter_date).replace(
-            tzinfo=timezone(timedelta(hours=5, minutes=30))
+            tzinfo=timezone(timedelta(hours=0, minutes=0))
         )
         eb_query = """SELECT eb_id, info,sbd_id,sbi_id,sbd_version,version,created_on,
                         created_by,last_modified_on,last_modified_by
@@ -325,3 +327,106 @@ class PostgresShiftRepository(CRUDShiftRepository):
                 info[eb["eb_id"]] = eb["info"]
                 info[eb["eb_id"]]["sbi_status"] = sbi_current_status
         return info
+
+    def get_media(self, shift_id: str) -> List[Media]:
+        """
+        Retrieve the media data associated with a specific shift.
+
+        :param shift_id: The unique identifier of the shift.
+        :return: A list of Media objects associated with the shift.
+        """
+        query = """
+        SELECT media
+        FROM tab_oda_slt
+        WHERE sid = %s;
+        """
+        params = (shift_id,)
+        rows = self.postgresDataAccess.execute_query_or_update(
+            query=query, params=params, query_type=QueryType.GET
+        )
+
+        if not rows:
+            return []
+
+        media_data = rows[0]["media"]
+        if media_data is None:
+            return []
+
+        return media_data
+
+    def add_media(self, shift_id: str, media: Media) -> bool:
+        query = """
+        UPDATE tab_oda_slt
+        SET media = CASE
+            WHEN media IS NULL THEN %s::jsonb
+            ELSE media || %s::jsonb
+        END
+        WHERE sid = %s
+        RETURNING media;
+        """
+
+        params = (json.dumps(media), json.dumps(media), shift_id)
+        rows = self.postgresDataAccess.execute_query_or_update(
+            query=query, params=params, query_type=QueryType.PUT
+        )
+
+        if not rows:
+            return False
+
+        return True
+
+    def get_current_shift(self) -> Optional[Shift]:
+        """
+        Retrieve a single shift by its unique identifier.
+
+        :param shift_id int: The unique identifier of the shift.
+
+        :returns: The Shift object with the specified identifier, or None if not found.
+        :raises: NotImplementedError if the method is not implemented by a subclass.
+        """
+
+        query = """
+        SELECT sid, shift_id, shift_start, shift_end, shift_operator, shift_logs, media,
+         annotations,
+               comments, created_by, created_time, last_modified_by, last_modified_time
+        FROM tab_oda_slt
+        ORDER BY sid DESC
+        LIMIT 1;
+        """  # noqa: W291
+
+        rows = self.postgresDataAccess.execute_query_or_update(
+            query=query, query_type=QueryType.GET
+        )
+
+        if not rows:
+            return None
+
+        row = rows[0]
+
+        operator_data = (
+            row["shift_operator"] if row.get("shift_operator") is not None else {}
+        )
+        logs_data = row["shift_logs"] if row.get("shift_logs") is not None else []
+        media_data = row["media"] if row.get("media") is not None else []
+
+        operator = Operator(**operator_data) if operator_data else None
+        shift_logs = [ShiftLogs(**log) for log in logs_data] if logs_data else None
+        media = [Media(**item) for item in media_data] if media_data else None
+
+        shift = Shift(
+            sid=row["sid"],
+            shift_id=row["shift_id"],
+            shift_start=row["shift_start"],
+            shift_end=row["shift_end"],
+            shift_operator=operator,
+            shift_logs=shift_logs,
+            media=media,
+            annotations=row["annotations"],
+            comments=row["comments"],
+            created_by=row["created_by"],
+            created_time=row["created_time"],
+            last_modified_by=row["last_modified_by"],
+            last_modified_time=row["last_modified_time"],
+        )
+
+        return shift
