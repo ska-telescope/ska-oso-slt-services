@@ -24,8 +24,8 @@ class ShiftService:
     ) -> List[Shift]:
         return self.crud_shift_repository.get_shifts(shift_start, shift_end)
 
-    def get_shift(self, id: int) -> Shift:
-        return self.crud_shift_repository.get_shift(id)
+    def get_shift(self, sid: int) -> Shift:
+        return self.crud_shift_repository.get_shift(sid)
 
     def create_shift(self, shift: Shift) -> Shift:
 
@@ -42,7 +42,7 @@ class ShiftService:
         updated_shift = self.crud_shift_repository.update_shift(shift)
         return updated_shift
 
-    def delete_shift(self, id: str):
+    def delete_shift(self, sid: str):
         pass
 
     def get_current_shift(self):

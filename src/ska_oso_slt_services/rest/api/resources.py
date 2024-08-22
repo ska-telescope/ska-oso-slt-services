@@ -37,10 +37,10 @@ uow = PostgresUnitOfWork(PostgresConnection().get_connection())
 
 def _extract_eb_id_from_key(key: str) -> str:
     """
-    Extract the EB ID from a given key string.
+    Extract the EB SID from a given key string.
 
-    :param key str: The key string from which to extract the EB ID.
-    :returns: The extracted EB ID.
+    :param key str: The key string from which to extract the EB SID.
+    :returns: The extracted EB SID.
     """
     try:
 
@@ -63,7 +63,7 @@ def updated_shift_log_info(current_shift_id: int):
 
     shift_logs_info = {}
 
-    current_shift_data = shift_service.get_shift(id=current_shift_id)
+    current_shift_data = shift_service.get_shift(sid=current_shift_id)
     if current_shift_data.shift_logs:
         for x in current_shift_data.shift_logs:
             if x.info["eb_id"] not in shift_logs_info:
@@ -112,7 +112,7 @@ def updated_shift_log_info(current_shift_id: int):
             if current_shift_data.shift_logs:
                 new_shift_logs.extend(current_shift_data.shift_logs)
 
-            updated_shift = Shift(id=current_shift_id, shift_logs=new_shift_logs)
+            updated_shift = Shift(sid=current_shift_id, shift_logs=new_shift_logs)
 
             updated_shift_with_info = shift_service.update_shift(shift=updated_shift)
             LOGGER.info("------> Shift Logs have been updated successfully")
@@ -233,7 +233,7 @@ def get_shift(shift_id):
     :param shift_id int: The unique identifier of the shift.
     :returns: The Shift object in JSON format and an HTTP status code.
     """
-    shift = shift_service.get_shift(id=shift_id)
+    shift = shift_service.get_shift(sid=shift_id)
     if shift is None:
         return {"error": "Shift not found"}, 404
     else:
@@ -258,13 +258,13 @@ def create_shift(body: Dict[str, Any]):
 
     created_shift = shift_service.create_shift(shift)
     shift_id = (
-        f"shift-{created_shift.shift_start.strftime('%Y%m%d')}-{created_shift.id}"
+        f"shift-{created_shift.shift_start.strftime('%Y%m%d')}-{created_shift.sid}"
     )
-    shift_service.update_shift(shift=Shift(shift_id=shift_id, id=created_shift.id))
-    shift_log_updater.update_shift_id(created_shift.id)
-    # shift_service.get_shift(id=created_shift.id)
+    shift_service.update_shift(shift=Shift(shift_id=shift_id, sid=created_shift.sid))
+    shift_log_updater.update_shift_id(created_shift.sid)
+    # shift_service.get_shift(id=created_shift.sid)
     return (
-        shift_service.get_shift(id=created_shift.id).model_dump(
+        shift_service.get_shift(sid=created_shift.sid).model_dump(
             mode="JSON", exclude_unset=True, exclude_none=True
         ),
         HTTPStatus.CREATED,
@@ -281,7 +281,7 @@ def update_shift(shift_id, body):
     :returns: The updated Shift object in JSON format and an HTTP status code.
     """
 
-    body["id"] = shift_id
+    body["sid"] = shift_id
     try:
 
         shift = Shift(**body)

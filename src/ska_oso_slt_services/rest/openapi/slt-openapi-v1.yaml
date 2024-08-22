@@ -271,7 +271,7 @@ components:
     Shift:
       type: object
       properties:
-        id:
+        sid:
           type: integer
           example: 1
         shift_start:

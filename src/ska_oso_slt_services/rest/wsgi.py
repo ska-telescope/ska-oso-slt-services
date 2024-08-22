@@ -4,7 +4,7 @@ SLT REST server entry point.
 
 import logging
 
-from ska_db_oda.rest.wsgi import UniformLogger  # noqa: F401
+from ska_db_oda.rest.wsgi import UniformLogger  # noqa: F401 #noqa: W0611
 
 from ska_oso_slt_services.data_access.postgres_data_acess import PostgresConnection
 from ska_oso_slt_services.rest import init_app
@@ -20,7 +20,7 @@ def create_oda_slt_table():
     """
     query = """
         CREATE TABLE tab_oda_slt (
-                id SERIAL PRIMARY KEY,
+                sid SERIAL PRIMARY KEY,
                 shift_id VARCHAR(255),
                 shift_start TIMESTAMP,
                 shift_end TIMESTAMP,

@@ -40,7 +40,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
 
         query = """
-        SELECT id,shift_id, shift_start, shift_end, shift_operator, shift_logs, media, 
+        SELECT sid,shift_id, shift_start, shift_end, shift_operator, shift_logs, media, 
         annotations, comments, created_by, created_time, last_modified_by,
          last_modified_time FROM tab_oda_slt
         """  # noqa: W291
@@ -68,7 +68,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             media = [Media(**item) for item in media_data] if media_data else None
 
             shift = Shift(
-                id=row["id"],
+                id=row["sid"],
                 shift_id=row["shift_id"],
                 shift_start=row["shift_start"],
                 shift_end=row["shift_end"],
@@ -97,11 +97,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
 
         query = """
-        SELECT id, shift_id, shift_start, shift_end, shift_operator, shift_logs, media,
+        SELECT sid, shift_id, shift_start, shift_end, shift_operator, shift_logs, media,
          annotations,
                comments, created_by, created_time, last_modified_by, last_modified_time
         FROM tab_oda_slt
-        WHERE id = %s
+        WHERE sid = %s
         """  # noqa: W291
 
         params = (shift_id,)
@@ -125,7 +125,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         media = [Media(**item) for item in media_data] if media_data else None
 
         shift = Shift(
-            id=row["id"],
+            sid=row["sid"],
             shift_id=row["shift_id"],
             shift_start=row["shift_start"],
             shift_end=row["shift_end"],
@@ -197,7 +197,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         columns_clause = ", ".join(columns)
         values_clause = ", ".join(values)
-        returning_clause = ", ".join(["id"] + columns)
+        returning_clause = ", ".join(["sid"] + columns)
         query = f"""
         INSERT INTO tab_oda_slt ({columns_clause})
         VALUES ({values_clause})
@@ -220,11 +220,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         :param shift Shift: The Shift object with updated information.
 
         :returns: The updated Shift object.
-        :raises: ValueError if the shift ID is not provided.
+        :raises: ValueError if the shift SID is not provided.
         :raises: NotImplementedError if the method is not implemented by a subclass.
         """
-        if not shift.id:
-            raise ValueError("Shift ID is required for update operation")
+        if not shift.sid:
+            raise ValueError("Shift SID is required for update operation")
 
         def serialize_datetime(obj):
             if isinstance(obj, datetime):
@@ -233,7 +233,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         shift_data = shift.model_dump(exclude_unset=True, mode="python")
 
-        shift_id = shift_data.pop("id", None)
+        shift_id = shift_data.pop("sid", None)
 
         set_clauses = []
         params = []
@@ -261,11 +261,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         params.append(shift_id)
 
         set_clause = ", ".join(set_clauses)
-        returning_clause = ", ".join(["id"] + [field for field in shift_data.keys()])
+        returning_clause = ", ".join(["sid"] + [field for field in shift_data.keys()])
         query = f"""
         UPDATE tab_oda_slt
         SET {set_clause}
-        WHERE id = %s
+        WHERE sid = %s
         RETURNING {returning_clause}
         """
 
@@ -274,12 +274,12 @@ class PostgresShiftRepository(CRUDShiftRepository):
         )
 
         if row:
-            shift.id = row["id"]
+            shift.id = row["sid"]
             shift.last_modified_time = row["last_modified_time"]
 
         return shift
 
-    def delete_shift(self, id: str) -> bool:
+    def delete_shift(self, sid: str) -> bool:
         pass
 
     def get_oda_data(self, filter_date):
@@ -336,7 +336,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         query = """
         SELECT media
         FROM tab_oda_slt
-        WHERE id = %s;
+        WHERE sid = %s;
         """
         params = (shift_id,)
         rows = self.postgresDataAccess.execute_query_or_update(
@@ -359,7 +359,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             WHEN media IS NULL THEN %s::jsonb
             ELSE media || %s::jsonb
         END
-        WHERE id = %s
+        WHERE sid = %s
         RETURNING media;
         """
 
@@ -384,11 +384,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
 
         query = """
-        SELECT id, shift_id, shift_start, shift_end, shift_operator, shift_logs, media,
+        SELECT sid, shift_id, shift_start, shift_end, shift_operator, shift_logs, media,
          annotations,
                comments, created_by, created_time, last_modified_by, last_modified_time
         FROM tab_oda_slt
-        ORDER BY id DESC
+        ORDER BY sid DESC
         LIMIT 1;
         """  # noqa: W291
 
@@ -412,7 +412,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         media = [Media(**item) for item in media_data] if media_data else None
 
         shift = Shift(
-            id=row["id"],
+            id=row["sid"],
             shift_id=row["shift_id"],
             shift_start=row["shift_start"],
             shift_end=row["shift_end"],
