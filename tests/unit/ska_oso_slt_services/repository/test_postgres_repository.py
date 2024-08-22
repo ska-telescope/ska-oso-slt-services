@@ -40,7 +40,7 @@ class TestPostgresShiftRepository:
         # mock_get_shifts = Shift(**valid_shift_data)
 
         shift_data = [{
-            "id": 1,
+            "sid": 1,
             "shift_id": "shift-001",
             "shift_start": "2024-07-28T08:00:00Z",
             "shift_end": "2024-07-28T16:00:00Z",
@@ -54,7 +54,7 @@ class TestPostgresShiftRepository:
         }]
 
         mock_execute_or_update_query.return_value = shift_data
-        # valid_shift_data["id"] = 1
+        # valid_shift_data["sid"] = 1
         # mock_execute_or_update_query.return_value = [valid_shift_data]
 
         # print("*********\n",mock_get_shifts)
@@ -81,7 +81,7 @@ class TestPostgresShiftRepository:
     )
     def test_get_shift(self, mock_execute_or_update_query):
         shift_data = [{
-            "id": 1,
+            "sid": 1,
             "shift_id": "shift-001",
             "shift_start": "2024-07-28T08:00:00Z",
             "shift_end": "2024-07-28T16:00:00Z",
@@ -109,7 +109,7 @@ class TestPostgresShiftRepository:
     )
     def test_create_shift(self, mock_execute_or_update_query):
         shift_data = {
-            "id": 1,
+            "sid": 1,
             "shift_id": "shift-001",
             "shift_start": "2024-07-28T08:00:00Z",
             "shift_end": "2024-07-28T16:00:00Z",
@@ -137,7 +137,7 @@ class TestPostgresShiftRepository:
     )
     def test_update_shift(self, mock_execute_or_update_query):
         shift_data = {
-            "id": 1,
+            "sid": 1,
             "shift_id": "shift-001",
             "shift_start": "2024-07-28T08:00:00Z",
             "shift_end": "2024-07-28T16:00:00Z",
@@ -223,7 +223,7 @@ class TestPostgresShiftRepository:
         shift_repository = PostgresShiftRepository()
 
         with pytest.raises(
-            ValueError, match="Shift ID is required for update operation"
+            ValueError, match="Shift SID is required for update operation"
         ):
             shift_repository.update_shift(shift)
 
@@ -234,7 +234,7 @@ class TestPostgresShiftRepository:
     def test_update_shift_db_error(self, mock_execute_or_update_query):
 
         shift_data = {
-            "id": 1,
+            "sid": 1,
             "shift_id": "shift-001",
             "shift_start": "2024-07-28T08:00:00Z",
             "shift_end": "2024-07-28T16:00:00Z",

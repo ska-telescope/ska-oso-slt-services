@@ -262,7 +262,7 @@ def create_shift(body: Dict[str, Any]):
     )
     shift_service.update_shift(shift=Shift(shift_id=shift_id, sid=created_shift.sid))
     shift_log_updater.update_shift_id(created_shift.sid)
-    # shift_service.get_shift(id=created_shift.sid)
+    # shift_service.get_shift(sid=created_shift.sid)
     return (
         shift_service.get_shift(sid=created_shift.sid).model_dump(
             mode="JSON", exclude_unset=True, exclude_none=True

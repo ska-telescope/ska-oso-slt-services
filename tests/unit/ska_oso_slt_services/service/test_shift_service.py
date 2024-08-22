@@ -51,7 +51,7 @@ class TestShiftService:
         self, mock_postgres_shift_repository_get_shifts, valid_shift_data
     ):
         valid_shift_data_with_id = deepcopy(valid_shift_data)
-        valid_shift_data_with_id["id"] = 1
+        valid_shift_data_with_id["sid"] = 1
         mock_get_shifts = Shift(**valid_shift_data_with_id)
         mock_postgres_shift_repository_get_shifts.return_value = mock_get_shifts
 
@@ -99,7 +99,7 @@ class TestShiftService:
     ):
         valid_shift_data_with_annotation = deepcopy(valid_shift_data)
         valid_shift_data_with_annotation["annotations"] = "updated_annotation"
-        valid_shift_data_with_annotation["id"] = 1
+        valid_shift_data_with_annotation["sid"] = 1
 
         mock_update_shifts = Shift(**valid_shift_data_with_annotation)
         # import pdb
