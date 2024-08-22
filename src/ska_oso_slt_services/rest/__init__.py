@@ -5,9 +5,13 @@ from typing import Any, Dict
 import prance
 from connexion import App
 
+from ska_oso_slt_services.rest.flask_slt import FlaskSLT
+
 KUBE_NAMESPACE = os.getenv("KUBE_NAMESPACE", "ska-oso-slt-services")
 SLT_MAJOR_VERSION = version("ska-oso-slt-services").split(".")[0]
 API_PATH = f"{KUBE_NAMESPACE}/slt/api/v{SLT_MAJOR_VERSION}"
+
+slt = FlaskSLT()
 
 
 # There is a (another) issue with Connexion where it cannot validate
@@ -46,6 +50,15 @@ def init_app(open_api_spec=None):
         "body": CustomRequestBodyValidator,
     }
     connexion = App(__name__, specification_dir="openapi/")
+
+    def set_default_headers_on_response(response):
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        return response
+
+    connexion.app.after_request(set_default_headers_on_response)
+
     connexion.add_api(
         open_api_spec,
         # The base path includes the namespace which is known at runtime

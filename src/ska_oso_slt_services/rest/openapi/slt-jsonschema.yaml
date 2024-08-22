@@ -1,0 +1,177 @@
+$defs:
+  ErrorWrapper:
+    properties:
+      detail:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Detail
+      stacktrace:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Stacktrace
+    title: ErrorWrapper
+    type: object
+  Metadata:
+    description: Represents metadata about other entities.
+    properties:
+      version:
+        default: 1
+        title: Version
+        type: integer
+      created_by:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Created By
+      created_on:
+        format: date-time
+        title: Created On
+        type: string
+      last_modified_by:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Last Modified By
+      last_modified_on:
+        format: date-time
+        title: Last Modified On
+        type: string
+    title: Metadata
+    type: object
+  PythonArguments:
+    description: Represents the arguments for a Python callable.
+    properties:
+      args:
+        items: {}
+        title: Args
+        type: array
+      kwargs:
+        title: Kwargs
+        type: object
+    title: PythonArguments
+    type: object
+  RequestResponse:
+    properties:
+      request:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Request
+      request_args:
+        anyOf:
+        - $ref: '#/$defs/PythonArguments'
+        - type: 'null'
+        default: null
+      status:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Status
+      response:
+        anyOf:
+        - $ref: '#/$defs/ResponseWrapper'
+        - type: 'null'
+        default: null
+      error:
+        anyOf:
+        - $ref: '#/$defs/ErrorWrapper'
+        - type: 'null'
+        default: null
+      request_sent_at:
+        format: date-time
+        title: Request Sent At
+        type: string
+      response_received_at:
+        anyOf:
+        - format: date-time
+          type: string
+        - type: 'null'
+        default: null
+        title: Response Received At
+    title: RequestResponse
+    type: object
+  ResponseWrapper:
+    properties:
+      result:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Result
+    title: ResponseWrapper
+    type: object
+  TelescopeType:
+    enum:
+    - ska_mid
+    - ska_low
+    - MeerKAT
+    title: TelescopeType
+    type: string
+properties:
+  interface:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: null
+    title: Interface
+  eb_id:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: null
+    title: Eb Id
+  metadata:
+    anyOf:
+    - $ref: '#/$defs/Metadata'
+    - type: 'null'
+    default: null
+  telescope:
+    $ref: '#/$defs/TelescopeType'
+  sbd_ref:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: null
+    title: Sbd Ref
+  sbd_version:
+    anyOf:
+    - type: integer
+    - type: 'null'
+    default: null
+    title: Sbd Version
+  sbi_ref:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: null
+    title: Sbi Ref
+  sbi_status:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: null
+    title: SBI Status
+  source:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: ODA
+    title: source
+  request_responses:
+    items:
+      $ref: '#/$defs/RequestResponse'
+    title: Request Responses
+    type: array
+required:
+- telescope
+title: SLTResponse
+type: object
+
