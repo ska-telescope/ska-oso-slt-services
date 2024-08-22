@@ -4,7 +4,7 @@ REST API
 =========
 
 The SLT REST API's support added for create shift, update and get shifts.
-Each resource supports a POST method to create a new shift, which will fetch a new identifier from SKUID.
+Each resource supports a POST method to create a new shift with unique shift_id.
 There are also GET and PUT method for a resource identifier to retrieve and update the shift, retrospectively.
 
 Once deployed, the API should be available at ``<HOST>/slt/api/<MAJOR_VERSION>/<RESOURCE>`` and the Swagger UI at ``<HOST>/api/<MAJOR_VERSION>/ui``.

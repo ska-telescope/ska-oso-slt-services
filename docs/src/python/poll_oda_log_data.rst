@@ -2,18 +2,21 @@
 Polling ODA Log Status Data
 ============================
 
-The initial version of the SLT (Shift Log Tool) provided support for fetching log data from the ODA system. A function named 
-updated_shift_log_info was created to facilitate this process.
+The initial version of the SLT (Shift Log Tool) provided support for fetching observation execution related logs 
+from the ODA e.g. success or failure of EB (Execution Block). 
 
-The `updated_shift_log_info` function takes a current_shift_id as an argument, 
+A function named ``updated_shift_log_info`` was created to facilitate this process.
+
+The ``updated_shift_log_info`` function takes a ``current_shift_id`` as an argument, 
 which is the unique identifier of the shift for which log data needs to be fetched.
 
-This function continuously synchronizes log data from the ODA system for the specified shift. It creates a background thread that periodically polls the ODA system for new log data at an interval of 5 seconds.
+This function continuously synchronizes log data from the ODA system for the specified shift. It creates a background thread that periodically polls the ODA system for new log data.
 
 Implementation Details
 ------------------------
-The current implementation of the updated_shift_log_info
- function follows a background thread-based approach to poll data from the ODA system. The fetched log data is then processed and stored in the appropriate data store.
+
+The current implementation of the ``updated_shift_log_info`` function follows a background thread-based approach 
+to poll data from the ODA system. The fetched log data is then processed and stored in the ODA.
 
 
 .. code-block:: console
