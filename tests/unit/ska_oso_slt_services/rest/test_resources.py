@@ -93,8 +93,6 @@ class TestShiftCRUD:
         assert_json_is_equal(
             response.data, mock_shift_after_update.model_dump_json(exclude_unset=True)
         )
-        # mock_get_shift.assert_called_once_with(sid=shift_id)
-        # mock_update_shift.assert_called_once_with(mock_shift_after_update)
 
     @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
     def test_get_shift_valid(self, mock_get_shift, client):
@@ -113,28 +111,6 @@ class TestShiftCRUD:
         assert response.status_code == HTTPStatus.OK
         assert_json_is_equal(
             response.data, mock_shift.model_dump_json(exclude_unset=True)
-        )
-        mock_get_shift.assert_called_once_with(sid=shift_id)
-
-    @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
-    def test_get_shift_valid_without_api_call(self, mock_get_shift, client):
-        """Verify that a valid shift can be retrieved."""
-        shift_id = 1
-        mock_shift = Shift(
-            sid=shift_id,
-            shift_operator={"name": "John Doe"},
-            annotations="Routine maintenance shift.",
-            comments="All systems operational.",
-        )
-        mock_get_shift.return_value = mock_shift
-
-        # response = client.get(f"/ska-oso-slt-services/slt/api/v1/shifts/{shift_id}")
-        from ska_oso_slt_services.rest.api.resources import get_shift
-
-        response = get_shift(shift_id)[0]
-        # assert response.status_code == HTTPStatus.OK
-        assert_json_is_equal(
-            json.dumps(response), mock_shift.model_dump_json(exclude_unset=True)
         )
         mock_get_shift.assert_called_once_with(sid=shift_id)
 
