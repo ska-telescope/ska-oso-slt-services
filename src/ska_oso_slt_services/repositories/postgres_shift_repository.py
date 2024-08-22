@@ -412,7 +412,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         media = [Media(**item) for item in media_data] if media_data else None
 
         shift = Shift(
-            id=row["sid"],
+            sid=row["sid"],
             shift_id=row["shift_id"],
             shift_start=row["shift_start"],
             shift_end=row["shift_end"],
