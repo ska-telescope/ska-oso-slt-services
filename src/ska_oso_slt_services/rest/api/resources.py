@@ -1,7 +1,7 @@
 import logging
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 from http import HTTPStatus
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -107,7 +107,7 @@ def updated_shift_log_info(current_shift_id: int):
             for new_or_updated_eb_id in new_eb_ids_merged:
                 new_info = created_after_eb_sbi_info[new_or_updated_eb_id]
                 new_shift_log = ShiftLogs(
-                    info=new_info, log_time=datetime.now(), source="ODA"
+                    info=new_info, log_time=datetime.now(tz=timezone.utc), source="ODA"
                 )
                 new_shift_logs.append(new_shift_log)
 

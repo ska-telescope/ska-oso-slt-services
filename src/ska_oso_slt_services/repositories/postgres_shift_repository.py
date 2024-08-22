@@ -190,12 +190,12 @@ class PostgresShiftRepository(CRUDShiftRepository):
         if "created_time" not in shift_data:
             columns.append("created_time")
             values.append("%s")
-            params.append(datetime.now().isoformat())
+            params.append(datetime.now(tz=timezone.utc).isoformat())
 
         if "shift_start" not in shift_data:
             columns.append("shift_start")
             values.append("%s")
-            params.append(datetime.now().isoformat())
+            params.append(datetime.now(tz=timezone.utc).isoformat())
 
         columns_clause = ", ".join(columns)
         values_clause = ", ".join(values)
