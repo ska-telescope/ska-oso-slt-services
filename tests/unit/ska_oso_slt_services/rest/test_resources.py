@@ -272,3 +272,22 @@ class TestShiftCRUD:
             updated_shift_data_with_logs.model_dump_json(exclude_unset=True),
             exclude_paths,
         )
+
+    @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_current_shift")
+    def test_get_current_shifts_valid(self, mock_get_shifts, client):
+        """Verify that all shifts can be retrieved."""
+        mock_shift = Shift(
+            id=1,
+            shift_operator={"name": "John Doe"},
+            annotations="Routine maintenance shift.",
+            comments="All systems operational.",
+        )
+
+        mock_get_shifts.return_value = mock_shift
+
+        response = client.get("/ska-oso-slt-services/slt/api/v0/current_shifts")
+        assert response.status_code == HTTPStatus.OK
+        assert_json_is_equal(
+            response.data,
+            mock_shift.model_dump_json(exclude_unset=True),
+        )

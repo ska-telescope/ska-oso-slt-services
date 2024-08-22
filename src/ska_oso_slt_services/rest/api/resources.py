@@ -17,6 +17,7 @@ from ska_oso_slt_services.common.file_upload import (
     read_image_from_folder,
     upload_image_to_folder,
 )
+from ska_oso_slt_services.data_access.config import ODA_DATA_POLLING_TIME
 from ska_oso_slt_services.data_access.postgres_data_acess import PostgresConnection
 from ska_oso_slt_services.models.data_models import Shift, ShiftLogs
 from ska_oso_slt_services.repositories.postgres_shift_repository import (
@@ -146,7 +147,9 @@ class ShiftLogUpdater:
                         f" {self.current_shift_id}"
                     )
                     updated_shift_log_info(self.current_shift_id)
-            time.sleep(20)  # Wait for 10 seconds before running again
+            time.sleep(
+                ODA_DATA_POLLING_TIME
+            )  # Wait for 10 seconds before running again
 
     def start(self):
         if not self.thread_started:

@@ -36,10 +36,8 @@ def create_oda_slt_table():
         );
                 """
     table_exist_query = """ 
-    SELECT EXISTS ( SELECT 1 FROM pg_tables WHERE tablename = 'tab_oda_slt' )
-     AS table_existence; 
-                        """
-
+    SELECT EXISTS ( SELECT 1 FROM pg_tables WHERE tablename = 'tab_oda_slt' )AS
+     table_existence; """  # noqa: W291
     connection_pool = PostgresConnection().get_connection()
     with connection_pool.connection() as conn:
         with conn.cursor() as cursor:

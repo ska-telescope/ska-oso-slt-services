@@ -1,3 +1,4 @@
+import base64
 import os
 from io import BytesIO
 
@@ -24,12 +25,10 @@ def upload_image_to_folder(
     return output, path
 
 
-import base64
-
-
 def read_image_from_folder(json_file_location: str) -> str:
     """
-    This function reads an image file and returns its contents as a Base64-encoded string.
+    This function reads an image file and returns its contents as a Base64-encoded
+    string.
 
     :param json_file_location: Path to the image file.
     :return: Base64-encoded string representation of the image data.
