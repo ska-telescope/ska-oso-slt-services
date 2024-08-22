@@ -288,7 +288,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
     def get_oda_data(self, filter_date):
         filter_date_tz = datetime.fromisoformat(filter_date).replace(
-            tzinfo=timezone(timedelta(hours=5, minutes=30))
+            tzinfo=timezone(timedelta(hours=0, minutes=0))
         )
         eb_query = """SELECT eb_id, info,sbd_id,sbi_id,sbd_version,version,created_on,
                         created_by,last_modified_on,last_modified_by
