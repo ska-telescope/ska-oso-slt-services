@@ -1,3 +1,4 @@
+import base64
 import os
 from io import BytesIO
 
@@ -22,9 +23,6 @@ def upload_image_to_folder(
         image.save(output, format="JPEG")
         output.seek(0)
     return output, path
-
-
-import base64
 
 
 def read_image_from_folder(json_file_location: str) -> str:

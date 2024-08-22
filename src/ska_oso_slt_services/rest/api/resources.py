@@ -316,7 +316,7 @@ def upload_image(**kwargs):
             _, path = upload_image_to_folder(media_content=file, file_id=shift_id)
             file_path_to_store.append({"type": "img", "path": path})
         shift_service.add_media(shift_id=shift_id, media=file_path_to_store)
-        return "Images uploaded successfully"
+        return {"message": "Image uploaded successfully"}
 
     except Exception as e:
         print(e)

@@ -1,4 +1,5 @@
 import copy
+import io
 from datetime import datetime, timezone
 from http import HTTPStatus
 from unittest.mock import patch
@@ -271,4 +272,45 @@ class TestShiftCRUD:
             response.data,
             updated_shift_data_with_logs.model_dump_json(exclude_unset=True),
             exclude_paths,
+        )
+
+    @patch("ska_oso_slt_services.services.shift_service.ShiftService.add_media")
+    @patch("ska_oso_slt_services.rest.api.resources.upload_image_to_folder")
+    def test_add_add_media(self, mock_save_file, mock_add_media, client):
+        """Verify that valid image should be upload."""
+        shift_id = 1
+
+        mock_save_file.return_value = "test", "test/1_mccs.png"
+        mock_add_media.return_value = True
+        data = {}
+        data["files"] = (io.BytesIO(b"abcdef"), "1_mccs.png")
+
+        response = client.post(
+            f"/ska-oso-slt-services/slt/api/v0/shifts/images/{shift_id}",
+            headers={"Content-Type": "multipart/form-data"},
+            data=data,
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert_json_is_equal(
+            response.data,
+            json.dumps({"message": "Image uploaded successfully"}),
+        )
+
+    # taking above reference write test case for get media
+    @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_media")
+    @patch("ska_oso_slt_services.rest.api.resources.read_image_from_folder")
+    def test_get_media(self, mock_read_image, mock_get_media, client):
+        """Verify that valid image should be upload."""
+        shift_id = 1
+        mock_get_media.return_value = [{"type": "test", "path": "test"}]
+        mock_read_image.return_value = "test"
+        response = client.get(
+            f"/ska-oso-slt-services/slt/api/v0/shifts/images/{shift_id}"
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert_json_is_equal(
+            response.data.decode("utf-8"),
+            '[\n  "test"\n]\n',
         )
