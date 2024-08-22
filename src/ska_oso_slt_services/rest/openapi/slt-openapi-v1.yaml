@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Shift Log Tool API
   description: API for managing shifts, including creating, updating, and retrieving shift information.
-  version: 0.1.0
+  version: 0.0.0
 servers:
 - url: ska-oso-slt-services/slt/api/v0/
 paths:

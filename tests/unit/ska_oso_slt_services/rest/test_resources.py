@@ -128,7 +128,6 @@ class TestShiftCRUD:
         )
         mock_get_shift.return_value = mock_shift
 
-        # response = client.get(f"/ska-oso-slt-services/slt/api/v1/shifts/{shift_id}")
         from ska_oso_slt_services.rest.api.resources import get_shift
 
         response = get_shift(shift_id)[0]
