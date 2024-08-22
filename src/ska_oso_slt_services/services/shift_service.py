@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from ska_oso_slt_services.models.data_models import Shift
+from ska_oso_slt_services.models.data_models import Media, Shift
 from ska_oso_slt_services.repositories.abstract_base import (
     CRUDShiftRepository,
     ShiftRepository,
@@ -31,6 +31,12 @@ class ShiftService:
 
         created_shift = self.crud_shift_repository.create_shift(shift)
         return created_shift
+
+    def get_media(self, shift_id: int) -> Media:
+        return self.crud_shift_repository.get_media(shift_id)
+
+    def add_media(self, shift_id: int, media: Media) -> Media:
+        return self.crud_shift_repository.add_media(shift_id, media)
 
     def update_shift(self, shift: Shift) -> Shift:
         updated_shift = self.crud_shift_repository.update_shift(shift)

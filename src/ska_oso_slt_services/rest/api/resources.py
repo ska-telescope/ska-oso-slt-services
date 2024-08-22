@@ -5,9 +5,9 @@ from datetime import datetime
 from functools import wraps
 from http import HTTPStatus
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-from urllib import request
 
 from deepdiff import DeepDiff
+from flask import request
 from pydantic import ValidationError
 from ska_db_oda.rest.api.resources import error_response
 from ska_db_oda.unit_of_work.postgresunitofwork import PostgresUnitOfWork
