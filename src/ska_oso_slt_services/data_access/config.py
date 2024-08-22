@@ -20,4 +20,4 @@ class EDADBConfig:
     )
 
 
-ODA_DATA_POLLING_TIME = os.getenv("ODA_DATA_POLLING_TIME", 20)
+ODA_DATA_POLLING_TIME = int(os.getenv("ODA_DATA_POLLING_TIME", "20"))

@@ -46,8 +46,10 @@ def _extract_eb_id_from_key(key: str) -> str:
 
         eb_id = key.split("[")[1].split("]")[0].strip("'")
         return eb_id
-    except IndexError:
-        raise ValueError(f"Unexpected key format: {key}")
+    except IndexError as e:
+        raise ValueError(  # 1pylint: disable=raise-missing-from
+            f"Unexpected key format: {key}"
+        ) from e
 
 
 def updated_shift_log_info(current_shift_id: int):
@@ -99,7 +101,7 @@ def updated_shift_log_info(current_shift_id: int):
 
         new_eb_ids_merged = list(new_eb_ids_merged_set)
 
-        LOGGER.info(f"------>New or Modified EB found in ODA {new_eb_ids_merged}")
+        LOGGER.info("------>New or Modified EB found in ODA %s", new_eb_ids_merged)
         if new_eb_ids_merged:
             new_shift_logs = []
             for new_or_updated_eb_id in new_eb_ids_merged:
@@ -143,8 +145,8 @@ class ShiftLogUpdater:
             with self.lock:
                 if self.current_shift_id is not None:
                     LOGGER.info(
-                        "------> Checking Updated ODA LOGS for SHIFT ID"
-                        f" {self.current_shift_id}"
+                        "------> Checking Updated ODA LOGS for SHIFT ID %s",
+                        self.current_shift_id,
                     )
                     updated_shift_log_info(self.current_shift_id)
             time.sleep(
@@ -194,7 +196,7 @@ def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response
 
             return error_response(e, HTTPStatus.UNPROCESSABLE_ENTITY)
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             LOGGER.exception(
                 "Exception occurred when calling the API function %s", api_fn
             )
@@ -321,7 +323,7 @@ def upload_image(**kwargs):
         shift_service.add_media(shift_id=shift_id, media=file_path_to_store)
         return "Images uploaded successfully"
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(e)
         return "Error uploading image!", 500
 

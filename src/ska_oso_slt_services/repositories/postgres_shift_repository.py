@@ -86,7 +86,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         return shifts
 
-    def get_shift(self, shift_id: int) -> Optional[Shift]:
+    def get_shift(  # pylint: disable=arguments-renamed
+        self, shift_id: int
+    ) -> Optional[Shift]:
         """
         Retrieve a single shift by its unique identifier.
 
@@ -210,6 +212,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         if row:
             created_shift = Shift(**row)
+        else:
+            created_shift = None
 
         return created_shift
 
