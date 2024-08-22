@@ -21,7 +21,6 @@ def valid_shift_data():
 
 
 class TestShiftService:
-
     @patch(
         "ska_oso_slt_services.repositories.postgres_shift_repository."
         "PostgresShiftRepository.get_shifts"
@@ -105,7 +104,6 @@ class TestShiftService:
         assert valid_shift_data_with_annotation == response.model_dump(
             mode="JSON", exclude_none=True
         )
-
 
     @patch(
         "ska_oso_slt_services.repositories.postgres_shift_repository"

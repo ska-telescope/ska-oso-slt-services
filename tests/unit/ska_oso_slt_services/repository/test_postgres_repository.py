@@ -9,7 +9,6 @@ from ska_oso_slt_services.repositories.postgres_shift_repository import (
 )
 
 
-
 class TestPostgresShiftRepository:
     @patch(
         "ska_oso_slt_services.repositories.postgres_shift_repository.PostgresDataAccess"
@@ -213,7 +212,6 @@ class TestPostgresShiftRepository:
 
         with pytest.raises(DatabaseError, match="Failed to update shift"):
             shift_repository.update_shift(shift)
-
 
     @patch(
         "ska_oso_slt_services.repositories.postgres_shift_repository."
