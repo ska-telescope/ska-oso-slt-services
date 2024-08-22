@@ -33,11 +33,11 @@ class ShiftRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_shift(self, sid: str) -> Shift:
+    def get_shift(self, shift_id: str) -> Shift:
         """
         Retrieve a shift by its SID.
 
-        :param sid: The SID of the shift to retrieve.
+        :param shift_id: The SID of the shift to retrieve.
 
         :returns: A Shift object with the specified SID.
 
