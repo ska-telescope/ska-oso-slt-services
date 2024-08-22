@@ -3,7 +3,7 @@ Shift Log Tool Services
 
 The Shift log Tool Services is the server component of the
 Shift Log Tool. It provides the web services used by the
-Shift Log Tool client to read and manipulate stored
+Shift Log Tool client to read and investigate stored
 shift log data.
 
 # Quick start
