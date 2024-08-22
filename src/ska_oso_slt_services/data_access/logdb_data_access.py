@@ -32,7 +32,7 @@ class LOGDBConnection:
         :return: Log DB Connection
         """
         # Load the API key from the file
-        with open(LogDBConfig.API_KEY_PATH, "r") as file:
+        with open(LogDBConfig.API_KEY_PATH, "r", encoding="utf-8") as file:
             api_key = file.read().strip()
 
         ssl_context = create_default_context(cafile=LogDBConfig.CA_CERTIFICATE_PATH)

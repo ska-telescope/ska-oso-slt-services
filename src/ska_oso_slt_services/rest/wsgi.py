@@ -4,7 +4,9 @@ SLT REST server entry point.
 
 import logging
 
-from ska_db_oda.rest.wsgi import UniformLogger  # noqa: F401
+from ska_db_oda.rest.wsgi import (  # noqa: F401 # pylint: disable=unused-import
+    UniformLogger,
+)
 
 from ska_oso_slt_services.data_access.postgres_data_acess import PostgresConnection
 from ska_oso_slt_services.rest import init_app
@@ -20,7 +22,7 @@ def create_oda_slt_table():
     """
     query = """
         CREATE TABLE tab_oda_slt (
-                id SERIAL PRIMARY KEY,
+                sid SERIAL PRIMARY KEY,
                 shift_id VARCHAR(255),
                 shift_start TIMESTAMP,
                 shift_end TIMESTAMP,
@@ -36,10 +38,8 @@ def create_oda_slt_table():
         );
                 """
     table_exist_query = """ 
-    SELECT EXISTS ( SELECT 1 FROM pg_tables WHERE tablename = 'tab_oda_slt' )
-     AS table_existence; 
-                        """
-
+    SELECT EXISTS ( SELECT 1 FROM pg_tables WHERE tablename = 'tab_oda_slt' )AS
+     table_existence; """  # noqa: W291
     connection_pool = PostgresConnection().get_connection()
     with connection_pool.connection() as conn:
         with conn.cursor() as cursor:
@@ -48,25 +48,23 @@ def create_oda_slt_table():
 
     if table_exist:
 
-        LOGGER.error("---------------> Table Already present")
+        LOGGER.info("---------------> Table Already present")
 
     if not table_exist:
-        LOGGER.error("---------------> Creating Table")
+        LOGGER.info("---------------> Creating Table")
         with connection_pool.connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 cursor.execute(table_exist_query)
                 table_exist = cursor.fetchone()["table_existence"]
                 if table_exist:
-                    LOGGER.error("----------> Table created successfully")
+                    LOGGER.info("----------> Table created successfully")
 
 
 if __name__ == "__main__":
-    LOGGER.error("---------------> Creating Table in if")
     create_oda_slt_table()
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=6001)
 else:
-    LOGGER.error("---------------> Creating Table in else")
     create_oda_slt_table()
     # presume being run from gunicorn
     # use gunicorn logging level for app and module loggers

@@ -33,13 +33,13 @@ class ShiftRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_shift(self, id: str) -> Shift:
+    def get_shift(self, sid: str) -> Shift:
         """
-        Retrieve a shift by its ID.
+        Retrieve a shift by its SID.
 
-        :param id: The ID of the shift to retrieve.
+        :param sid: The SID of the shift to retrieve.
 
-        :returns: A Shift object with the specified ID.
+        :returns: A Shift object with the specified SID.
 
         :raises: NotImplementedError if the method is not implemented by a subclass.
         """
@@ -82,11 +82,11 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    def delete_shift(self, id: str) -> bool:
+    def delete_shift(self, sid: str) -> bool:
         """
-        Delete a shift by its ID.
+        Delete a shift by its SID.
 
-        :param id: The ID of the shift to delete.
+        :param sid: The SID of the shift to delete.
 
         :returns: True if the shift was deleted successfully, False otherwise.
 
@@ -99,7 +99,7 @@ class CRUDShiftRepository(ShiftRepository):
         """
         Retrieve a list of media associated with a shift.
 
-        :param id: The ID of the shift to retrieve media for.
+        :param sid: The SID of the shift to retrieve media for.
 
         :returns: A list of Media objects associated with the specified shift.
 
@@ -112,7 +112,7 @@ class CRUDShiftRepository(ShiftRepository):
         """
         Add media to a shift.
 
-        :param id: The ID of the shift to add media to.
+        :param sid: The SID of the shift to add media to.
         :param media: The Media object to add.
 
         :returns: True if the media was added successfully, False otherwise.

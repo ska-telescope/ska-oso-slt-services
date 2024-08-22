@@ -18,3 +18,6 @@ class EDADBConfig:
     HOST = os.getenv(
         "EDA_DB_HOST", "timescaledb.ska-eda-mid-db.svc.techops.internal.skao.int"
     )
+
+
+ODA_DATA_POLLING_TIME = int(os.getenv("ODA_DATA_POLLING_TIME", "20"))

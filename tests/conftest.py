@@ -129,10 +129,10 @@ def shift_logs_data():
 
 
 @pytest.fixture()
-def shift_data_with_logs(shift_logs_data):
+def shift_data_with_logs(shift_logs_data):  # pylint: disable=redefined-outer-name
     """Shift Fixture with logs"""
     return Shift(
-        id=1,
+        sid=1,
         shift_operator={"name": "John Doe"},
         annotations="Routine maintenance shift.",
         comments="All systems operational.",
@@ -142,12 +142,14 @@ def shift_data_with_logs(shift_logs_data):
 
 
 @pytest.fixture()
-def updated_shift_data_with_logs(shift_logs_data):
+def updated_shift_data_with_logs(
+    shift_logs_data,
+):  # pylint: disable=redefined-outer-name
     """Updated Shift Fixture with logs"""
     updated_shift_logs = shift_logs_data.copy()
     updated_shift_logs["info"]["sbi_status"] = "updated"
     return Shift(
-        id=1,
+        sid=1,
         shift_operator={"name": "John Doe"},
         annotations="Routine maintenance shift.",
         comments="All systems operational.",

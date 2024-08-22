@@ -1,7 +1,7 @@
 import logging
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 from http import HTTPStatus
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -17,6 +17,7 @@ from ska_oso_slt_services.common.file_upload import (
     read_image_from_folder,
     upload_image_to_folder,
 )
+from ska_oso_slt_services.data_access.config import ODA_DATA_POLLING_TIME
 from ska_oso_slt_services.data_access.postgres_data_acess import PostgresConnection
 from ska_oso_slt_services.models.data_models import Shift, ShiftLogs
 from ska_oso_slt_services.repositories.postgres_shift_repository import (
@@ -36,17 +37,19 @@ uow = PostgresUnitOfWork(PostgresConnection().get_connection())
 
 def _extract_eb_id_from_key(key: str) -> str:
     """
-    Extract the EB ID from a given key string.
+    Extract the EB SID from a given key string.
 
-    :param key str: The key string from which to extract the EB ID.
-    :returns: The extracted EB ID.
+    :param key str: The key string from which to extract the EB SID.
+    :returns: The extracted EB SID.
     """
     try:
 
         eb_id = key.split("[")[1].split("]")[0].strip("'")
         return eb_id
-    except IndexError:
-        raise ValueError(f"Unexpected key format: {key}")
+    except IndexError as e:
+        raise ValueError(  # 1pylint: disable=raise-missing-from
+            f"Unexpected key format: {key}"
+        ) from e
 
 
 def updated_shift_log_info(current_shift_id: int):
@@ -62,7 +65,7 @@ def updated_shift_log_info(current_shift_id: int):
 
     shift_logs_info = {}
 
-    current_shift_data = shift_service.get_shift(id=current_shift_id)
+    current_shift_data = shift_service.get_shift(sid=current_shift_id)
     if current_shift_data.shift_logs:
         for x in current_shift_data.shift_logs:
             if x.info["eb_id"] not in shift_logs_info:
@@ -98,20 +101,20 @@ def updated_shift_log_info(current_shift_id: int):
 
         new_eb_ids_merged = list(new_eb_ids_merged_set)
 
-        LOGGER.info(f"------>New or Modified EB found in ODA {new_eb_ids_merged}")
+        LOGGER.info("------>New or Modified EB found in ODA %s", new_eb_ids_merged)
         if new_eb_ids_merged:
             new_shift_logs = []
             for new_or_updated_eb_id in new_eb_ids_merged:
                 new_info = created_after_eb_sbi_info[new_or_updated_eb_id]
                 new_shift_log = ShiftLogs(
-                    info=new_info, log_time=datetime.now(), source="ODA"
+                    info=new_info, log_time=datetime.now(tz=timezone.utc), source="ODA"
                 )
                 new_shift_logs.append(new_shift_log)
 
             if current_shift_data.shift_logs:
                 new_shift_logs.extend(current_shift_data.shift_logs)
 
-            updated_shift = Shift(id=current_shift_id, shift_logs=new_shift_logs)
+            updated_shift = Shift(sid=current_shift_id, shift_logs=new_shift_logs)
 
             updated_shift_with_info = shift_service.update_shift(shift=updated_shift)
             LOGGER.info("------> Shift Logs have been updated successfully")
@@ -142,11 +145,13 @@ class ShiftLogUpdater:
             with self.lock:
                 if self.current_shift_id is not None:
                     LOGGER.info(
-                        "------> Checking Updated ODA LOGS for SHIFT ID"
-                        f" {self.current_shift_id}"
+                        "------> Checking Updated ODA LOGS for SHIFT ID %s",
+                        self.current_shift_id,
                     )
                     updated_shift_log_info(self.current_shift_id)
-            time.sleep(20)  # Wait for 10 seconds before running again
+            time.sleep(
+                ODA_DATA_POLLING_TIME
+            )  # Wait for 10 seconds before running again
 
     def start(self):
         if not self.thread_started:
@@ -191,7 +196,7 @@ def error_handler(api_fn: Callable[[str], Response]) -> Callable[[str], Response
 
             return error_response(e, HTTPStatus.UNPROCESSABLE_ENTITY)
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             LOGGER.exception(
                 "Exception occurred when calling the API function %s", api_fn
             )
@@ -230,7 +235,7 @@ def get_shift(shift_id):
     :param shift_id int: The unique identifier of the shift.
     :returns: The Shift object in JSON format and an HTTP status code.
     """
-    shift = shift_service.get_shift(id=shift_id)
+    shift = shift_service.get_shift(sid=shift_id)
     if shift is None:
         return {"error": "Shift not found"}, 404
     else:
@@ -255,13 +260,13 @@ def create_shift(body: Dict[str, Any]):
 
     created_shift = shift_service.create_shift(shift)
     shift_id = (
-        f"shift-{created_shift.shift_start.strftime('%Y%m%d')}-{created_shift.id}"
+        f"shift-{created_shift.shift_start.strftime('%Y%m%d')}-{created_shift.sid}"
     )
-    shift_service.update_shift(shift=Shift(shift_id=shift_id, id=created_shift.id))
-    shift_log_updater.update_shift_id(created_shift.id)
-    # shift_service.get_shift(id=created_shift.id)
+    shift_service.update_shift(shift=Shift(shift_id=shift_id, sid=created_shift.sid))
+    shift_log_updater.update_shift_id(created_shift.sid)
+    # shift_service.get_shift(sid=created_shift.sid)
     return (
-        shift_service.get_shift(id=created_shift.id).model_dump(
+        shift_service.get_shift(sid=created_shift.sid).model_dump(
             mode="JSON", exclude_unset=True, exclude_none=True
         ),
         HTTPStatus.CREATED,
@@ -278,7 +283,7 @@ def update_shift(shift_id, body):
     :returns: The updated Shift object in JSON format and an HTTP status code.
     """
 
-    body["id"] = shift_id
+    body["sid"] = shift_id
     try:
 
         shift = Shift(**body)
@@ -318,7 +323,7 @@ def upload_image(**kwargs):
         shift_service.add_media(shift_id=shift_id, media=file_path_to_store)
         return {"message": "Image uploaded successfully"}
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(e)
         return "Error uploading image!", 500
 
