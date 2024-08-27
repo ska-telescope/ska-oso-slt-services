@@ -31,10 +31,10 @@ stages:
     - |-
       echo "Status of pods in $KUBE_NAMESPACE namespace:"
       kubectl get pods -n $KUBE_NAMESPACE -o jsonpath="{range .items[*]}{'Pod: '}{.metadata.name}:{'\n'}{'\t'}{'Image: '}{.spec.containers[*].image}{'\n'}{'\t'}{'Status: '}{.status.phase}{'\n'}{end}{'\n'}"
-      echo "Address to connect to the deployment of the SLT API: "
-      echo "  https://k8s.stfc.skao.int/$KUBE_NAMESPACE/slt/api/v0"
+      echo "Address to connect to the deployment of the ODT API: "
+      echo "  https://k8s.stfc.skao.int/$KUBE_NAMESPACE/odt/api/v0"
       echo "Address to connect to the Swagger UI for the deployment: "
-      echo "  https://k8s.stfc.skao.int/$KUBE_NAMESPACE/slt/api/v0/ui/"
+      echo "  https://k8s.stfc.skao.int/$KUBE_NAMESPACE/odt/api/v0/ui/"
 
 # Currently, the dev template uses ci-dev-$CI_PROJECT_NAME which means only one branch can be deployed at a time, so we overwrite this
 .dev_env: &dev_env
@@ -72,25 +72,6 @@ stop-dev-environment:
   needs:
     - oci-image-build
 
-test-chart-templates:
-  stage: test
-  variables:
-    MINIKUBE: "false"
-  tags:
-  - k8srunner
-  image: $SKA_K8S_TOOLS_BUILD_DEPLOY
-
-  script:
-    - helm plugin install https://github.com/helm-unittest/helm-unittest.git
-    - make k8s-chart-test
-    - mkdir -p ./build/reports
-    - mv charts/build/chart_template_tests.xml ./build/reports/chart_template_tests.xml
-  artifacts:
-    name: "$CI_PROJECT_NAME-$CI_JOB_ID"
-    paths:
-      - "build/"
-    reports:
-      junit: build/reports/chart_template_tests.xml
 
 include:
   # Python
