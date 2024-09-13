@@ -1,8 +1,8 @@
 from enum import Enum
 from threading import Lock
-from typing import List
+from typing import List, Tuple
 
-from psycopg import DatabaseError
+from psycopg import Connection, DatabaseError, sql
 from psycopg_pool import ConnectionPool
 from ska_db_oda.unit_of_work.postgresunitofwork import create_connection_pool
 
@@ -47,40 +47,115 @@ class PostgresConnection:
 
 
 class PostgresDataAccess:
-    def __init__(self):
-        self.connection_pool = PostgresConnection().get_connection()
+    """
+    Postgres Data Access Class
 
-    def execute_query_or_update(
-        self, query: str, query_type: QueryType, params: tuple | List = None
-    ):
+    """
+
+    def __init__(self):
+        self.postgres_connection = PostgresConnection().get_connection()
+
+
+class PostgresDataAccess:
+    """
+    Postgres Data Access Class
+    """
+
+    def __init__(self):
+        self.postgres_connection = PostgresConnection().get_connection()
+
+    def insert(self, query: sql.Composed, params: Tuple):
         """
-        Executes a query or update operation on the database.
+        Insert data into the database.
 
         :param query: The SQL query to be executed.
-        :param query_type: The type of query (GET, POST, PUT, DELETE).
-        :param params: Parameters to be used in the SQL query.
-        :return: The result of the query if query_type is GET; otherwise, None.
+        :param params: The parameters for the query.
+        :return: The ID of the inserted row.
         """
         try:
-            with self.connection_pool.connection() as conn:
+            with self.postgres_connection.connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(query, params)
-                    if query_type == QueryType.GET:
-                        return cursor.fetchall()
-                    elif query_type in {
-                        QueryType.POST,
-                        QueryType.PUT,
-                        QueryType.DELETE,
-                    }:
-                        returned_id_or_data = None
-                        if query_type == QueryType.POST:
-                            returned_id_or_data = cursor.fetchone()
-                        conn.commit()
-                        return returned_id_or_data
-                    else:
-                        raise ValueError(f"Unsupported query type: {query_type}")
-        except (Exception, DatabaseError) as error:
-            raise DatabaseError(  # pylint: disable=raise-missing-from
-                f"Error executing {query_type.value} query: {query} with params:"
-                f" {params}. Error: {str(error)}"
-            )
+                    conn.commit()
+                    return cursor.fetchone()
+        except DatabaseError as e:
+            # Handle database-related exceptions
+            print(f"Error executing insert query: {e}")
+            conn.rollback()
+            raise
+        except Exception as e:
+            # Handle other exceptions
+            print(f"Unexpected error: {e}")
+            raise
+
+    def update(self, query: sql.Composed, params: Tuple):
+        """
+        Update data in the database.
+
+        :param query: The SQL query to be executed.
+        :param params: The parameters for the query.
+        :return: The number of rows affected.
+        """
+        try:
+            with self.postgres_connection.connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, params)
+                    conn.commit()
+                    return cursor.rowcount
+        except DatabaseError as e:
+            # Handle database-related exceptions
+            print(f"Error executing update query: {e}")
+            conn.rollback()
+            raise
+        except Exception as e:
+            # Handle other exceptions
+            print(f"Unexpected error: {e}")
+            raise
+
+    def delete(self, query: str, connection):
+        pass
+
+    def get(self, query: sql.Composed, params: Tuple):
+        """
+        Get data from the database.
+
+        :param query: The SQL query to be executed.
+        :param connection: The database connection object.
+        :return: The result of the query.
+        """
+        try:
+            with self.postgres_connection.connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, params)
+                    conn.commit()
+                    return cursor.fetchall()
+        except DatabaseError as e:
+            # Handle database-related exceptions
+            print(f"Error executing get query: {e}")
+            raise
+        except Exception as e:
+            # Handle other exceptions
+            print(f"Unexpected error: {e}")
+            raise
+
+    def get_one(self, query: sql.Composed, params: Tuple):
+        """
+        Get one row from the database.
+
+        :param query: The SQL query to be executed.
+        :param params: The parameters for the query.
+        :return: The result of the query.
+        """
+        try:
+            with self.postgres_connection.connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, params)
+                    return cursor.fetchone()
+        except DatabaseError as e:
+            # Handle database-related exceptions
+            print(f"Error executing get_one query: {e}")
+            raise
+        except Exception as e:
+            # Handle other exceptions
+            print(f"Unexpected error: {e}")
+            raise

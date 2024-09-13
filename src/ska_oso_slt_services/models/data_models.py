@@ -1,10 +1,25 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+
+from ska_oso_slt_services.utils.codec import PdmObject
 
 
-class Operator(BaseModel):
+class Metadata(PdmObject):
+    """Represents metadata about other entities."""
+
+    created_by: Optional[str] = None
+    created_on: AwareDatetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    last_modified_by: Optional[str] = None
+    last_modified_on: AwareDatetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
+class Operator(PdmObject):
     """
     Represents an operator in the SLT Shift Log Tool.
 
@@ -16,7 +31,7 @@ class Operator(BaseModel):
     name: Optional[str] = None
 
 
-class Media(BaseModel):
+class Media(PdmObject):
     """
     Represents media associated with a shift in the SLT Shift Log Tool.
 
@@ -24,13 +39,11 @@ class Media(BaseModel):
     :param path Optional[str]: The path to the media file.
     """
 
-    model_config = ConfigDict(extra="forbid")
-
     type: Optional[str] = None
     path: Optional[str] = None
 
 
-class ShiftLogs(BaseModel):
+class ShiftLogs(PdmObject):
     """
     Represents logs associated with a shift in the SLT Shift Log Tool.
 
@@ -39,14 +52,14 @@ class ShiftLogs(BaseModel):
     :param log_time Optional[datetime]: The time the log was created.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    # model_config = ConfigDict(extra="forbid")
 
     info: Optional[dict] = None
     source: Optional[str] = None
     log_time: Optional[datetime] = None
 
 
-class Shift(BaseModel):
+class Shift(PdmObject):
     """
     Represents a shift in the SLT Shift Log Tool.
 
@@ -64,18 +77,39 @@ class Shift(BaseModel):
     :param last_modified_time Optional[datetime]: The time the shift was last modified.
     """
 
-    model_config = ConfigDict(extra="forbid")
-
-    sid: Optional[int] = None
     shift_id: Optional[str] = None
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None
-    shift_operator: Optional[Operator] = None
+    shift_operator: Optional[str] = None
     shift_logs: Optional[List[ShiftLogs]] = None
     media: Optional[List[Media]] = None
     annotations: Optional[str] = None
     comments: Optional[str] = None
-    created_by: Optional[str] = None
-    created_time: Optional[datetime] = None
-    last_modified_by: Optional[str] = None
-    last_modified_time: Optional[datetime] = None
+    metadata: Optional[Metadata] = None
+
+
+from enum import Enum
+
+
+class QueryType(Enum):
+    CREATED_BETWEEN = "created_between"
+    MODIFIED_BETWEEN = "modified_between"
+
+
+class MatchType(Enum):
+    EQUALS = "equals"
+    STARTS_WITH = "starts_with"
+    CONTAINS = "contains"
+
+
+class DateQuery(BaseModel):
+    shift_start: Optional[datetime] = None
+    shift_end: Optional[datetime] = None
+    query_type: QueryType = QueryType.CREATED_BETWEEN
+
+
+class UserQuery(BaseModel):
+    comments: Optional[str] = None
+    shift_operator: Optional[str] = None
+    shift_id: Optional[str] = None
+    match_type: MatchType = MatchType.EQUALS

@@ -16,7 +16,10 @@ class ShiftRepository(ABC):
 
     @abstractmethod
     def get_shifts(
-        self, shift_start: Optional[datetime], shift_end: Optional[datetime]
+        self,
+        query_params: Optional[datetime],
+        pattern: Optional[str],
+        pattern_value: Optional[str],
     ) -> List[Shift]:
         """
         Retrieve a list of shifts within the specified start and end times.
@@ -70,6 +73,19 @@ class CRUDShiftRepository(ShiftRepository):
 
     @abstractmethod
     def update_shift(self, shift: Shift) -> Shift:
+        """
+        Update an existing shift.
+
+        :param shift: The Shift object to update.
+
+        :returns: The updated Shift object.
+
+        :raises: NotImplementedError if the method is not implemented by a subclass.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def patch_shift(self, shift_id: Optional[str], comments: Optional[str]) -> Shift:
         """
         Update an existing shift.
 
