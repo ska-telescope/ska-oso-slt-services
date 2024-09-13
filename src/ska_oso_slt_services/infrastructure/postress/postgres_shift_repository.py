@@ -6,8 +6,8 @@ from ska_oso_slt_services.data_access.postgres_data_acess import (
     PostgresDataAccess,
     QueryType,
 )
+from ska_oso_slt_services.infrastructure.abstract_base import CRUDShiftRepository
 from ska_oso_slt_services.models.data_models import Media, Operator, Shift, ShiftLogs
-from ska_oso_slt_services.repositories.abstract_base import CRUDShiftRepository
 
 
 class PostgresShiftRepository(CRUDShiftRepository):

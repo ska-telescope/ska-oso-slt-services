@@ -90,8 +90,7 @@ class TestShiftService:
         valid_shift_data_with_annotation["sid"] = 1
 
         mock_update_shifts = Shift(**valid_shift_data_with_annotation)
-        # import pdb
-        # pdb.set_trace()
+
         mock_postgres_shift_repository_create_shift.return_value = mock_update_shifts
 
         shift_repository = PostgresShiftRepository()

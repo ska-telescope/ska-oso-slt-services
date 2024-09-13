@@ -12,10 +12,7 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 
-def update_metadata(
-    shift: T,
-    last_modified_by: Optional[str] = None
-) -> T:
+def update_metadata(shift: T, last_modified_by: Optional[str] = None) -> T:
     """Updates the metadata of a copy of the entity
 
     If a version of the entity already exists in the ODA, the previous version will be incremented and the last modified fields updated.
@@ -70,14 +67,3 @@ def set_new_metadata(shift: T, created_by: Optional[str] = None) -> T:
         last_modified_by=created_by,
     )
     return shift
-
-
-# def _get_latest_metadata(self, entity: T) -> Optional[Metadata]:
-#         """Implementation of the abstract MetaDataMixin method for a memory backend.
-
-#         See :func:`~ska_db_oda.domain.metadatamixin.MetadataMixin._get_latest_metadata` docstring for details
-#         """
-#         try:
-#             return self.read(get_identifier(entity)).metadata
-#         except KeyError:
-#             return None
