@@ -64,7 +64,7 @@ class PostgresDataAccess:
     def __init__(self):
         self.postgres_connection = PostgresConnection().get_connection()
 
-    def insert(self, query: sql.Composed, params: Tuple):
+    async def insert(self, query: sql.Composed, params: Tuple):
         """
         Insert data into the database.
 
@@ -88,7 +88,7 @@ class PostgresDataAccess:
             print(f"Unexpected error: {e}")
             raise
 
-    def update(self, query: sql.Composed, params: Tuple):
+    async def update(self, query: sql.Composed, params: Tuple):
         """
         Update data in the database.
 
@@ -115,7 +115,7 @@ class PostgresDataAccess:
     def delete(self, query: str, connection):
         pass
 
-    def get(self, query: sql.Composed, params: Tuple):
+    async def get(self, query: sql.Composed, params: Tuple):
         """
         Get data from the database.
 
@@ -138,7 +138,7 @@ class PostgresDataAccess:
             print(f"Unexpected error: {e}")
             raise
 
-    def get_one(self, query: sql.Composed, params: Tuple):
+    async def get_one(self, query: sql.Composed, params: Tuple):
         """
         Get one row from the database.
 

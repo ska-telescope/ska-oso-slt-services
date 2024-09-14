@@ -1,5 +1,5 @@
-from os import environ
-from typing import Any, cast
+from os import PathLike, environ
+from typing import Any, Type, cast
 
 from pydantic import (
     BaseModel,
@@ -13,7 +13,7 @@ from pydantic_core import PydanticUndefined
 EXTRA_FIELDS = cast(ExtraValues | None, environ.get("EXTRA_FIELDS"))
 
 
-class PdmObject(BaseModel):
+class SLTObject(BaseModel):
     """Shared Base Class for all PDM Entities."""
 
     # https://docs.pydantic.dev/latest/api/config/#pydantic.config.ConfigDict
@@ -61,11 +61,6 @@ class PdmObject(BaseModel):
         return without_nulls
 
 
-import json
-from os import PathLike
-from typing import Type
-
-
 class OpenAPICodec:
     """
     OpenAPICodec serialises and deserialises PDM Entities to and from
@@ -73,25 +68,12 @@ class OpenAPICodec:
     """
 
     @staticmethod
-    def loads(klass: Type[PdmObject], json_data: str) -> PdmObject:
+    def loads(klass: Type[SLTObject], json_data: str) -> SLTObject:
         return klass.model_validate_json(json_data)
 
     @staticmethod
-    def dumps(entity: PdmObject) -> str:
+    def dumps(entity: SLTObject) -> str:
         return entity.model_dump_json()
-
-    @staticmethod
-    def load_from_file(klass: Type[PdmObject], path: PathLike[str]):
-        """
-        Load an instance of a generated class from disk.
-
-        :param klass: the class to create from the file
-        :param path: the path to the file
-        :return: an instance of class
-        """
-        with open(path, "r", encoding="utf-8") as json_file:
-            json_data = json_file.read()
-            return OpenAPICodec.loads(klass, json_data)
 
 
 CODEC = OpenAPICodec()

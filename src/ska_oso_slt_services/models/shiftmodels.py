@@ -3,10 +3,10 @@ from typing import List, Optional
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
-from ska_oso_slt_services.utils.codec import PdmObject
+from ska_oso_slt_services.utils.codec import SLTObject
 
 
-class Metadata(PdmObject):
+class Metadata(SLTObject):
     """Represents metadata about other entities."""
 
     created_by: Optional[str] = None
@@ -19,7 +19,7 @@ class Metadata(PdmObject):
     )
 
 
-class Operator(PdmObject):
+class Operator(SLTObject):
     """
     Represents an operator in the SLT Shift Log Tool.
 
@@ -31,7 +31,7 @@ class Operator(PdmObject):
     name: Optional[str] = None
 
 
-class Media(PdmObject):
+class Media(SLTObject):
     """
     Represents media associated with a shift in the SLT Shift Log Tool.
 
@@ -43,7 +43,7 @@ class Media(PdmObject):
     path: Optional[str] = None
 
 
-class ShiftLogs(PdmObject):
+class ShiftLogs(SLTObject):
     """
     Represents logs associated with a shift in the SLT Shift Log Tool.
 
@@ -59,7 +59,7 @@ class ShiftLogs(PdmObject):
     log_time: Optional[datetime] = None
 
 
-class Shift(PdmObject):
+class Shift(SLTObject):
     """
     Represents a shift in the SLT Shift Log Tool.
 

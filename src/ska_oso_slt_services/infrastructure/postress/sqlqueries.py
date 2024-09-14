@@ -8,7 +8,7 @@ from typing import Any, Dict, Tuple, Union
 from psycopg import sql
 
 from ska_oso_slt_services.infrastructure.postress.mapping import TableDetails
-from ska_oso_slt_services.models.data_models import DateQuery, Shift, UserQuery
+from ska_oso_slt_services.models.shiftmodels import DateQuery, Shift, UserQuery
 
 SqlTypes = Union[str, int, datetime]
 QueryAndParameters = Tuple[sql.Composed, Tuple[SqlTypes]]

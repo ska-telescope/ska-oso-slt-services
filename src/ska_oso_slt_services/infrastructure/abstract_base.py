@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import List, Optional
 
-from ska_oso_slt_services.models.data_models import Media, Shift
+from ska_oso_slt_services.models.shiftmodels import Media, Shift
 
 
 class ShiftRepository(ABC):

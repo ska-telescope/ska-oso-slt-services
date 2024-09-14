@@ -8,7 +8,7 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Any, Callable, Dict, Tuple, Union
 
-from ska_oso_slt_services.models.data_models import Shift
+from ska_oso_slt_services.models.shiftmodels import Shift
 
 SqlTypes = Union[str, int, datetime]
 
