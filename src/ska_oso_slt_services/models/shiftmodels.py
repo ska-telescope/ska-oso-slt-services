@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
@@ -88,27 +89,48 @@ class Shift(SLTObject):
     metadata: Optional[Metadata] = None
 
 
-from enum import Enum
-
-
 class QueryType(Enum):
+    """
+    Enum representing the different types of queries available for filtering shifts.
+    """
+
     CREATED_BETWEEN = "created_between"
     MODIFIED_BETWEEN = "modified_between"
 
 
 class MatchType(Enum):
+    # add doc string for MatchType Enum
+    """
+    Enum representing the different types of matching available for filtering shifts.
+    """
     EQUALS = "equals"
     STARTS_WITH = "starts_with"
     CONTAINS = "contains"
 
 
 class DateQuery(BaseModel):
+    """
+    Represents a query for filtering shifts based on date range.
+    :param shift_start Optional[datetime]: The start time of the shift.
+    :param shift_end Optional[datetime]: The end time of the shift.
+    :param query_type QueryType: The type of query to perform.
+    """
+
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None
     query_type: QueryType = QueryType.CREATED_BETWEEN
 
 
 class UserQuery(BaseModel):
+    """
+    Represents a query for filtering shifts based on user.
+    :param shift_operator Optional[str]: The operator of the shift.
+    :param match_type MatchType: The type of matching to perform.
+    :param comments Optional[str]: Comments for the shift.
+    :param shift_id: Optional[str] = None
+
+    """
+
     comments: Optional[str] = None
     shift_operator: Optional[str] = None
     shift_id: Optional[str] = None

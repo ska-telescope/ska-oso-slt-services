@@ -9,8 +9,8 @@ from psycopg2 import Error as PostgresError
 
 from ska_oso_slt_services.data_access.postgres_data_acess import PostgresDataAccess
 from ska_oso_slt_services.infrastructure.abstract_base import CRUDShiftRepository
-from ska_oso_slt_services.infrastructure.postress.mapping import ShiftLogMapping
-from ska_oso_slt_services.infrastructure.postress.sqlqueries import (
+from ska_oso_slt_services.infrastructure.postgres.mapping import ShiftLogMapping
+from ska_oso_slt_services.infrastructure.postgres.sqlqueries import (
     column_based_query,
     insert_query,
     patch_query,
@@ -21,14 +21,26 @@ from ska_oso_slt_services.infrastructure.postress.sqlqueries import (
 )
 from ska_oso_slt_services.models.shiftmodels import Media, Metadata, Shift
 from ska_oso_slt_services.utils.codec import CODEC
-from ska_oso_slt_services.utils.exception import DatabaseError, InvalidInputError
+from ska_oso_slt_services.utils.exception import DatabaseError
 from ska_oso_slt_services.utils.metadatamixin import set_new_metadata, update_metadata
 
 LOGGER = logging.getLogger(__name__)
 
 
 class ShiftService(CRUDShiftRepository):
+    """
+    Service class for managing shift operations.
+
+    This class provides methods for creating, retrieving, updating, and deleting shifts.
+    It interacts with the database through the PostgresDataAccess class.
+    """
+
     def __init__(self) -> None:
+        """
+        Initialize the ShiftService.
+        Sets up the PostgresDataAccess and ShiftLogMapping instances.
+        """
+
         self.postgres_data_access = PostgresDataAccess()
         self.table_details = ShiftLogMapping()
 
@@ -37,6 +49,21 @@ class ShiftService(CRUDShiftRepository):
         user_query: Optional[any] = None,
         date_query: Optional[any] = None,
     ) -> List[Shift]:
+        """
+        Retrieve shifts based on user or date query.
+
+        Args:
+            user_query (Optional[any]): Query parameters for user-based search.
+            date_query (Optional[any]): Query parameters for date-based search.
+
+        Returns:
+            List[Shift]: A list of Shift objects matching the query.
+
+        Raises:
+            ValueError: If there's an error in processing the query.
+            Exception: For any other unexpected errors.
+        """
+
         try:
             if date_query.shift_start and date_query.shift_end:
                 query, params = select_by_date_query(self.table_details, date_query)
@@ -57,6 +84,19 @@ class ShiftService(CRUDShiftRepository):
             raise
 
     async def get_shift(self, shift_id):
+        """
+        Retrieve a specific shift by its ID.
+
+        Args:
+            shift_id (str): The unique identifier of the shift.
+
+        Returns:
+            Shift: The Shift object if found.
+
+        Raises:
+            ValueError: If no shift is found with the given ID.
+            Exception: For any other unexpected errors.
+        """
         try:
             query, params = select_latest_query(self.table_details, shift_id=shift_id)
             shift = await self.postgres_data_access.get_one(query, params)
@@ -73,26 +113,64 @@ class ShiftService(CRUDShiftRepository):
             raise
 
     def _prepare_shift_with_metadata(self, shift: Dict[Any, Any]) -> Shift:
+        """
+        Prepare a shift object with metadata.
+
+        Args:
+            shift (Dict[Any, Any]): Raw shift data from the database.
+
+        Returns:
+            Shift: A Shift object with metadata included.
+        """
         processed_data = json.loads(json.dumps(shift, default=self._datetime_to_string))
         shift_load = CODEC.loads(Shift, json.dumps(processed_data))
-
         metadata_dict = self._create_metadata(shift)
         shift_load.metadata = Metadata(**metadata_dict)
 
         return shift_load
 
     def _parse_datetime_string(self, date_string: str) -> datetime:
+        """
+        Parse a datetime string to a datetime object.
+
+        Args:
+            date_string (str): The datetime string to parse.
+
+        Returns:
+            datetime: The parsed datetime object.
+        """
         dt = parser.parse(date_string)
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         return dt
 
     def _datetime_to_string(self, obj: Any) -> str:
+        """
+        Convert a datetime object to an ISO format string.
+
+        Args:
+            obj (Any): The object to convert.
+
+        Returns:
+            str: The ISO format string representation of the datetime.
+
+        Raises:
+            TypeError: If the object is not a datetime instance.
+        """
         if isinstance(obj, datetime):
             return obj.isoformat()
         raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
     def _create_metadata(self, shift: Dict[Any, Any]) -> Dict[str, str]:
+        """
+        Create metadata dictionary from shift data.
+
+        Args:
+            shift (Dict[Any, Any]): The shift data.
+
+        Returns:
+            Dict[str, str]: A dictionary containing metadata information.
+        """
         return {
             "created_by": shift["created_by"],
             "created_on": self._parse_datetime_string(shift["created_on"].isoformat()),
@@ -154,6 +232,18 @@ class ShiftService(CRUDShiftRepository):
         return insert_query(table_details=self.table_details, shift=shift)
 
     async def update_shift(self, shift: Shift) -> Shift:
+        """
+        Update an existing shift.
+
+        Args:
+            shift (Shift): The shift object with updated information.
+
+        Returns:
+            Shift: The updated shift object.
+
+        Raises:
+            ValueError: If there's an error in updating the shift.
+        """
         try:
             shift = update_metadata(shift)
             if shift.comments:
@@ -171,6 +261,18 @@ class ShiftService(CRUDShiftRepository):
             raise e
 
     async def _get_existing_shift(self, shift_id: int) -> Optional[dict]:
+        """
+        Retrieve an existing shift from the database.
+
+        Args:
+            shift_id (int): The ID of the shift to retrieve.
+
+        Returns:
+            Optional[dict]: The shift data if found, None otherwise.
+
+        Raises:
+            ValueError: If no shift is found with the given ID.
+        """
         query, params = column_based_query(
             table_details=self.table_details,
             shift_id=shift_id,
@@ -182,39 +284,73 @@ class ShiftService(CRUDShiftRepository):
         return result
 
     def _validate_shift_end(self, existing_shift: dict) -> None:
+        """
+        Validate if a shift can be updated based on its end time.
+
+        Args:
+            existing_shift (dict): The existing shift data.
+
+        Raises:
+            ValueError: If the shift has already ended and cannot be updated.
+        """
         if existing_shift["shift_end"]:
             raise ValueError(f"After shift end update shift disabled")
 
     def _merge_comments(
         self, new_comments: str, existing_comments: Optional[str]
     ) -> str:
+        """
+        Merge new comments with existing comments.
+
+        Args:
+            new_comments (str): The new comments to add.
+            existing_comments (Optional[str]): The existing comments, if any.
+
+        Returns:
+            str: The merged comments.
+        """
         if existing_comments:
             return f"{new_comments} {existing_comments}"
         return new_comments
 
     async def _update_shift_in_database(self, shift: Shift) -> None:
+        """
+        Update the shift in the database.
+
+        Args:
+            shift (Shift): The shift object to update.
+        """
         query, params = update_query(self.table_details, shift=shift)
         await self.postgres_data_access.update(query, params)
 
     async def patch_shift(
         self, shift_id: str | None, column_name: str | None, column_value: str | None
-    ) -> Shift:
-        # get comments from database
+    ) -> Dict[str, str]:
+        """
+        Patch a specific column of a shift.
+
+        Args:
+            shift_id (str | None): The ID of the shift to patch.
+            column_name (str | None): The name of the column to update.
+            column_value (str | None): The new value for the column.
+
+        Returns:
+            Dict[str, str]: A dictionary with a success message.
+
+        Raises:
+            ValueError: If shift_id, column_name, or column_value is None.
+            DatabaseError: If there's an error in the database operation.
+            RuntimeError: For any unexpected errors during the operation.
+        """
+        if not all([shift_id, column_name, column_value]):
+            raise ValueError("shift_id, column_name, and column_value must be provided")
+
         try:
-            self._get_existing_shift(shift_id)
-            query, params = patch_query(
-                self.table_details,
-                column_names=[column_name],
-                values=[column_value],
-                shift_id=shift_id,
-            )
+            await self._validate_shift_exists(shift_id)
+            query, params = self._build_patch_query(shift_id, column_name, column_value)
             await self.postgres_data_access.update(query, params)
-            return {"details": "Shift updated"}
+            return {"details": "Shift updated successfully"}
         except PostgresError as e:
-            raise DatabaseError(
-                f"Database error occurred while patching shift: {str(e)}"
-            ) from e
-        except ValueError as e:
             raise DatabaseError(
                 f"Database error occurred while patching shift: {str(e)}"
             ) from e
@@ -222,6 +358,38 @@ class ShiftService(CRUDShiftRepository):
             raise RuntimeError(
                 f"Unexpected error occurred while patching shift: {str(e)}"
             ) from e
+
+    async def _validate_shift_exists(self, shift_id: str) -> None:
+        """
+        Validate that a shift with the given ID exists.
+
+        Args:
+            shift_id (str): The ID of the shift to validate.
+
+        Raises:
+            ValueError: If the shift does not exist.
+        """
+        existing_shift = await self._get_existing_shift(shift_id)
+        if not existing_shift:
+            raise ValueError(f"Shift with ID {shift_id} does not exist")
+
+    def _build_patch_query(
+        self, shift_id: str, column_name: str, column_value: str
+    ) -> Tuple[str, List[Any]]:
+        """
+        Build the SQL query and parameters for patching a shift.
+
+        Args:
+            shift_id (str): The ID of the shift to patch.
+            column_name (str): The name of the column to update.
+            column_value (str): The new value for the column.
+
+        Returns:
+            Tuple[str, List[Any]]: A tuple containing the SQL query and its parameters.
+        """
+        query = patch_query(self.table_details, [column_name], [column_value], shift_id)
+        params = [column_value, shift_id]
+        return query, params
 
     def get_media(self, shift_id: int) -> Media:
         pass

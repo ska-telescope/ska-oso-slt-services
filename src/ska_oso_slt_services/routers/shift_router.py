@@ -1,30 +1,30 @@
+"""
+Shift Router used for routes the request to appropriate method
+"""
+
 import logging
-import traceback
 from datetime import datetime
 from functools import wraps
 from http import HTTPStatus
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import ValidationError
 
-from ska_oso_slt_services.data_access.postgres_data_acess import PostgresConnection
-from ska_oso_slt_services.infrastructure.postress.postgres_shift_repository import (
-    PostgresShiftRepository,
-)
 from ska_oso_slt_services.models.shiftmodels import DateQuery, Shift, UserQuery
 from ska_oso_slt_services.services.shift_service import ShiftService
-from ska_oso_slt_services.utils.exception import DatabaseError, InvalidInputError
+from ska_oso_slt_services.utils.exception import DatabaseError
 
 
 def get_shift_service() -> ShiftService:
+    """
+    Dependency to get the ShiftService instance
+    """
     return ShiftService()
 
 
 LOGGER = logging.getLogger(__name__)
-from pydantic import ValidationError
 
-shift_repository = PostgresShiftRepository
-connection_pool = PostgresConnection().get_connection()
 
 shift_service_dependency = Depends(get_shift_service)
 
@@ -37,9 +37,6 @@ def error_handler(route_function):
         try:
             LOGGER.debug("Executing route function: %s", route_function.__name__)
             return await route_function(*args, **kwargs)
-        except InvalidInputError as e:
-            LOGGER.exception("Invalid input: %s", str(e))
-            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))
         except ValidationError as e:
             LOGGER.exception("Invalid input: %s", str(e))
             raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))
@@ -54,7 +51,6 @@ def error_handler(route_function):
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST, detail="Wrong value provided"
             )
-
         except Exception as e:
             LOGGER.exception("Unexpected error: %s", str(e))
             raise HTTPException(
@@ -72,13 +68,13 @@ async def get_shift(
     shift_service: ShiftService = shift_service_dependency,
 ):
     """
-    Retrieve a list of shifts filtered by the specified start and end times.
+    Retrieve a specific shift by its ID.
 
-    :param shift_start Optional[str]: The start time to filter shifts in ISO format.
-     If None, no start time filter is applied.
-    :param shift_end Optional[str]: The end time to filter shifts in ISO format. If
-    None, no end time filter is applied.
-    :returns: A list of Shift objects in JSON format and an HTTP status code.
+    Args:
+        shift_id (str): The unique identifier of the shift.
+
+    Raises:
+        HTTPException: If the shift is not found.
     """
     shifts = await shift_service.get_shift(shift_id=shift_id)
     return shifts, HTTPStatus.OK
@@ -91,6 +87,11 @@ async def get_shifts(
     data_query: DateQuery = Depends(),
     shift_service: ShiftService = shift_service_dependency,
 ):
+    """
+    Retrieve all shifts.
+    This endpoint returns a list of all shifts in the system.
+    """
+
     LOGGER.debug("user_query: %s", user_query)
     shifts = await shift_service.get_shifts(user_query, data_query)
     return shifts, HTTPStatus.OK
@@ -101,9 +102,17 @@ async def get_shifts(
 async def create_shift(
     shift: Shift, shift_service: ShiftService = shift_service_dependency
 ):
-    # TO DO need to re think
+    """
+    Create a new shift.
+
+    Args:
+        shift (ShiftCreate): The shift data to create.
+
+    Returns:
+        Shift: The created shift.
+    """
     shifts = await shift_service.create_shift(shift)
-    return shifts, HTTPStatus.OK
+    return shifts, HTTPStatus.CREATED
 
 
 @router.put("/shifts/update", tags=["shifts"])
@@ -111,6 +120,16 @@ async def create_shift(
 async def update_shift(
     shift: Shift, shift_service: ShiftService = shift_service_dependency
 ):
+    """
+    Update an existing shift.
+
+    Args:
+        shift_id (str): The unique identifier of the shift to update.
+        shift (ShiftUpdate): The updated shift data.
+
+    Raises:
+        HTTPException: If the shift is not found.
+    """
     shifts = await shift_service.update_shift(shift)
     return shifts, HTTPStatus.OK
 
@@ -123,6 +142,16 @@ async def patch_shift(
     column_value: Optional[str],
     shift_service: ShiftService = shift_service_dependency,
 ):
+    """
+    Partially update an existing shift.
+
+    Args:
+        shift_id (str): The unique identifier of the shift to update.
+        shift (ShiftUpdate): The partial shift data to update.
+
+    Raises:
+        HTTPException: If the shift is not found.
+    """
     shift = await shift_service.patch_shift(
         shift_id=shift_id, column_name=column_name, column_value=column_value
     )
