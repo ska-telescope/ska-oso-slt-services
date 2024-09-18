@@ -26,6 +26,9 @@ pyhdbpp = "^1.5.12"
 annotated-types = "^0.7.0"
 elastic-transport = "^8.15.0"
 fastapi = "^0.111.0"
+psycopg2-binary = "^2.9.9"
+pillow = "^10.4.0"
+
 
 
 [tool.poetry.group.dev.dependencies]
