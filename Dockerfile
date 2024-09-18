@@ -26,4 +26,10 @@ RUN poetry export --format requirements.txt --output poetry-requirements.txt --w
 
 USER tango
 
-CMD ["python3", "-m", "ska_oso_slt_services.rest.wsgi"]
+CMD ["fastapi", \
+    "run", \
+    "src/ska_oso_slt_services/app.py", \
+    # Trust TLS headers set by nginx ingress:
+    "--proxy-headers", \
+    "--port", "5000" \
+]

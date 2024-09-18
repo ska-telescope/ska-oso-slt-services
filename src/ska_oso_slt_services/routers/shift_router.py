@@ -3,16 +3,19 @@ Shift Router used for routes the request to appropriate method
 """
 
 import logging
+import traceback
 from functools import wraps
 from http import HTTPStatus
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Response
 from psycopg import DatabaseError, DataError, InternalError
 from pydantic import ValidationError
 
 from ska_oso_slt_services.models.shiftmodels import DateQuery, Shift, UserQuery
 from ska_oso_slt_services.services.shift_service import ShiftService
+
+LOGGER = logging.getLogger(__name__)
 
 
 def get_shift_service() -> ShiftService:
@@ -20,9 +23,6 @@ def get_shift_service() -> ShiftService:
     Dependency to get the ShiftService instance
     """
     return ShiftService()
-
-
-LOGGER = logging.getLogger(__name__)
 
 
 shift_service_dependency = Depends(get_shift_service)
@@ -38,26 +38,39 @@ def error_handler(route_function):
             return await route_function(*args, **kwargs)
         except ValidationError as e:
             LOGGER.exception("Invalid input: %s", str(e))
-            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))
+            error_response(e, HTTPStatus.BAD_REQUEST)
         except (DatabaseError, InternalError, DataError) as e:
             LOGGER.exception("Database error: %s", str(e))
-            raise HTTPException(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail="Database error occurred",
-            )
+            error_response(e)
         except ValueError as e:
             LOGGER.exception("Unexpected error: %s", str(e))
-            raise HTTPException(
-                status_code=HTTPStatus.BAD_REQUEST, detail="Wrong value provided"
-            )
-        except Exception as e:
+            error_response(e, HTTPStatus.BAD_REQUEST)
+        except Exception as e:  # pylint: disable=W0718
             LOGGER.exception("Unexpected error: %s", str(e))
-            raise HTTPException(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail="An unexpected error occurred",
-            )
+            error_response(e)
 
     return wrapper
+
+
+def error_response(
+    err: Exception, http_status: HTTPStatus = HTTPStatus.INTERNAL_SERVER_ERROR
+) -> Response:
+    """
+    Creates a general server error response from an exception
+
+    :return: HTTP response server error
+    """
+    response_body = {
+        "title": http_status.phrase,
+        "detail": f"{repr(err)} with args {err.args}",
+        "traceback": {
+            "key": "Internal Server Error",
+            "type": str(type(err)),
+            "full_traceback": traceback.format_exc(),
+        },
+    }
+
+    return response_body, http_status
 
 
 @router.get("/shift", tags=["shifts"])

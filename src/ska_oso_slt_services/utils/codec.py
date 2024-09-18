@@ -1,4 +1,4 @@
-from os import PathLike, environ
+from os import environ
 from typing import Any, Type, cast
 
 from pydantic import (
@@ -42,8 +42,9 @@ class SLTObject(BaseModel):
     def _exclude_default_nulls_and_empty(
         self, dumped: dict[str, Any]
     ) -> dict[str, Any]:
-        """To avoid cluttering JSON output, we want to omit any None, [], {} values
-        that are present by default, but preserve any 'empty' values that were deliberately
+        """To avoid cluttering JSON output, we want to omit
+        any None, [], {} values that are present by default,
+        but preserve any 'empty' values that were deliberately
         set by callers."""
         filtered = {
             key: val

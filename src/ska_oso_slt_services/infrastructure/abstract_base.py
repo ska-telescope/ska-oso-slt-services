@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
 from typing import List, Optional
 
-from ska_oso_slt_services.models.shiftmodels import Media, Shift
+from ska_oso_slt_services.models.shiftmodels import DateQuery, Media, Shift, UserQuery
 
 
 class ShiftRepository(ABC):
@@ -15,11 +14,10 @@ class ShiftRepository(ABC):
     """
 
     @abstractmethod
-    def get_shifts(
+    async def get_shifts(
         self,
-        query_params: Optional[datetime],
-        pattern: Optional[str],
-        pattern_value: Optional[str],
+        user_query: Optional[UserQuery] = None,
+        date_query: Optional[DateQuery] = None,
     ) -> List[Shift]:
         """
         Retrieve a list of shifts within the specified start and end times.
@@ -36,7 +34,7 @@ class ShiftRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_shift(self, shift_id: str) -> Shift:
+    async def get_shift(self, shift_id: str) -> Shift:
         """
         Retrieve a shift by its SID.
 
@@ -59,7 +57,7 @@ class CRUDShiftRepository(ShiftRepository):
     """
 
     @abstractmethod
-    def create_shift(self, shift: Shift) -> Shift:
+    async def create_shift(self, shift: Shift) -> Shift:
         """
         Create a new shift.
 
@@ -72,7 +70,7 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    def update_shift(self, shift: Shift) -> Shift:
+    async def update_shift(self, shift: Shift) -> Shift:
         """
         Update an existing shift.
 
@@ -85,7 +83,9 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    def patch_shift(self, shift_id: Optional[str], comments: Optional[str]) -> Shift:
+    async def patch_shift(
+        self, shift_id: str | None, column_name: str | None, column_value: str | None
+    ) -> Shift:
         """
         Update an existing shift.
 
@@ -98,7 +98,7 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    def delete_shift(self, sid: str) -> bool:
+    async def delete_shift(self, sid: str) -> bool:
         """
         Delete a shift by its SID.
 
@@ -111,7 +111,7 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    def get_media(self, shift_id: str) -> List[Media]:
+    async def get_media(self, shift_id: str) -> List[Media]:
         """
         Retrieve a list of media associated with a shift.
 
@@ -124,7 +124,7 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    def add_media(self, shift_id: str, media: Media) -> bool:
+    async def add_media(self, shift_id: str, media: Media) -> bool:
         """
         Add media to a shift.
 

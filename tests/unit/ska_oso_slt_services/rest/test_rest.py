@@ -12,10 +12,6 @@ app = create_app()
 client = TestClient(app)
 
 
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
-
-
 def test_create_shift():
     # Prepare test data with metadata
     current_time = datetime.now(timezone.utc)
@@ -40,7 +36,8 @@ def test_create_shift():
     # Patch both database access and Shift model creation
     with (
         patch(
-            "ska_oso_slt_services.data_access.postgres_data_acess.PostgresDataAccess.insert"
+            "ska_oso_slt_services.data_access"
+            ".postgres_data_acess.PostgresDataAccess.insert"
         ) as mock_insert,
         patch(
             "ska_oso_slt_services.services.shift_service.Shift", return_value=mock_shift
@@ -106,7 +103,8 @@ def test_get_shift():
 
     # Patch the database session to use our mock
     with patch(
-        "ska_oso_slt_services.data_access.postgres_data_acess.PostgresDataAccess.get_one",
+        "ska_oso_slt_services.data_access"
+        ".postgres_data_acess.PostgresDataAccess.get_one",
         return_value=mock_shift,
     ):
         # Send a GET request to the endpoint
@@ -233,16 +231,18 @@ def test_update_shift():
 
     # Patch the database session to use our mock
     with patch(
-        "ska_oso_slt_services.data_access.postgres_data_acess.PostgresDataAccess.get_one",
+        "ska_oso_slt_services.data_access."
+        "postgres_data_acess.PostgresDataAccess.get_one",
         return_value=existing_shift,
     ):
         with patch(
-            "ska_oso_slt_services.data_access.postgres_data_acess.PostgresDataAccess.update",
+            "ska_oso_slt_services.data_access.postgres_data_acess"
+            ".PostgresDataAccess.update",
             return_value=updated_shift,
         ):
             # Send a PUT request to the endpoint
             response = client.put(
-                f"/ska-oso-slt-services/slt/api/v0/shift/shifts/update",
+                "/ska-oso-slt-services/slt/api/v0/shift/shifts/update",
                 json=update_data,
             )
 
@@ -255,13 +255,6 @@ def test_update_shift():
     assert updated_shift_response[0]["shift_operator"] == update_data["shift_operator"]
     assert updated_shift_response[0]["annotations"] == update_data["annotations"]
 
-
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
-
-from fastapi.testclient import TestClient
-
-from ska_oso_slt_services import create_app
 
 # Create the FastAPI app instance
 app = create_app()
@@ -307,16 +300,18 @@ def test_patch_shift():
 
     # Patch the database session to use our mock
     with patch(
-        "ska_oso_slt_services.data_access.postgres_data_acess.PostgresDataAccess.get_one",
+        "ska_oso_slt_services.data_access."
+        "postgres_data_acess.PostgresDataAccess.get_one",
         return_value=existing_shift,
     ):
         with patch(
-            "ska_oso_slt_services.data_access.postgres_data_acess.PostgresDataAccess.update",
+            "ska_oso_slt_services.data_access.postgres_data_acess."
+            "PostgresDataAccess.update",
             return_value=patched_shift,
         ):
             # Send a PATCH request to the endpoint
             response = client.patch(
-                f"/ska-oso-slt-services/slt/api/v0/shift/shifts/patch/test-id-1",
+                "/ska-oso-slt-services/slt/api/v0/shift/shifts/patch/test-id-1",
                 json=patch_data,
             )
 

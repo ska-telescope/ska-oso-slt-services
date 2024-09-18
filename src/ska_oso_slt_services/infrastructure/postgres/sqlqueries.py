@@ -2,7 +2,8 @@
 Pure functions which map from entities to SQL queries with parameters.
 
 This module provides functions to generate SQL queries for various database operations
-related to shift management, including inserting, updating, selecting, and querying shifts.
+related to shift management, including inserting, updating,
+selecting, and querying shifts.
 """
 
 from datetime import datetime
@@ -20,14 +21,17 @@ QueryAndParameters = Tuple[sql.Composed, Tuple[SqlTypes]]
 def insert_query(table_details: TableDetails, shift: Shift) -> QueryAndParameters:
     """
     Creates a query and parameters to insert the given entity in the table,
-    effectively creating a new version by inserting a new row, and returning the row ID.
+    effectively creating a new version by inserting a new row,
+    and returning the row ID.
 
     Args:
-        table_details (TableDetails): The information about the table to perform the insert on.
+        table_details (TableDetails): The information about the
+        table to perform the insert on.
         shift (Shift): The shift entity which will be persisted.
 
     Returns:
-        QueryAndParameters: A tuple of the query and parameters, which psycopg will safely combine.
+        QueryAndParameters: A tuple of the query and parameters,
+        which psycopg will safely combine.
     """
     columns = table_details.get_columns_with_metadata()
     params = table_details.get_params_with_metadata(shift)
@@ -51,14 +55,17 @@ def update_query(table_details: TableDetails, shift: Shift) -> QueryAndParameter
     Creates a query and parameters to update the given entity in the table,
     overwriting values in the existing row and returning the row ID.
 
-    If there is not an existing row for the identifier then no update is performed.
+    If there is not an existing row for the identifier
+    then no update is performed.
 
     Args:
-        table_details (TableDetails): The information about the table to perform the update on.
+        table_details (TableDetails): The information about the table
+        to perform the update on.
         shift (Shift): The shift entity which will be persisted.
 
     Returns:
-        QueryAndParameters: A tuple of the query and parameters, which psycopg will safely combine.
+        QueryAndParameters: A tuple of the query and parameters,
+        which psycopg will safely combine.
     """
     columns = table_details.get_columns_with_metadata()
     params = table_details.get_params_with_metadata(shift)
@@ -87,7 +94,8 @@ def patch_query(
     Creates a query and parameters to patch specific columns of a shift entry.
 
     Args:
-        table_details (TableDetails): The information about the table to perform the patch on.
+        table_details (TableDetails): The information about
+        the table to perform the patch on.
         column_names (list[str]): List of column names to be updated.
         values (list[Any]): List of values corresponding to the column names.
         shift_id (int): The ID of the shift to be patched.
@@ -110,15 +118,17 @@ def select_latest_query(
     table_details: TableDetails, shift_id: str
 ) -> QueryAndParameters:
     """
-    Creates a query and parameters to find the latest version of the given entity in the table,
-    returning the row if found.
+    Creates a query and parameters to find the latestversion of
+    the given entity in the table, returning the row if found.
 
     Args:
-        table_details (TableDetails): The information about the table to perform the query on.
+        table_details (TableDetails): The information about
+        the table to perform the query on.
         shift_id (str): The identifier of the shift to search for.
 
     Returns:
-        QueryAndParameters: A tuple of the query and parameters, which psycopg will safely combine.
+        QueryAndParameters: A tuple of the query and parameters,
+        which psycopg will safely combine.
     """
     columns = table_details.table_details.column_map.keys()
     mapping_columns = [key for key in table_details.table_details.metadata_map.keys()]
@@ -233,7 +243,8 @@ def select_by_date_query(
     Creates a query to select shifts based on date-specific criteria.
 
     Args:
-        table_details (TableDetails): The information about the table to query.
+        table_details (TableDetails): The information
+        about the table to query.
         qry_params (DateQuery): The date query parameters.
 
     Returns:

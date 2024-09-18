@@ -40,16 +40,6 @@ class PostgresConnection:
 class PostgresDataAccess:
     """
     Postgres Data Access Class
-
-    """
-
-    def __init__(self):
-        self.postgres_connection = PostgresConnection().get_connection()
-
-
-class PostgresDataAccess:
-    """
-    Postgres Data Access Class
     """
 
     def __init__(self):
@@ -71,12 +61,12 @@ class PostgresDataAccess:
                     return cursor.fetchone()
         except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
-            LOGGER.info(f"Error executing insert query: {e}")
+            LOGGER.info("Error executing insert query: %s", e)
             conn.rollback()
             raise e
         except Exception as e:
             # Handle other exceptions
-            LOGGER.info(f"Unexpected error: {e}")
+            LOGGER.info("Unexpected error: %s", e)
             raise e
 
     async def update(self, query: sql.Composed, params: Tuple) -> int:
@@ -95,12 +85,12 @@ class PostgresDataAccess:
                     return cursor.rowcount
         except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
-            LOGGER.info(f"Error executing update query: {e}")
+            LOGGER.info("Error executing update query: %s", e)
             conn.rollback()
             raise e
         except Exception as e:
             # Handle other exceptions
-            LOGGER.info(f"Unexpected error: {e}")
+            LOGGER.info("Unexpected error: %s", e)
             raise e
 
     def delete(self, query: str, connection):
@@ -122,11 +112,11 @@ class PostgresDataAccess:
                     return cursor.fetchall()
         except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
-            LOGGER.info(f"Error executing get query: {e}")
+            LOGGER.info("Error executing get query: %s", e)
             raise e
         except Exception as e:
             # Handle other exceptions
-            LOGGER.info(f"Unexpected error: {e}")
+            LOGGER.info("Unexpected error: %s", e)
             raise e
 
     async def get_one(self, query: sql.Composed, params: Tuple) -> Tuple[Any, ...]:
@@ -144,9 +134,9 @@ class PostgresDataAccess:
                     return cursor.fetchone()
         except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
-            LOGGER.info(f"Error executing get one query: {e}")
+            LOGGER.info("Error executing single record query: %s", e)
             raise e
         except Exception as e:
             # Handle other exceptions
-            LOGGER.info(f"Unexpected error: {e}")
+            LOGGER.info("Unexpected error: %s", e)
             raise e

@@ -19,7 +19,13 @@ from ska_oso_slt_services.infrastructure.postgres.sqlqueries import (
     select_latest_query,
     update_query,
 )
-from ska_oso_slt_services.models.shiftmodels import Media, Metadata, Shift
+from ska_oso_slt_services.models.shiftmodels import (
+    DateQuery,
+    Media,
+    Metadata,
+    Shift,
+    UserQuery,
+)
 from ska_oso_slt_services.utils.codec import CODEC
 from ska_oso_slt_services.utils.metadatamixin import set_new_metadata, update_metadata
 
@@ -45,8 +51,8 @@ class ShiftService(CRUDShiftRepository):
 
     async def get_shifts(
         self,
-        user_query: Optional[any] = None,
-        date_query: Optional[any] = None,
+        user_query: Optional[UserQuery] = None,
+        date_query: Optional[DateQuery] = None,
     ) -> List[Shift]:
         """
         Retrieve shifts based on user or date query.
@@ -69,18 +75,26 @@ class ShiftService(CRUDShiftRepository):
             else:
                 query, params = select_by_user_query(self.table_details, user_query)
             shifts = await self.postgres_data_access.get(query, params)
-            LOGGER.info(f"Shifts: {shifts}")
+            LOGGER.info("Shifts: %s", shifts)
             prepared_shifts = []
             for shift in shifts:
                 processed_shift = self._prepare_shift_with_metadata(shift)
                 prepared_shifts.append(processed_shift)
             return prepared_shifts
-        except (ValueError, Exception) as e:
+        except (
+            DatabaseError,
+            InternalError,
+            DataError,
+            ValueError,
+        ) as e:  # pylint: disable=W0718, I0021
             # Log the error
-            LOGGER.error(f"Error getting shift: {e}")
+            LOGGER.error("Error getting shift: %s", e)
 
             # Optionally, you can re-raise the exception
             raise e
+        except Exception as e:  # pylint: disable=W0718
+            # Handle other exceptions
+            LOGGER.error("Unexpected error: %s", e)
 
     async def get_shift(self, shift_id):
         """
@@ -104,13 +118,13 @@ class ShiftService(CRUDShiftRepository):
                 return shift_with_metadata
             else:
                 raise ValueError(f"No shift found with ID: {shift_id}")
-        except (DatabaseError, InternalError, DataError) as e:
+        except (DatabaseError, InternalError, DataError, ValueError) as e:
             # Handle database-related exceptions
-            LOGGER.error(f"Error executing insert query: {e}")
+            LOGGER.error("Error executing insert query: %s", e)
             raise e
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0718
             # Handle other exceptions
-            LOGGER.error(f"Unexpected error: {e}")
+            LOGGER.error("Unexpected error: %s", e)
 
     def _prepare_shift_with_metadata(self, shift: Dict[Any, Any]) -> Shift:
         """
@@ -194,13 +208,13 @@ class ShiftService(CRUDShiftRepository):
             shift = self._prepare_new_shift(shift)
             await self._insert_shift_to_database(shift)
             return shift
-        except (DatabaseError, InternalError, DataError) as e:
+        except (DatabaseError, InternalError, DataError, ValueError) as e:
             # Handle database-related exceptions
-            LOGGER.error(f"Error executing insert query: {e}")
+            LOGGER.error("Error executing insert query: %s", e)
             raise e
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0718
             # Handle other exceptions
-            LOGGER.error(f"Unexpected error: {e}")
+            LOGGER.error("Unexpected error: %s", e)
 
     def _prepare_new_shift(self, shift: Shift) -> Shift:
         """
@@ -265,11 +279,11 @@ class ShiftService(CRUDShiftRepository):
             return shift
         except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
-            LOGGER.error(f"Error executing insert query: {e}")
+            LOGGER.error("Error executing insert query: %s", e)
             raise e
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0718
             # Handle other exceptions
-            LOGGER.error(f"Unexpected error: {e}")
+            LOGGER.error("Unexpected error: %s", e)
 
     async def _get_existing_shift(self, shift_id: int) -> Optional[dict]:
         """
@@ -305,7 +319,7 @@ class ShiftService(CRUDShiftRepository):
             ValueError: If the shift has already ended and cannot be updated.
         """
         if existing_shift["shift_end"]:
-            raise ValueError(f"After shift end update shift disabled")
+            raise ValueError("After shift end update shift disabled")
 
     def _merge_comments(
         self, new_comments: str, existing_comments: Optional[str]
@@ -361,13 +375,13 @@ class ShiftService(CRUDShiftRepository):
             query, params = self._build_patch_query(shift_id, column_name, column_value)
             await self.postgres_data_access.update(query, params)
             return {"details": "Shift updated successfully"}
-        except (DatabaseError, InternalError, DataError) as e:
+        except (DatabaseError, InternalError, DataError, ValueError) as e:
             # Handle database-related exceptions
-            LOGGER.error(f"Error executing insert query: {e}")
+            LOGGER.error("Error executing insert query: %s", e)
             raise e
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0718
             # Handle other exceptions
-            LOGGER.error(f"Unexpected error: {e}")
+            LOGGER.error("Unexpected error: %s", e)
 
     async def _validate_shift_exists(self, shift_id: str) -> None:
         """
@@ -401,11 +415,11 @@ class ShiftService(CRUDShiftRepository):
         params = [column_value, shift_id]
         return query, params
 
-    def get_media(self, shift_id: int) -> Media:
+    async def get_media(self, shift_id: int) -> Media:
         pass
 
-    def add_media(self, shift_id: int, media: Media) -> Media:
+    async def add_media(self, shift_id: int, media: Media) -> Media:
         pass
 
-    def delete_shift(self, sid: str):
+    async def delete_shift(self, sid: str):
         pass

@@ -19,13 +19,15 @@ SqlTypes = Union[str, int, datetime]
 @dataclass
 class TableDetails:
     """
-    Represents the details of a database table and its mapping to a Shift object.
+    Represents the details of a database table and its mapping
+    to a Shift object.
 
     Attributes:
         table_name (str): The name of the database table.
         identifier_field (str): The primary identifier field of the table.
         column_map (dict): Mapping of table columns to Shift object attributes.
-        metadata_map (Dict[str, Callable[[Shift], SqlTypes]]): Mapping of metadata fields to their respective getter functions.
+        metadata_map (Dict[str, Callable[[Shift], SqlTypes]]):
+        Mapping of metadata fields to their respective getter functions.
     """
 
     table_name: str
@@ -45,7 +47,7 @@ class ModelEncoder(json.JSONEncoder):
     Custom JSON encoder for handling model objects with 'model_dump_json' method.
     """
 
-    def default(self, obj: Any) -> Any:
+    def default(self, obj: Any) -> Any:  # pylint: disable=W0237
         """
         Encode objects with 'model_dump_json' method or use default encoding.
 
@@ -62,7 +64,8 @@ class ModelEncoder(json.JSONEncoder):
 
 class ShiftLogMapping:
     """
-    Provides mapping functionality for Shift objects to database operations.
+    Provides mapping functionality for Shift objects
+    to database operations.
     """
 
     @property
@@ -71,7 +74,8 @@ class ShiftLogMapping:
         Get the table details for the shift log.
 
         Returns:
-            TableDetails: An object containing the table name, identifier field, and column mappings.
+            TableDetails: An object containing the table name,
+            identifier field, and column mappings.
         """
         return TableDetails(
             table_name="tab_oda_slt",
@@ -94,7 +98,8 @@ class ShiftLogMapping:
         Get a tuple of column names including metadata fields.
 
         Returns:
-            Tuple[str]: A tuple containing all column names and metadata field names.
+            Tuple[str]: A tuple containing all column names and
+            metadata field names.
         """
         return tuple(self.table_details.column_map.keys()) + tuple(
             self.table_details.metadata_map.keys()
@@ -108,7 +113,8 @@ class ShiftLogMapping:
             shift: The Shift object to extract parameters from.
 
         Returns:
-            Tuple[SqlTypes]: A tuple containing parameter values for all columns and metadata fields.
+            Tuple[SqlTypes]: A tuple containing
+            parameter values for all columns and metadata fields.
         """
         return tuple(
             map_fn(shift) for map_fn in self.table_details.column_map.values()
