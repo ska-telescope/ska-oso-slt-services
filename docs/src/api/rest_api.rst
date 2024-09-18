@@ -129,7 +129,4 @@ For example, to retrieve slt shift between shift_start and shift_end from the st
          }
       ]
 
-The SLT API endpoints, with the accepted requests and expected responses, are documented below:
-
-.. openapi:: ../../../src/ska_oso_slt_services/rest/openapi/slt-openapi-v1.yaml
-   
+The SLT API endpoints, with the accepted requests and expected responses, are documented below:   

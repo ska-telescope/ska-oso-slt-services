@@ -85,7 +85,6 @@ Generally the API URL should be available at  `https://k8s.stfc.skao.int/$KUBE_N
 
 # Development
 
-The API for this service is defined by an [OpenAPI document](src/ska_oso_slt_services/openapi/slt-openapi-v1.yaml).
 This had been used to generate parts of the code used by the application using Swagger Codegen, name those in the [generated package](src/ska_oso_slt_services/slt/generated)
 
 # Documentation
