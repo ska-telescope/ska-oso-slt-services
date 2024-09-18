@@ -125,6 +125,7 @@ class ShiftService(CRUDShiftRepository):
         except Exception as e:  # pylint: disable=W0718
             # Handle other exceptions
             LOGGER.error("Unexpected error: %s", e)
+            raise e
 
     def _prepare_shift_with_metadata(self, shift: Dict[Any, Any]) -> Shift:
         """
@@ -215,6 +216,7 @@ class ShiftService(CRUDShiftRepository):
         except Exception as e:  # pylint: disable=W0718
             # Handle other exceptions
             LOGGER.error("Unexpected error: %s", e)
+            raise e
 
     def _prepare_new_shift(self, shift: Shift) -> Shift:
         """
@@ -284,6 +286,7 @@ class ShiftService(CRUDShiftRepository):
         except Exception as e:  # pylint: disable=W0718
             # Handle other exceptions
             LOGGER.error("Unexpected error: %s", e)
+            raise e
 
     async def _get_existing_shift(self, shift_id: int) -> Optional[dict]:
         """
@@ -382,6 +385,7 @@ class ShiftService(CRUDShiftRepository):
         except Exception as e:  # pylint: disable=W0718
             # Handle other exceptions
             LOGGER.error("Unexpected error: %s", e)
+            raise e
 
     async def _validate_shift_exists(self, shift_id: str) -> None:
         """
