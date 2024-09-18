@@ -1,21 +1,12 @@
-from enum import Enum
+import logging
 from threading import Lock
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
-from psycopg import Connection, DatabaseError, sql
+from psycopg import DatabaseError, DataError, InternalError, sql
 from psycopg_pool import ConnectionPool
 from ska_db_oda.unit_of_work.postgresunitofwork import create_connection_pool
 
-
-class QueryType(Enum):
-    """
-    Enum class for query types
-    """
-
-    GET = "GET"
-    POST = "POST"
-    PUT = "PUT"
-    DELETE = "DELETE"
+LOGGER = logging.getLogger(__name__)
 
 
 class PostgresConnection:
@@ -64,7 +55,7 @@ class PostgresDataAccess:
     def __init__(self):
         self.postgres_connection = PostgresConnection().get_connection()
 
-    async def insert(self, query: sql.Composed, params: Tuple):
+    async def insert(self, query: sql.Composed, params: Tuple) -> int:
         """
         Insert data into the database.
 
@@ -78,17 +69,17 @@ class PostgresDataAccess:
                     cursor.execute(query, params)
                     conn.commit()
                     return cursor.fetchone()
-        except DatabaseError as e:
+        except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
-            print(f"Error executing insert query: {e}")
+            LOGGER.info(f"Error executing insert query: {e}")
             conn.rollback()
-            raise
+            raise e
         except Exception as e:
             # Handle other exceptions
-            print(f"Unexpected error: {e}")
-            raise
+            LOGGER.info(f"Unexpected error: {e}")
+            raise e
 
-    async def update(self, query: sql.Composed, params: Tuple):
+    async def update(self, query: sql.Composed, params: Tuple) -> int:
         """
         Update data in the database.
 
@@ -102,20 +93,20 @@ class PostgresDataAccess:
                     cursor.execute(query, params)
                     conn.commit()
                     return cursor.rowcount
-        except DatabaseError as e:
+        except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
-            print(f"Error executing update query: {e}")
+            LOGGER.info(f"Error executing update query: {e}")
             conn.rollback()
-            raise
+            raise e
         except Exception as e:
             # Handle other exceptions
-            print(f"Unexpected error: {e}")
-            raise
+            LOGGER.info(f"Unexpected error: {e}")
+            raise e
 
     def delete(self, query: str, connection):
         pass
 
-    async def get(self, query: sql.Composed, params: Tuple):
+    async def get(self, query: sql.Composed, params: Tuple) -> List[Tuple[int, str]]:
         """
         Get data from the database.
 
@@ -129,16 +120,16 @@ class PostgresDataAccess:
                     cursor.execute(query, params)
                     conn.commit()
                     return cursor.fetchall()
-        except DatabaseError as e:
+        except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
-            print(f"Error executing get query: {e}")
-            raise
+            LOGGER.info(f"Error executing get query: {e}")
+            raise e
         except Exception as e:
             # Handle other exceptions
-            print(f"Unexpected error: {e}")
-            raise
+            LOGGER.info(f"Unexpected error: {e}")
+            raise e
 
-    async def get_one(self, query: sql.Composed, params: Tuple):
+    async def get_one(self, query: sql.Composed, params: Tuple) -> Tuple[Any, ...]:
         """
         Get one row from the database.
 
@@ -151,11 +142,11 @@ class PostgresDataAccess:
                 with conn.cursor() as cursor:
                     cursor.execute(query, params)
                     return cursor.fetchone()
-        except DatabaseError as e:
+        except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
-            print(f"Error executing get_one query: {e}")
-            raise
+            LOGGER.info(f"Error executing get one query: {e}")
+            raise e
         except Exception as e:
             # Handle other exceptions
-            print(f"Unexpected error: {e}")
-            raise
+            LOGGER.info(f"Unexpected error: {e}")
+            raise e

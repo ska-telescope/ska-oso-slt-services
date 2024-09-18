@@ -3,17 +3,16 @@ Shift Router used for routes the request to appropriate method
 """
 
 import logging
-from datetime import datetime
 from functools import wraps
 from http import HTTPStatus
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from psycopg import DatabaseError, DataError, InternalError
 from pydantic import ValidationError
 
 from ska_oso_slt_services.models.shiftmodels import DateQuery, Shift, UserQuery
 from ska_oso_slt_services.services.shift_service import ShiftService
-from ska_oso_slt_services.utils.exception import DatabaseError
 
 
 def get_shift_service() -> ShiftService:
@@ -40,7 +39,7 @@ def error_handler(route_function):
         except ValidationError as e:
             LOGGER.exception("Invalid input: %s", str(e))
             raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))
-        except DatabaseError as e:
+        except (DatabaseError, InternalError, DataError) as e:
             LOGGER.exception("Database error: %s", str(e))
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,

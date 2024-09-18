@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from dateutil import parser
-from psycopg2 import Error as PostgresError
+from psycopg import DatabaseError, DataError, InternalError
 
 from ska_oso_slt_services.data_access.postgres_data_acess import PostgresDataAccess
 from ska_oso_slt_services.infrastructure.abstract_base import CRUDShiftRepository
@@ -21,7 +21,6 @@ from ska_oso_slt_services.infrastructure.postgres.sqlqueries import (
 )
 from ska_oso_slt_services.models.shiftmodels import Media, Metadata, Shift
 from ska_oso_slt_services.utils.codec import CODEC
-from ska_oso_slt_services.utils.exception import DatabaseError
 from ska_oso_slt_services.utils.metadatamixin import set_new_metadata, update_metadata
 
 LOGGER = logging.getLogger(__name__)
@@ -81,7 +80,7 @@ class ShiftService(CRUDShiftRepository):
             LOGGER.error(f"Error getting shift: {e}")
 
             # Optionally, you can re-raise the exception
-            raise
+            raise e
 
     async def get_shift(self, shift_id):
         """
@@ -105,12 +104,13 @@ class ShiftService(CRUDShiftRepository):
                 return shift_with_metadata
             else:
                 raise ValueError(f"No shift found with ID: {shift_id}")
-        except (ValueError, Exception) as e:
-            # Log the error
-            LOGGER.error(f"Error getting shift: {e}")
-
-            # Optionally, you can re-raise the exception
-            raise
+        except (DatabaseError, InternalError, DataError) as e:
+            # Handle database-related exceptions
+            LOGGER.error(f"Error executing insert query: {e}")
+            raise e
+        except Exception as e:
+            # Handle other exceptions
+            LOGGER.error(f"Unexpected error: {e}")
 
     def _prepare_shift_with_metadata(self, shift: Dict[Any, Any]) -> Shift:
         """
@@ -190,9 +190,17 @@ class ShiftService(CRUDShiftRepository):
         Returns:
             Shift: The newly created shift with updated attributes.
         """
-        shift = self._prepare_new_shift(shift)
-        await self._insert_shift_to_database(shift)
-        return shift
+        try:
+            shift = self._prepare_new_shift(shift)
+            await self._insert_shift_to_database(shift)
+            return shift
+        except (DatabaseError, InternalError, DataError) as e:
+            # Handle database-related exceptions
+            LOGGER.error(f"Error executing insert query: {e}")
+            raise e
+        except Exception as e:
+            # Handle other exceptions
+            LOGGER.error(f"Unexpected error: {e}")
 
     def _prepare_new_shift(self, shift: Shift) -> Shift:
         """
@@ -255,10 +263,13 @@ class ShiftService(CRUDShiftRepository):
 
             await self._update_shift_in_database(shift)
             return shift
-        except ValueError as e:
-            # Consider logging the error here
-            LOGGER.error(f"Error updating shift: {e}")
+        except (DatabaseError, InternalError, DataError) as e:
+            # Handle database-related exceptions
+            LOGGER.error(f"Error executing insert query: {e}")
             raise e
+        except Exception as e:
+            # Handle other exceptions
+            LOGGER.error(f"Unexpected error: {e}")
 
     async def _get_existing_shift(self, shift_id: int) -> Optional[dict]:
         """
@@ -350,14 +361,13 @@ class ShiftService(CRUDShiftRepository):
             query, params = self._build_patch_query(shift_id, column_name, column_value)
             await self.postgres_data_access.update(query, params)
             return {"details": "Shift updated successfully"}
-        except PostgresError as e:
-            raise DatabaseError(
-                f"Database error occurred while patching shift: {str(e)}"
-            ) from e
+        except (DatabaseError, InternalError, DataError) as e:
+            # Handle database-related exceptions
+            LOGGER.error(f"Error executing insert query: {e}")
+            raise e
         except Exception as e:
-            raise RuntimeError(
-                f"Unexpected error occurred while patching shift: {str(e)}"
-            ) from e
+            # Handle other exceptions
+            LOGGER.error(f"Unexpected error: {e}")
 
     async def _validate_shift_exists(self, shift_id: str) -> None:
         """

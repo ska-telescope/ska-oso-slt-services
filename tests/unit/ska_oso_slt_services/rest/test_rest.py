@@ -12,41 +12,71 @@ app = create_app()
 client = TestClient(app)
 
 
-def test_create_shift():
-    # Prepare test data
-    shift_data = {"shift_operator": "test"}
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
 
-    # Create a mock for the database session
-    mock_db_session = MagicMock()
+
+def test_create_shift():
+    # Prepare test data with metadata
+    current_time = datetime.now(timezone.utc)
+    shift_data = {
+        "shift_operator": "test",
+        "metadata": {
+            "created_by": "DefaultUser",
+            "created_on": current_time.isoformat(),
+            "last_modified_by": "DefaultUser",
+            "last_modified_on": current_time.isoformat(),
+        },
+    }
 
     # Create a mock for the shift model
     mock_shift = MagicMock()
+    mock_shift.shift_operator = shift_data["shift_operator"]
+    mock_shift.created_by = shift_data["metadata"]["created_by"]
+    mock_shift.created_on = current_time
+    mock_shift.last_modified_by = shift_data["metadata"]["last_modified_by"]
+    mock_shift.last_modified_on = current_time
 
-    # Set up the mock to return our mock_shift when add() is called
-    mock_db_session.add.return_value = None
-    mock_db_session.commit.return_value = None
-    mock_db_session.refresh.return_value = None
-
-    # Patch the database session to use our mock
-    with patch(
-        "ska_oso_slt_services.data_access.postgres_data_acess.PostgresDataAccess.insert",
-        return_value=mock_db_session,
-    ):
-        # Patch the Shift model to return our mock_shift when instantiated
-        with patch(
+    # Patch both database access and Shift model creation
+    with (
+        patch(
+            "ska_oso_slt_services.data_access.postgres_data_acess.PostgresDataAccess.insert"
+        ) as mock_insert,
+        patch(
             "ska_oso_slt_services.services.shift_service.Shift", return_value=mock_shift
-        ):
-            # Send a POST request to the endpoint
-            response = client.post(
-                "/ska-oso-slt-services/slt/api/v0/shift/shifts/create", json=shift_data
-            )
+        ),
+    ):
 
-    # Assert the response status code
-    assert response.status_code == 200
+        # Send a POST request to the endpoint
+        response = client.post(
+            "/ska-oso-slt-services/slt/api/v0/shift/shifts/create", json=shift_data
+        )
 
-    # Assert the response content
+    # Assertions
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
     created_shift = response.json()
-    assert created_shift[0]["shift_operator"] == "test"
+    assert created_shift[0]["shift_operator"] == shift_data["shift_operator"], (
+        f"Expected shift_operator to be '{shift_data['shift_operator']}', but got"
+        f" '{created_shift[0]['shift_operator']}'"
+    )
+
+    # Verify metadata
+    assert "metadata" in created_shift[0], "Metadata is missing in the response"
+    metadata = created_shift[0]["metadata"]
+    assert metadata["created_by"] == shift_data["metadata"]["created_by"], (
+        f"Expected created_by to be '{shift_data['metadata']['created_by']}', but got"
+        f" '{metadata['created_by']}'"
+    )
+    assert metadata["last_modified_by"] == shift_data["metadata"]["last_modified_by"], (
+        "Expected last_modified_by to be"
+        f" '{shift_data['metadata']['last_modified_by']}', but got"
+        f" '{metadata['last_modified_by']}'"
+    )
+
+    mock_insert.assert_called_once()
 
 
 def test_get_shift():
