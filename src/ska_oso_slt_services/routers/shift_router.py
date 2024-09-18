@@ -38,16 +38,16 @@ def error_handler(route_function):
             return await route_function(*args, **kwargs)
         except ValidationError as e:
             LOGGER.exception("Invalid input: %s", str(e))
-            error_response(e, HTTPStatus.BAD_REQUEST)
+            return error_response(e, HTTPStatus.BAD_REQUEST)
         except (DatabaseError, InternalError, DataError) as e:
             LOGGER.exception("Database error: %s", str(e))
-            error_response(e)
+            return error_response(e)
         except ValueError as e:
             LOGGER.exception("Unexpected error: %s", str(e))
-            error_response(e, HTTPStatus.BAD_REQUEST)
+            return error_response(e, HTTPStatus.BAD_REQUEST)
         except Exception as e:  # pylint: disable=W0718
             LOGGER.exception("Unexpected error: %s", str(e))
-            error_response(e)
+            return error_response(e)
 
     return wrapper
 
