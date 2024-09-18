@@ -21,6 +21,10 @@ ska-ser-logging = "^0.4.1"
 ska-db-oda  = "5.3.3"
 # ska-db-oda = { version="5.3.3+dev.cea0b078b", source="gitlab-ska-db-oda" }
 pydantic = "^2.7"
+elasticsearch = "^8.14.0"
+pyhdbpp = "^1.5.12"
+annotated-types = "^0.7.0"
+elastic-transport = "^8.15.0"
 fastapi = "^0.111.0"
 
 
