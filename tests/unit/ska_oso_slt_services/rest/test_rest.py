@@ -130,11 +130,13 @@ def test_get_shifts():
             "shift_start": datetime.now(tz=timezone.utc),
             "shift_end": datetime.now(tz=timezone.utc),
             "shift_operator": "test-operator-1",
-            "shift_logs": [{
-                "info": {},
-                "source": "test",
-                "log_time": datetime.now(tz=timezone.utc),
-            }],
+            "shift_logs": [
+                {
+                    "info": {},
+                    "source": "test",
+                    "log_time": datetime.now(tz=timezone.utc),
+                }
+            ],
             "media": [{"type": "test", "path": "test"}],
             "annotations": "test-annotation-1",
             "comments": "test-comment-1",

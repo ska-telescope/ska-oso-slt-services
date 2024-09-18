@@ -34,12 +34,14 @@ class TableDetails:
     identifier_field: str
     column_map: dict
     metadata_map: dict
-    metadata_map: Dict[str, Callable[[Shift], SqlTypes]] = MappingProxyType({
-        "created_on": lambda shift: shift.metadata.created_on,
-        "created_by": lambda shift: shift.metadata.created_by,
-        "last_modified_on": lambda shift: shift.metadata.last_modified_on,
-        "last_modified_by": lambda shift: shift.metadata.last_modified_by,
-    })
+    metadata_map: Dict[str, Callable[[Shift], SqlTypes]] = MappingProxyType(
+        {
+            "created_on": lambda shift: shift.metadata.created_on,
+            "created_by": lambda shift: shift.metadata.created_by,
+            "last_modified_on": lambda shift: shift.metadata.last_modified_on,
+            "last_modified_by": lambda shift: shift.metadata.last_modified_by,
+        }
+    )
 
 
 class ModelEncoder(json.JSONEncoder):

@@ -36,12 +36,14 @@ def insert_query(table_details: TableDetails, shift: Shift) -> QueryAndParameter
     columns = table_details.get_columns_with_metadata()
     params = table_details.get_params_with_metadata(shift)
     # params = tuple(shift_dump[key] for key in mapping.table_details.column_map.keys())
-    query = sql.SQL("""
+    query = sql.SQL(
+        """
         INSERT INTO {table}
         ({fields})
         VALUES ({values})
         RETURNING id
-        """).format(
+        """
+    ).format(
         table=sql.Identifier(table_details.table_details.table_name),
         fields=sql.SQL(",").join(map(sql.Identifier, columns)),
         values=sql.SQL(",").join(sql.Placeholder() * len(params)),
@@ -71,11 +73,13 @@ def update_query(table_details: TableDetails, shift: Shift) -> QueryAndParameter
     params = table_details.get_params_with_metadata(shift)
     # query to add comments
 
-    query = sql.SQL("""
+    query = sql.SQL(
+        """
         UPDATE {table} SET ({fields}) = ({values})
         WHERE id=(SELECT id FROM {table} WHERE {identifier_field}=%s)
         RETURNING id;
-        """).format(
+        """
+    ).format(
         identifier_field=sql.Identifier(table_details.table_details.identifier_field),
         table=sql.Identifier(table_details.table_details.table_name),
         fields=sql.SQL(",").join(map(sql.Identifier, columns)),
@@ -139,10 +143,12 @@ def select_latest_query(
     params = (shift_id,)
 
     query = (
-        sql.SQL("""
+        sql.SQL(
+            """
         SELECT {fields}
         FROM {table}
-        """).format(
+        """
+        ).format(
             fields=sql.SQL(",").join(map(sql.Identifier, columns)),
             table=sql.Identifier(table_details.table_details.table_name),
             identifier_field=sql.Identifier(
@@ -167,11 +173,13 @@ def column_based_query(table_details: TableDetails, shift_id: str, column_names:
     Returns:
         QueryAndParameters: A tuple of the query and parameters.
     """
-    query = sql.SQL("""
+    query = sql.SQL(
+        """
         SELECT {column_name}
         FROM {table}
         WHERE {identifier_field} = %s
-        """).format(
+        """
+    ).format(
         column_name=sql.SQL(",").join(map(sql.Identifier, column_names)),
         table=sql.Identifier(table_details.table_details.table_name),
         identifier_field=sql.Identifier(table_details.table_details.identifier_field),
@@ -220,10 +228,12 @@ def select_by_user_query(
         else:
             where_clause = sql.SQL("")
     query = (
-        sql.SQL("""
+        sql.SQL(
+            """
     SELECT {fields}
     FROM {table}
-    """).format(
+    """
+        ).format(
             fields=sql.SQL(",").join(map(sql.Identifier, columns)),
             table=sql.Identifier(table_details.table_details.table_name),
             identifier_field=sql.Identifier(
@@ -263,9 +273,11 @@ def select_by_date_query(
             )
             params = (qry_params.shift_start, qry_params.shift_end)
         else:
-            where_clause = sql.SQL("""
+            where_clause = sql.SQL(
+                """
             WHERE {date_field} >= %s
-            """)
+            """
+            )
             params = (qry_params.shift_start,)
     else:
         where_clause = sql.SQL("""WHERE {date_field} <= %s""")
@@ -284,10 +296,12 @@ def select_by_date_query(
             )
 
     query = (
-        sql.SQL("""
+        sql.SQL(
+            """
         SELECT {fields}
         FROM {table}
-        """).format(
+        """
+        ).format(
             fields=sql.SQL(",").join(map(sql.Identifier, columns)),
             table=sql.Identifier(table_details.table_details.table_name),
             identifier_field=sql.Identifier(

@@ -16,42 +16,31 @@ url = 'https://pypi.org/simple'
 
 [tool.poetry.dependencies]
 python = "^3.10"
-connexion = {extras = ["swagger-ui"], version = "^2.14.0"}
 python-dateutil = "^2.8.2"
-gunicorn = "^20.1.0"
 ska-ser-logging = "^0.4.1"
-ska-ser-skuid = "^3.3.3"
-prance = {version = "^23.6.21.0", extras = ["osv"]}
 ska-db-oda  = "5.3.3"
-elasticsearch = "^8.14.0"
-pyhdbpp = "^1.5.12"
-annotated-types = "^0.7.0"
-elastic-transport = "^8.15.0"
-psycopg2-binary = "^2.9.9"
-pillow = "^10.4.0"
-deepdiff = "7.0.1"
+# ska-db-oda = { version="5.3.3+dev.cea0b078b", source="gitlab-ska-db-oda" }
+pydantic = "^2.7"
 fastapi = "^0.111.0"
 
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.1.1"
-pytest-cov = "^3.0.0"
-pytest-forked = "^1.4.0"
+pytest = "^8.2.2"
+pytest-cov = "^5.0.0"
+pytest-forked = "^1.6.0"
 pytest-json-report = "^1.5.0"
-black = "^23.12.1"
+black = "^24.0.0"
 pycodestyle = "^2.8.0"
 isort = "^5.10.1"
 pylint-junit = "^0.3.2"
 flake8 = "^7.0.0"
-deepdiff = "^7.0.1"
+deepdiff = "^7.0.0"
 
 
 [tool.poetry.group.docs.dependencies]
-recommonmark = "^0.7.1"
 sphinxcontrib-openapi= "^0.7.0"
 myst-parser = "^1.0.0"
 ska-ser-sphinx-theme = "^0.1.2"
-mistune = "^2"
 
 
 [tool.pytest.ini_options]
