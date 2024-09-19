@@ -107,6 +107,16 @@ class ShiftLogMapping:
             self.table_details.metadata_map.keys()
         )
 
+    def get_metadata_columns(self) -> Tuple[str]:
+        """
+        Get a tuple of column names including metadata fields.
+
+        Returns:
+            Tuple[str]: A tuple containing all column names and
+            metadata field names.
+        """
+        return tuple(self.table_details.metadata_map.keys())
+
     def get_params_with_metadata(self, shift) -> Tuple[SqlTypes]:
         """
         Get parameter values for a given shift, including metadata.

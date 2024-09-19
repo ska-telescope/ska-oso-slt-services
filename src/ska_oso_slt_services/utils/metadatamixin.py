@@ -1,5 +1,4 @@
 import logging
-from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Optional, TypeVar
 
@@ -11,7 +10,9 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 
-def update_metadata(shift: T, last_modified_by: Optional[str] = None) -> T:
+def update_metadata(
+    shift: T, metadata: Metadata, last_modified_by: Optional[str] = None
+) -> T:
     """Updates the metadata of a copy of the entity
 
     If a version of the entity already exists in the SLT, the previous
@@ -27,12 +28,16 @@ def update_metadata(shift: T, last_modified_by: Optional[str] = None) -> T:
     :return: A copy of the entity with the updated metadata to be persisted
     :rtype: An SLT entity which contains Metadata
     """
-    if last_modified_by is None:
-        last_modified_by = "DefaultUser"
-    updated_entity = deepcopy(shift)
-    updated_entity.metadata.last_modified_on = datetime.now(tz=timezone.utc)
-    updated_entity.metadata.last_modified_by = last_modified_by
-    return updated_entity
+
+    if metadata.created_on and metadata.created_by:
+        metadata_cls = Metadata
+        shift.metadata = metadata_cls(
+            created_on=metadata.created_on,
+            created_by=metadata.created_by,
+            last_modified_on=datetime.now(timezone.utc),
+            last_modified_by=last_modified_by,
+        )
+    return shift
 
 
 def set_new_metadata(shift: T, created_by: Optional[str] = None) -> T:

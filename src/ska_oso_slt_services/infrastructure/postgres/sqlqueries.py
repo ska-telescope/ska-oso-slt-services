@@ -188,6 +188,33 @@ def column_based_query(table_details: TableDetails, shift_id: str, column_names:
     return query, params
 
 
+def select_metadata_query(
+    table_details: TableDetails, shift_id: str
+) -> QueryAndParameters:
+    """
+    Creates a query to select all columns for all shifts.
+
+    Args:
+        table_details (TableDetails): The information about the table to query.
+
+    Returns:
+        QueryAndParameters: A tuple of the query and parameters.
+    """
+    columns = table_details.get_metadata_columns()
+    query = sql.SQL(
+        """
+        SELECT {fields}
+        FROM {table}
+        WHERE {identifier_field} = %s
+        """
+    ).format(
+        fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
+        table=sql.Identifier(table_details.table_details.table_name),
+        identifier_field=sql.Identifier(table_details.table_details.identifier_field),
+    )
+    return query, (shift_id,)
+
+
 def select_by_user_query(
     table_details: TableDetails, qry_params: UserQuery
 ) -> QueryAndParameters:

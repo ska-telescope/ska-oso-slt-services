@@ -18,9 +18,9 @@ def test_create_shift():
     shift_data = {
         "shift_operator": "test",
         "metadata": {
-            "created_by": "DefaultUser",
+            "created_by": "test",
             "created_on": current_time.isoformat(),
-            "last_modified_by": "DefaultUser",
+            "last_modified_by": "test",
             "last_modified_on": current_time.isoformat(),
         },
     }

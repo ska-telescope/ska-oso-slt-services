@@ -17,6 +17,7 @@ from ska_oso_slt_services.infrastructure.postgres.sqlqueries import (
     select_by_date_query,
     select_by_user_query,
     select_latest_query,
+    select_metadata_query,
     update_query,
 )
 from ska_oso_slt_services.models.shiftmodels import (
@@ -120,12 +121,12 @@ class ShiftService(CRUDShiftRepository):
                 raise ValueError(f"No shift found with ID: {shift_id}")
         except (DatabaseError, InternalError, DataError, ValueError) as e:
             # Handle database-related exceptions
-            LOGGER.error("Error executing insert query: %s", e)
-            raise e
-        except Exception as e:  # pylint: disable=W0718
-            # Handle other exceptions
-            LOGGER.error("Unexpected error: %s", e)
-            raise e
+            LOGGER.error("Error getting shift: %s", e)
+            raise
+        except Exception as e:
+            # Handle other unexpected exceptions
+            LOGGER.error("Unexpected error while getting shift: %s", e)
+            raise
 
     def _prepare_shift_with_metadata(self, shift: Dict[Any, Any]) -> Shift:
         """
@@ -173,8 +174,10 @@ class ShiftService(CRUDShiftRepository):
             TypeError: If the object is not a datetime instance.
         """
         if isinstance(obj, datetime):
+            if obj.tzinfo is None:
+                obj = obj.replace(tzinfo=timezone.utc)
             return obj.isoformat()
-        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+        return str(obj)
 
     def _create_metadata(self, shift: Dict[Any, Any]) -> Dict[str, str]:
         """
@@ -211,12 +214,12 @@ class ShiftService(CRUDShiftRepository):
             return shift
         except (DatabaseError, InternalError, DataError, ValueError) as e:
             # Handle database-related exceptions
-            LOGGER.error("Error executing insert query: %s", e)
-            raise e
-        except Exception as e:  # pylint: disable=W0718
-            # Handle other exceptions
-            LOGGER.error("Unexpected error: %s", e)
-            raise e
+            LOGGER.error("Error getting shift: %s", e)
+            raise
+        except Exception as e:
+            # Handle other unexpected exceptions
+            LOGGER.error("Unexpected error while getting shift: %s", e)
+            raise
 
     def _prepare_new_shift(self, shift: Shift) -> Shift:
         """
@@ -228,7 +231,7 @@ class ShiftService(CRUDShiftRepository):
         Returns:
             Shift: The prepared shift object.
         """
-        shift = set_new_metadata(shift)
+        shift = set_new_metadata(shift, created_by=shift.shift_operator)
         shift.shift_start = datetime.now(timezone.utc)
         shift.shift_id = f"shift-{uuid.uuid4()}"
         return shift
@@ -269,7 +272,10 @@ class ShiftService(CRUDShiftRepository):
             ValueError: If there's an error in updating the shift.
         """
         try:
-            shift = update_metadata(shift)
+            metadata = await self._get_latest_metadata(shift)
+            shift = update_metadata(
+                shift, metadata=metadata, last_modified_by=shift.shift_operator
+            )
             if shift.comments:
                 existing_shift = await self._get_existing_shift(shift.shift_id)
                 self._validate_shift_end(existing_shift)
@@ -279,14 +285,34 @@ class ShiftService(CRUDShiftRepository):
 
             await self._update_shift_in_database(shift)
             return shift
-        except (DatabaseError, InternalError, DataError) as e:
+        except (DatabaseError, InternalError, DataError, ValueError) as e:
             # Handle database-related exceptions
-            LOGGER.error("Error executing insert query: %s", e)
-            raise e
-        except Exception as e:  # pylint: disable=W0718
-            # Handle other exceptions
-            LOGGER.error("Unexpected error: %s", e)
-            raise e
+            LOGGER.error("Error getting shift: %s", e)
+            raise
+        except Exception as e:
+            # Handle other unexpected exceptions
+            LOGGER.error("Unexpected error while getting shift: %s", e)
+            raise
+
+    async def _get_latest_metadata(self, shift: Shift) -> Optional[Metadata]:
+        """Get latest metadata for update."""
+        try:
+            query, params = select_metadata_query(
+                table_details=self.table_details,
+                shift_id=shift.shift_id,
+            )
+            meta_data = await self.postgres_data_access.get_one(query, params)
+            return CODEC.loads(
+                Metadata, json.dumps(meta_data, default=self._datetime_to_string)
+            )
+        except (DatabaseError, InternalError, DataError, ValueError) as e:
+            # Handle database-related exceptions
+            LOGGER.error("Error getting shift: %s", e)
+            raise
+        except Exception as e:
+            # Handle other unexpected exceptions
+            LOGGER.error("Unexpected error while getting shift: %s", e)
+            raise
 
     async def _get_existing_shift(self, shift_id: int) -> Optional[dict]:
         """
@@ -380,12 +406,12 @@ class ShiftService(CRUDShiftRepository):
             return {"details": "Shift updated successfully"}
         except (DatabaseError, InternalError, DataError, ValueError) as e:
             # Handle database-related exceptions
-            LOGGER.error("Error executing insert query: %s", e)
-            raise e
-        except Exception as e:  # pylint: disable=W0718
-            # Handle other exceptions
-            LOGGER.error("Unexpected error: %s", e)
-            raise e
+            LOGGER.error("Error getting shift: %s", e)
+            raise
+        except Exception as e:
+            # Handle other unexpected exceptions
+            LOGGER.error("Unexpected error while getting shift: %s", e)
+            raise
 
     async def _validate_shift_exists(self, shift_id: str) -> None:
         """
