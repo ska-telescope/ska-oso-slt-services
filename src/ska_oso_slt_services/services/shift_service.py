@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from dateutil import parser
-from psycopg import DatabaseError, DataError, InternalError
 
+from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.data_access.postgres_data_acess import PostgresDataAccess
 from ska_oso_slt_services.infrastructure.abstract_base import CRUDShiftRepository
 from ska_oso_slt_services.infrastructure.postgres.mapping import ShiftLogMapping
@@ -66,36 +66,23 @@ class ShiftService(CRUDShiftRepository):
             List[Shift]: A list of Shift objects matching the query.
 
         Raises:
-            ValueError: If there's an error in processing the query.
+            NotFoundError: If there's an error in processing the query.
             Exception: For any other unexpected errors.
         """
 
-        try:
-            if date_query.shift_start and date_query.shift_end:
-                query, params = select_by_date_query(self.table_details, date_query)
-            else:
-                query, params = select_by_user_query(self.table_details, user_query)
-            shifts = await self.postgres_data_access.get(query, params)
-            LOGGER.info("Shifts: %s", shifts)
-            prepared_shifts = []
-            for shift in shifts:
-                processed_shift = self._prepare_shift_with_metadata(shift)
-                prepared_shifts.append(processed_shift)
-            return prepared_shifts
-        except (
-            DatabaseError,
-            InternalError,
-            DataError,
-            ValueError,
-        ) as e:  # pylint: disable=W0718, I0021
-            # Log the error
-            LOGGER.error("Error getting shift: %s", e)
-
-            # Optionally, you can re-raise the exception
-            raise e
-        except Exception as e:  # pylint: disable=W0718
-            # Handle other exceptions
-            LOGGER.error("Unexpected error: %s", e)
+        if date_query.shift_start and date_query.shift_end:
+            query, params = select_by_date_query(self.table_details, date_query)
+        else:
+            query, params = select_by_user_query(self.table_details, user_query)
+        shifts = await self.postgres_data_access.get(query, params)
+        if not shifts:
+            raise NotFoundError("No shifts found for the given query.")
+        LOGGER.info("Shifts: %s", shifts)
+        prepared_shifts = []
+        for shift in shifts:
+            processed_shift = self._prepare_shift_with_metadata(shift)
+            prepared_shifts.append(processed_shift)
+        return prepared_shifts
 
     async def get_shift(self, shift_id):
         """
@@ -108,25 +95,16 @@ class ShiftService(CRUDShiftRepository):
             Shift: The Shift object if found.
 
         Raises:
-            ValueError: If no shift is found with the given ID.
+            NotFoundError: If no shift is found with the given ID.
             Exception: For any other unexpected errors.
         """
-        try:
-            query, params = select_latest_query(self.table_details, shift_id=shift_id)
-            shift = await self.postgres_data_access.get_one(query, params)
+        query, params = select_latest_query(self.table_details, shift_id=shift_id)
+        shift = await self.postgres_data_access.get_one(query, params)
+        if shift:
             shift_with_metadata = self._prepare_shift_with_metadata(shift)
-            if shift_with_metadata:
-                return shift_with_metadata
-            else:
-                raise ValueError(f"No shift found with ID: {shift_id}")
-        except (DatabaseError, InternalError, DataError, ValueError) as e:
-            # Handle database-related exceptions
-            LOGGER.error("Error getting shift: %s", e)
-            raise
-        except Exception as e:
-            # Handle other unexpected exceptions
-            LOGGER.error("Unexpected error while getting shift: %s", e)
-            raise
+            return shift_with_metadata
+        else:
+            raise NotFoundError(f"No shift found with ID: {shift_id}")
 
     def _prepare_shift_with_metadata(self, shift: Dict[Any, Any]) -> Shift:
         """
@@ -208,18 +186,10 @@ class ShiftService(CRUDShiftRepository):
         Returns:
             Shift: The newly created shift with updated attributes.
         """
-        try:
-            shift = self._prepare_new_shift(shift)
-            await self._insert_shift_to_database(shift)
-            return shift
-        except (DatabaseError, InternalError, DataError, ValueError) as e:
-            # Handle database-related exceptions
-            LOGGER.error("Error getting shift: %s", e)
-            raise
-        except Exception as e:
-            # Handle other unexpected exceptions
-            LOGGER.error("Unexpected error while getting shift: %s", e)
-            raise
+
+        shift = self._prepare_new_shift(shift)
+        await self._insert_shift_to_database(shift)
+        return shift
 
     def _prepare_new_shift(self, shift: Shift) -> Shift:
         """
@@ -271,48 +241,31 @@ class ShiftService(CRUDShiftRepository):
         Raises:
             ValueError: If there's an error in updating the shift.
         """
-        try:
-            metadata = await self._get_latest_metadata(shift)
-            shift = update_metadata(
-                shift, metadata=metadata, last_modified_by=shift.shift_operator
+        metadata = await self._get_latest_metadata(shift)
+        shift = update_metadata(
+            shift, metadata=metadata, last_modified_by=shift.shift_operator
+        )
+        if shift.comments:
+            existing_shift = await self._get_existing_shift(shift.shift_id)
+            self._validate_shift_end(existing_shift)
+            shift.comments = self._merge_comments(
+                shift.comments, existing_shift["comments"]
             )
-            if shift.comments:
-                existing_shift = await self._get_existing_shift(shift.shift_id)
-                self._validate_shift_end(existing_shift)
-                shift.comments = self._merge_comments(
-                    shift.comments, existing_shift["comments"]
-                )
 
-            await self._update_shift_in_database(shift)
-            return shift
-        except (DatabaseError, InternalError, DataError, ValueError) as e:
-            # Handle database-related exceptions
-            LOGGER.error("Error getting shift: %s", e)
-            raise
-        except Exception as e:
-            # Handle other unexpected exceptions
-            LOGGER.error("Unexpected error while getting shift: %s", e)
-            raise
+        await self._update_shift_in_database(shift)
+        return shift
 
     async def _get_latest_metadata(self, shift: Shift) -> Optional[Metadata]:
         """Get latest metadata for update."""
-        try:
-            query, params = select_metadata_query(
-                table_details=self.table_details,
-                shift_id=shift.shift_id,
-            )
-            meta_data = await self.postgres_data_access.get_one(query, params)
-            return CODEC.loads(
-                Metadata, json.dumps(meta_data, default=self._datetime_to_string)
-            )
-        except (DatabaseError, InternalError, DataError, ValueError) as e:
-            # Handle database-related exceptions
-            LOGGER.error("Error getting shift: %s", e)
-            raise
-        except Exception as e:
-            # Handle other unexpected exceptions
-            LOGGER.error("Unexpected error while getting shift: %s", e)
-            raise
+
+        query, params = select_metadata_query(
+            table_details=self.table_details,
+            shift_id=shift.shift_id,
+        )
+        meta_data = await self.postgres_data_access.get_one(query, params)
+        return CODEC.loads(
+            Metadata, json.dumps(meta_data, default=self._datetime_to_string)
+        )
 
     async def _get_existing_shift(self, shift_id: int) -> Optional[dict]:
         """
@@ -334,7 +287,7 @@ class ShiftService(CRUDShiftRepository):
         )
         result = await self.postgres_data_access.get_one(query, params)
         if result is None:
-            raise ValueError(f"No shift found with ID: {shift_id}")
+            raise NotFoundError(f"No shift found with ID: {shift_id}")
         return result
 
     def _validate_shift_end(self, existing_shift: dict) -> None:
@@ -392,26 +345,19 @@ class ShiftService(CRUDShiftRepository):
             Dict[str, str]: A dictionary with a success message.
 
         Raises:
-            ValueError: If shift_id, column_name, or column_value is None.
+            NotFoundError: If shift_id, column_name, or column_value is None.
             DatabaseError: If there's an error in the database operation.
             RuntimeError: For any unexpected errors during the operation.
         """
         if not all([shift_id, column_name, column_value]):
-            raise ValueError("shift_id, column_name, and column_value must be provided")
+            raise NotFoundError(
+                "shift_id, column_name, and column_value must be provided"
+            )
 
-        try:
-            await self._validate_shift_exists(shift_id)
-            query, params = self._build_patch_query(shift_id, column_name, column_value)
-            await self.postgres_data_access.update(query, params)
-            return {"details": "Shift updated successfully"}
-        except (DatabaseError, InternalError, DataError, ValueError) as e:
-            # Handle database-related exceptions
-            LOGGER.error("Error getting shift: %s", e)
-            raise
-        except Exception as e:
-            # Handle other unexpected exceptions
-            LOGGER.error("Unexpected error while getting shift: %s", e)
-            raise
+        await self._validate_shift_exists(shift_id)
+        query, params = self._build_patch_query(shift_id, column_name, column_value)
+        await self.postgres_data_access.update(query, params)
+        return {"details": "Shift updated successfully"}
 
     async def _validate_shift_exists(self, shift_id: str) -> None:
         """
@@ -425,7 +371,7 @@ class ShiftService(CRUDShiftRepository):
         """
         existing_shift = await self._get_existing_shift(shift_id)
         if not existing_shift:
-            raise ValueError(f"Shift with ID {shift_id} does not exist")
+            raise NotFoundError(f"Shift with ID {shift_id} does not exist")
 
     def _build_patch_query(
         self, shift_id: str, column_name: str, column_value: str

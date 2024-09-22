@@ -5,6 +5,7 @@ from typing import Optional
 
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
+from psycopg import DatabaseError, DataError, InternalError
 
 from ska_oso_slt_services.common.model import ErrorDetails, ErrorResponseTraceback
 
@@ -67,29 +68,30 @@ def _make_response(
     )
 
 
-async def slt_record_not_found_handler(request: Request, err: KeyError) -> JSONResponse:
+async def record_not_found_handler(_: Request, err: KeyError) -> JSONResponse:
     """
     A custom handler function to deal with KeyError raised by the SLT and
     return the correct HTTP 404 response.
     """
     # TODO there is a risk that the KeyError is not from the
-    is_not_found_in_slt = any("not found" in str(arg).lower() for arg in err.args)
-    if is_not_found_in_slt:
-        # TODO make SLT exceptions more consistent:
-        if identifier := request.path_params.get("identifier"):
-            detail = f"Identifier {identifier} not found in repository"
-        else:
-            detail = err.args[0]
-        raise NotFoundError(detail=detail)
-    else:
-        LOGGER.exception(
-            "KeyError raised by api function call, but not due to the "
-            "sbd_id not being found in the SLT."
-        )
-        return await dangerous_internal_server_handler(request, err)
+    return _make_response(
+        HTTPStatus.BAD_REQUEST,
+        detail=repr(err),
+        traceback=ErrorResponseTraceback(
+            key=HTTPStatus.BAD_REQUEST.phrase,
+            type=str(type(err)),
+            full_traceback=format_exc(),
+        ),
+    )
 
 
-async def dangerous_internal_server_handler(_: Request, err: Exception) -> JSONResponse:
+async def database_error_handler(
+    _: Request, err: DatabaseError | DataError | InternalError
+) -> JSONResponse:
+    return await internal_server_handler(_, err)
+
+
+async def internal_server_handler(_: Request, err: Exception) -> JSONResponse:
     """
     A custom handler function that returns a verbose HTTP 500 response containing
     detailed traceback information.

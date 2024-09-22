@@ -3,14 +3,10 @@ Shift Router used for routes the request to appropriate method
 """
 
 import logging
-import traceback
-from functools import wraps
 from http import HTTPStatus
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Response
-from psycopg import DatabaseError, DataError, InternalError
-from pydantic import ValidationError
+from fastapi import APIRouter, Depends
 
 from ska_oso_slt_services.models.shiftmodels import DateQuery, Shift, UserQuery
 from ska_oso_slt_services.services.shift_service import ShiftService
@@ -30,51 +26,7 @@ shift_service_dependency = Depends(get_shift_service)
 router = APIRouter(prefix="/shift")
 
 
-def error_handler(route_function):
-    @wraps(route_function)
-    async def wrapper(*args, **kwargs):
-        try:
-            LOGGER.debug("Executing route function: %s", route_function.__name__)
-            return await route_function(*args, **kwargs)
-        except ValidationError as e:
-            LOGGER.exception("Invalid input: %s", str(e))
-            return error_response(e, HTTPStatus.BAD_REQUEST)
-        except (DatabaseError, InternalError, DataError) as e:
-            LOGGER.exception("Database error: %s", str(e))
-            return error_response(e)
-        except ValueError as e:
-            LOGGER.exception("Unexpected error: %s", str(e))
-            return error_response(e, HTTPStatus.BAD_REQUEST)
-        except Exception as e:  # pylint: disable=W0718
-            LOGGER.exception("Unexpected error: %s", str(e))
-            return error_response(e)
-
-    return wrapper
-
-
-def error_response(
-    err: Exception, http_status: HTTPStatus = HTTPStatus.INTERNAL_SERVER_ERROR
-) -> Response:
-    """
-    Creates a general server error response from an exception
-
-    :return: HTTP response server error
-    """
-    response_body = {
-        "title": http_status.phrase,
-        "detail": f"{repr(err)} with args {err.args}",
-        "traceback": {
-            "key": "Internal Server Error",
-            "type": str(type(err)),
-            "full_traceback": traceback.format_exc(),
-        },
-    }
-
-    return response_body, http_status
-
-
-@router.get("/shift", tags=["shifts"])
-@error_handler
+@router.get("/shift", tags=["shifts"], summary="Get a shift")
 async def get_shift(
     shift_id: Optional[str] = None,
     shift_service: ShiftService = shift_service_dependency,
@@ -92,8 +44,11 @@ async def get_shift(
     return shifts, HTTPStatus.OK
 
 
-@router.get("/shifts", tags=["shifts"])
-@error_handler
+@router.get(
+    "/shifts",
+    tags=["shifts"],
+    summary="Retrieve shift data based on user and date query",
+)
 async def get_shifts(
     user_query: UserQuery = Depends(),
     data_query: DateQuery = Depends(),
@@ -109,8 +64,7 @@ async def get_shifts(
     return shifts, HTTPStatus.OK
 
 
-@router.post("/shifts/create", tags=["shifts"])
-@error_handler
+@router.post("/shifts/create", tags=["shifts"], summary="Create a new shift")
 async def create_shift(
     shift: Shift, shift_service: ShiftService = shift_service_dependency
 ):
@@ -127,8 +81,7 @@ async def create_shift(
     return shifts, HTTPStatus.CREATED
 
 
-@router.put("/shifts/update", tags=["shifts"])
-@error_handler
+@router.put("/shifts/update", tags=["shifts"], summary="Update an existing shift")
 async def update_shift(
     shift: Shift, shift_service: ShiftService = shift_service_dependency
 ):
@@ -146,8 +99,11 @@ async def update_shift(
     return shifts, HTTPStatus.OK
 
 
-@router.patch("/shifts/patch/{shift_id}", tags=["shifts"])
-@error_handler
+@router.patch(
+    "/shifts/patch/{shift_id}",
+    tags=["shifts"],
+    summary="Partially update an existing shift",
+)
 async def patch_shift(
     shift_id: Optional[str],
     column_name: Optional[str],

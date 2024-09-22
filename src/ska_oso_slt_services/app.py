@@ -8,10 +8,12 @@ from importlib.metadata import version
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from psycopg import DatabaseError, DataError, InternalError
 
 from ska_oso_slt_services.common import (
-    dangerous_internal_server_handler,
-    slt_record_not_found_handler,
+    database_error_handler,
+    internal_server_handler,
+    record_not_found_handler,
 )
 from ska_oso_slt_services.routers.shift_router import router
 
@@ -45,10 +47,12 @@ def create_app(production=PRODUCTION) -> FastAPI:
     )
 
     app.include_router(router, prefix=API_PREFIX)
-    app.exception_handler(KeyError)(slt_record_not_found_handler)
-
-    if not production:
-        app.exception_handler(Exception)(dangerous_internal_server_handler)
+    app.exception_handler(ValueError)(record_not_found_handler)
+    app.exception_handler(DatabaseError)(database_error_handler)
+    app.exception_handler(DataError)(database_error_handler)
+    app.exception_handler(InternalError)(database_error_handler)
+    if production:
+        app.exception_handler(Exception)(internal_server_handler)
     return app
 
 

@@ -18,10 +18,9 @@ rest:
   logLevel: info
   enabled: true
   image:
-    registry: artefact.skao.int
-    image: ska-oso-slt-services
-    tag: ~ # Defaults to the chart appVersion if not set
-    pullPolicy: IfNotPresent
+    registry: registry.gitlab.com
+    image: ska-telescope/oso/ska-oso-slt-services/ska-oso-slt-services
+    tag: 0.1.0-dev.ca3d85425 
   oda:
     backendType: postgres
     postgres: # The below values are used to set environment variables that are used in the ODA Repository. If they are not set then the defaults defined by the ODA will be used.
