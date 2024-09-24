@@ -7,7 +7,7 @@ from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from psycopg import DatabaseError, DataError, InternalError
 
-from ska_oso_slt_services.domain.model import ErrorDetails, ErrorResponseTraceback
+from ska_oso_slt_services.domain.app_model import ErrorDetails, ErrorResponseTraceback
 
 LOGGER = logging.getLogger(__name__)
 
