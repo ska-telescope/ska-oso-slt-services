@@ -28,6 +28,7 @@ elastic-transport = "^8.15.0"
 fastapi = "^0.111.0"
 psycopg2-binary = "^2.9.9"
 pillow = "^10.4.0"
+tzdata = "^2024.2"
 
 
 
