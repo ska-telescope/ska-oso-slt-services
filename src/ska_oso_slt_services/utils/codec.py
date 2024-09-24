@@ -1,5 +1,5 @@
 from os import environ
-from typing import Any, Type, cast
+from typing import Any, cast
 
 from pydantic import (
     BaseModel,
@@ -14,7 +14,7 @@ EXTRA_FIELDS = cast(ExtraValues | None, environ.get("EXTRA_FIELDS"))
 
 
 class SLTObject(BaseModel):
-    """Shared Base Class for all PDM Entities."""
+    """Shared Base Class for all SLT data models."""
 
     # https://docs.pydantic.dev/latest/api/config/#pydantic.config.ConfigDict
     model_config = ConfigDict(
@@ -60,21 +60,3 @@ class SLTObject(BaseModel):
         dumped = default_serializer(self)
         without_nulls = self._exclude_default_nulls_and_empty(dumped)
         return without_nulls
-
-
-class OpenAPICodec:
-    """
-    OpenAPICodec serialises and deserialises PDM Entities to and from
-    JSON.
-    """
-
-    @staticmethod
-    def loads(klass: Type[SLTObject], json_data: str) -> SLTObject:
-        return klass.model_validate_json(json_data)
-
-    @staticmethod
-    def dumps(entity: SLTObject) -> str:
-        return entity.model_dump_json()
-
-
-CODEC = OpenAPICodec()

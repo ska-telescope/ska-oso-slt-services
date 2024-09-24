@@ -36,8 +36,8 @@ def test_create_shift():
     # Patch both database access and Shift model creation
     with (
         patch(
-            "ska_oso_slt_services.data_access"
-            ".postgres_data_acess.PostgresDataAccess.insert"
+            "ska_oso_slt_services.data_access.postgres"
+            ".execute_query.PostgresDataAccess.insert"
         ) as mock_insert,
         patch(
             "ska_oso_slt_services.services.shift_service.Shift", return_value=mock_shift
@@ -103,8 +103,8 @@ def test_get_shift():
 
     # Patch the database session to use our mock
     with patch(
-        "ska_oso_slt_services.data_access"
-        ".postgres_data_acess.PostgresDataAccess.get_one",
+        "ska_oso_slt_services.data_access.postgres"
+        ".execute_query.PostgresDataAccess.get_one",
         return_value=mock_shift,
     ):
         # Send a GET request to the endpoint
@@ -169,7 +169,8 @@ def test_get_shifts():
 
     # Patch the database session to use our mock
     with patch(
-        "ska_oso_slt_services.data_access.postgres_data_acess.PostgresDataAccess.get",
+        "ska_oso_slt_services.data_access.postgres"
+        ".execute_query.PostgresDataAccess.get",
         return_value=mock_shifts,
     ):
         # Send a GET request to the endpoint
@@ -233,13 +234,13 @@ def test_update_shift():
 
     # Patch the database session to use our mock
     with patch(
-        "ska_oso_slt_services.data_access."
-        "postgres_data_acess.PostgresDataAccess.get_one",
+        "ska_oso_slt_services.data_access.postgres"
+        ".execute_query.PostgresDataAccess.get_one",
         return_value=existing_shift,
     ):
         with patch(
-            "ska_oso_slt_services.data_access.postgres_data_acess"
-            ".PostgresDataAccess.update",
+            "ska_oso_slt_services.data_access.postgres"
+            ".execute_query.PostgresDataAccess.update",
             return_value=updated_shift,
         ):
             # Send a PUT request to the endpoint
@@ -302,13 +303,13 @@ def test_patch_shift():
 
     # Patch the database session to use our mock
     with patch(
-        "ska_oso_slt_services.data_access."
-        "postgres_data_acess.PostgresDataAccess.get_one",
+        "ska_oso_slt_services.data_access.postgres"
+        ".execute_query.PostgresDataAccess.get_one",
         return_value=existing_shift,
     ):
         with patch(
-            "ska_oso_slt_services.data_access.postgres_data_acess."
-            "PostgresDataAccess.update",
+            "ska_oso_slt_services.data_access.postgres"
+            ".execute_query.PostgresDataAccess.update",
             return_value=patched_shift,
         ):
             # Send a PATCH request to the endpoint

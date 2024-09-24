@@ -11,7 +11,7 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Any, Callable, Dict, Tuple, Union
 
-from ska_oso_slt_services.models.shiftmodels import Shift
+from ska_oso_slt_services.domain.shift_models import Shift
 
 SqlTypes = Union[str, int, datetime]
 
@@ -112,8 +112,7 @@ class ShiftLogMapping:
         Get a tuple of column names including metadata fields.
 
         Returns:
-            Tuple[str]: A tuple containing all column names and
-            metadata field names.
+            Tuple[str]: A tuple containing only metadata field names.
         """
         return tuple(self.table_details.metadata_map.keys())
 

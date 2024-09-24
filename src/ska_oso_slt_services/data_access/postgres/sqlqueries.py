@@ -11,8 +11,8 @@ from typing import Any, Dict, Tuple, Union
 
 from psycopg import sql
 
-from ska_oso_slt_services.infrastructure.postgres.mapping import TableDetails
-from ska_oso_slt_services.models.shiftmodels import DateQuery, Shift, UserQuery
+from ska_oso_slt_services.data_access.postgres.mapping import TableDetails
+from ska_oso_slt_services.domain.shift_models import DateQuery, Shift, UserQuery
 
 SqlTypes = Union[str, int, datetime]
 QueryAndParameters = Tuple[sql.Composed, Tuple[SqlTypes]]
@@ -35,7 +35,6 @@ def insert_query(table_details: TableDetails, shift: Shift) -> QueryAndParameter
     """
     columns = table_details.get_columns_with_metadata()
     params = table_details.get_params_with_metadata(shift)
-    # params = tuple(shift_dump[key] for key in mapping.table_details.column_map.keys())
     query = sql.SQL(
         """
         INSERT INTO {table}

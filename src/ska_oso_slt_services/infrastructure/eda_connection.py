@@ -2,7 +2,7 @@ from threading import Lock
 
 from pyhdbpp.timescaledb import TimescaleDbReader
 
-from ska_oso_slt_services.data_access.config import EDADBConfig
+from ska_oso_slt_services.infrastructure.config import EDADBConfig
 
 
 class EDADBConnection:

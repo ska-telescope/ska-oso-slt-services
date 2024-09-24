@@ -79,7 +79,9 @@ class Shift(SLTObject):
     """
 
     shift_id: Optional[str] = None
-    shift_start: Optional[datetime] = None
+    shift_start: AwareDatetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
     shift_end: Optional[datetime] = None
     shift_operator: Optional[str] = None
     shift_logs: Optional[List[ShiftLogs]] = None

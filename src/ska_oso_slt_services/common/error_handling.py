@@ -7,7 +7,7 @@ from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from psycopg import DatabaseError, DataError, InternalError
 
-from ska_oso_slt_services.common.model import ErrorDetails, ErrorResponseTraceback
+from ska_oso_slt_services.domain.model import ErrorDetails, ErrorResponseTraceback
 
 LOGGER = logging.getLogger(__name__)
 
@@ -73,7 +73,6 @@ async def record_not_found_handler(_: Request, err: KeyError) -> JSONResponse:
     A custom handler function to deal with KeyError raised by the SLT and
     return the correct HTTP 404 response.
     """
-    # TODO there is a risk that the KeyError is not from the
     return _make_response(
         HTTPStatus.BAD_REQUEST,
         detail=repr(err),

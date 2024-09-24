@@ -8,7 +8,10 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends
 
-from ska_oso_slt_services.models.shiftmodels import DateQuery, Shift, UserQuery
+from ska_oso_slt_services.domain.shift_models import DateQuery, Shift, UserQuery
+from ska_oso_slt_services.repository.postgress_shift_repository import (
+    PostgressShiftRepository,
+)
 from ska_oso_slt_services.services.shift_service import ShiftService
 
 LOGGER = logging.getLogger(__name__)
@@ -18,7 +21,7 @@ def get_shift_service() -> ShiftService:
     """
     Dependency to get the ShiftService instance
     """
-    return ShiftService()
+    return ShiftService([PostgressShiftRepository])
 
 
 shift_service_dependency = Depends(get_shift_service)
