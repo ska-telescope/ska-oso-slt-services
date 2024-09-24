@@ -16,7 +16,7 @@ class PostgresDataAccess:
     def __init__(self):
         self.postgres_connection = PostgresConnection().get_connection()
 
-    async def insert(self, query: sql.Composed, params: Tuple) -> int:
+    def insert(self, query: sql.Composed, params: Tuple) -> int:
         """
         Insert data into the database.
 
@@ -40,7 +40,7 @@ class PostgresDataAccess:
             LOGGER.info("Unexpected error: %s", e)
             raise e
 
-    async def update(self, query: sql.Composed, params: Tuple) -> int:
+    def update(self, query: sql.Composed, params: Tuple) -> int:
         """
         Update data in the database.
 
@@ -67,7 +67,7 @@ class PostgresDataAccess:
     def delete(self, query: str, connection):
         pass
 
-    async def get(self, query: sql.Composed, params: Tuple) -> List[Tuple[int, str]]:
+    def get(self, query: sql.Composed, params: Tuple) -> List[Tuple[int, str]]:
         """
         Get data from the database.
 
@@ -91,7 +91,7 @@ class PostgresDataAccess:
             LOGGER.info("Unexpected error: %s", e)
             raise e
 
-    async def get_one(self, query: sql.Composed, params: Tuple) -> Tuple[Any, ...]:
+    def get_one(self, query: sql.Composed, params: Tuple) -> Tuple[Any, ...]:
         """
         Get one row from the database.
 

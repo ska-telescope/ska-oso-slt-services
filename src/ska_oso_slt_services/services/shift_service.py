@@ -39,7 +39,7 @@ class ShiftService:
         if not self.postgres_repository:
             raise ValueError("PostgressShiftRepository is required")
 
-    async def get_shift(self, shift_id: str) -> Optional[dict]:
+    def get_shift(self, shift_id: str) -> Optional[dict]:
         """
         Retrieve a shift by its ID.
 
@@ -52,14 +52,14 @@ class ShiftService:
         if not self.postgres_repository:
             raise ValueError("PostgresShiftRepository is not available")
 
-        result = await self.postgres_repository.get_shift(shift_id)
+        result = self.postgres_repository.get_shift(shift_id)
         if result:
             shift_with_metadata = self._prepare_shift_with_metadata(result)
             return shift_with_metadata
         else:
             raise NotFoundError(f"No shift found with ID: {shift_id}")
 
-    async def get_shifts(
+    def get_shifts(
         self,
         user_query: Optional[UserQuery] = None,
         date_query: Optional[DateQuery] = None,
@@ -79,7 +79,7 @@ class ShiftService:
         if not self.postgres_repository:
             raise ValueError("PostgresShiftRepository is not available")
 
-        shifts = await self.postgres_repository.get_shifts(user_query, date_query)
+        shifts = self.postgres_repository.get_shifts(user_query, date_query)
         if not shifts:
             raise NotFoundError("No shifts found for the given query.")
         LOGGER.info("Shifts: %s", shifts)
@@ -89,7 +89,7 @@ class ShiftService:
             prepared_shifts.append(processed_shift)
         return prepared_shifts
 
-    async def create_shift(self, shift_data):
+    def create_shift(self, shift_data):
         """
         Create a new shift.
 
@@ -100,9 +100,9 @@ class ShiftService:
             dict: The created shift data.
         """
         shift = set_new_metadata(shift_data, created_by=shift_data.shift_operator)
-        return await self.postgres_repository.create_shift(shift)
+        return self.postgres_repository.create_shift(shift)
 
-    async def update_shift(self, shift_data):
+    def update_shift(self, shift_data):
         """
         Update an existing shift.
 
@@ -113,18 +113,16 @@ class ShiftService:
         Returns:
             dict: The updated shift data.
         """
-        metadata = await self.postgres_repository.get_latest_metadata(shift_data)
+        metadata = self.postgres_repository.get_latest_metadata(shift_data)
         shift = update_metadata(
             shift_data, metadata=metadata, last_modified_by=shift_data.shift_operator
         )
-        return await self.postgres_repository.update_shift(shift)
+        return self.postgres_repository.update_shift(shift)
 
-    async def patch_shift(
+    def patch_shift(
         self, shift_id: str | None, column_name: str | None, column_value: str | None
     ):
-        return await self.postgres_repository.patch_shift(
-            shift_id, column_name, column_value
-        )
+        return self.postgres_repository.patch_shift(shift_id, column_name, column_value)
 
     def delete_shift(self, shift_id):
         """

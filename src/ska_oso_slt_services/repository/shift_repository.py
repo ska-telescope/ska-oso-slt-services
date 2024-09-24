@@ -14,7 +14,7 @@ class ShiftRepository(ABC):
     """
 
     @abstractmethod
-    async def get_shifts(
+    def get_shifts(
         self,
         user_query: Optional[UserQuery] = None,
         date_query: Optional[DateQuery] = None,
@@ -34,7 +34,7 @@ class ShiftRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_shift(self, shift_id: str) -> Shift:
+    def get_shift(self, shift_id: str) -> Shift:
         """
         Retrieve a shift by its SID.
 

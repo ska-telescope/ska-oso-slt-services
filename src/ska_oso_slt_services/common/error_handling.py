@@ -68,7 +68,7 @@ def _make_response(
     )
 
 
-async def record_not_found_handler(_: Request, err: KeyError) -> JSONResponse:
+def record_not_found_handler(_: Request, err: KeyError) -> JSONResponse:
     """
     A custom handler function to deal with KeyError raised by the SLT and
     return the correct HTTP 404 response.
@@ -84,13 +84,13 @@ async def record_not_found_handler(_: Request, err: KeyError) -> JSONResponse:
     )
 
 
-async def database_error_handler(
+def database_error_handler(
     _: Request, err: DatabaseError | DataError | InternalError
 ) -> JSONResponse:
-    return await internal_server_handler(_, err)
+    return internal_server_handler(_, err)
 
 
-async def internal_server_handler(_: Request, err: Exception) -> JSONResponse:
+def internal_server_handler(_: Request, err: Exception) -> JSONResponse:
     """
     A custom handler function that returns a verbose HTTP 500 response containing
     detailed traceback information.

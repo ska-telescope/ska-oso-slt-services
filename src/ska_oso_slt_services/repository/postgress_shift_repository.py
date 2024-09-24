@@ -39,7 +39,7 @@ class CRUDShiftRepository(ShiftRepository):
     """
 
     @abstractmethod
-    async def create_shift(self, shift: Shift) -> Shift:
+    def create_shift(self, shift: Shift) -> Shift:
         """
         Create a new shift.
 
@@ -52,7 +52,7 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    async def update_shift(self, shift: Shift) -> Shift:
+    def update_shift(self, shift: Shift) -> Shift:
         """
         Update an existing shift.
 
@@ -65,7 +65,7 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    async def patch_shift(
+    def patch_shift(
         self, shift_id: str | None, column_name: str | None, column_value: str | None
     ) -> Shift:
         """
@@ -80,7 +80,7 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_shift(self, sid: str) -> bool:
+    def delete_shift(self, sid: str) -> bool:
         """
         Delete a shift by its SID.
 
@@ -93,7 +93,7 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_media(self, shift_id: str) -> List[Media]:
+    def get_media(self, shift_id: str) -> List[Media]:
         """
         Retrieve a list of media associated with a shift.
 
@@ -106,7 +106,7 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    async def add_media(self, shift_id: str, media: Media) -> bool:
+    def add_media(self, shift_id: str, media: Media) -> bool:
         """
         Add media to a shift.
 
@@ -137,7 +137,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
         self.postgres_data_access = PostgresDataAccess()
         self.table_details = ShiftLogMapping()
 
-    async def get_shifts(
+    def get_shifts(
         self,
         user_query: Optional[UserQuery] = None,
         date_query: Optional[DateQuery] = None,
@@ -161,10 +161,10 @@ class PostgressShiftRepository(CRUDShiftRepository):
             query, params = select_by_date_query(self.table_details, date_query)
         else:
             query, params = select_by_user_query(self.table_details, user_query)
-        shifts = await self.postgres_data_access.get(query, params)
+        shifts = self.postgres_data_access.get(query, params)
         return shifts
 
-    async def get_shift(self, shift_id):
+    def get_shift(self, shift_id):
         """
         Retrieve a specific shift by its ID.
 
@@ -179,10 +179,10 @@ class PostgressShiftRepository(CRUDShiftRepository):
             Exception: For any other unexpected errors.
         """
         query, params = select_latest_query(self.table_details, shift_id=shift_id)
-        shift = await self.postgres_data_access.get_one(query, params)
+        shift = self.postgres_data_access.get_one(query, params)
         return shift
 
-    async def create_shift(self, shift: Shift) -> Shift:
+    def create_shift(self, shift: Shift) -> Shift:
         """
         Create a new shift with updated metadata, start time, and unique ID.
 
@@ -193,7 +193,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
             Shift: The newly created shift with updated attributes.
         """
         shift = self._prepare_new_shift(shift)
-        await self._insert_shift_to_database(shift)
+        self._insert_shift_to_database(shift)
         return shift
 
     def _prepare_new_shift(self, shift: Shift) -> Shift:
@@ -210,7 +210,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
         shift.shift_id = f"shift-{uuid.uuid4()}"
         return shift
 
-    async def _insert_shift_to_database(self, shift: Shift) -> None:
+    def _insert_shift_to_database(self, shift: Shift) -> None:
         """
         Insert the shift into the database.
 
@@ -218,7 +218,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
             shift (Shift): The shift object to be inserted.
         """
         query, params = self._build_insert_query(shift)
-        await self.postgres_data_access.insert(query, params)
+        self.postgres_data_access.insert(query, params)
 
     def _build_insert_query(self, shift: Shift) -> Tuple[str, Any]:
         """
@@ -232,7 +232,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
         """
         return insert_query(table_details=self.table_details, shift=shift)
 
-    async def update_shift(self, shift: Shift) -> Shift:
+    def update_shift(self, shift: Shift) -> Shift:
         """
         Update an existing shift.
 
@@ -245,28 +245,28 @@ class PostgressShiftRepository(CRUDShiftRepository):
         Raises:
             ValueError: If there's an error in updating the shift.
         """
-        await self._validate_shift_exists(shift.shift_id)
+        self._validate_shift_exists(shift.shift_id)
         if shift.comments:
-            existing_shift = await self._get_existing_shift(shift.shift_id)
+            existing_shift = self._get_existing_shift(shift.shift_id)
             self._validate_shift_end(existing_shift)
             shift.comments = self._merge_comments(
                 shift.comments, existing_shift["comments"]
             )
 
-        await self._update_shift_in_database(shift)
+        self._update_shift_in_database(shift)
         return shift
 
-    async def get_latest_metadata(self, shift: Shift) -> Optional[Metadata]:
+    def get_latest_metadata(self, shift: Shift) -> Optional[Metadata]:
         """Get latest metadata for update."""
 
         query, params = select_metadata_query(
             table_details=self.table_details,
             shift_id=shift.shift_id,
         )
-        meta_data = await self.postgres_data_access.get_one(query, params)
+        meta_data = self.postgres_data_access.get_one(query, params)
         return Metadata.model_validate(meta_data)
 
-    async def _get_existing_shift(self, shift_id: int) -> Optional[dict]:
+    def _get_existing_shift(self, shift_id: int) -> Optional[dict]:
         """
         Retrieve an existing shift from the database.
 
@@ -284,7 +284,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
             shift_id=shift_id,
             column_names=["comments", "shift_end"],
         )
-        result = await self.postgres_data_access.get_one(query, params)
+        result = self.postgres_data_access.get_one(query, params)
         if result is None:
             raise NotFoundError(f"No shift found with ID: {shift_id}")
         return result
@@ -319,7 +319,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
             return f"{existing_comments} {new_comments}"
         return new_comments
 
-    async def _update_shift_in_database(self, shift: Shift) -> None:
+    def _update_shift_in_database(self, shift: Shift) -> None:
         """
         Update the shift in the database.
 
@@ -327,9 +327,9 @@ class PostgressShiftRepository(CRUDShiftRepository):
             shift (Shift): The shift object to update.
         """
         query, params = update_query(self.table_details, shift=shift)
-        await self.postgres_data_access.update(query, params)
+        self.postgres_data_access.update(query, params)
 
-    async def patch_shift(
+    def patch_shift(
         self, shift_id: str | None, column_name: str | None, column_value: str | None
     ) -> Dict[str, str]:
         """
@@ -353,12 +353,12 @@ class PostgressShiftRepository(CRUDShiftRepository):
                 "shift_id, column_name, and column_value must be provided"
             )
 
-        await self._validate_shift_exists(shift_id)
+        self._validate_shift_exists(shift_id)
         query, params = self._build_patch_query(shift_id, column_name, column_value)
-        await self.postgres_data_access.update(query, params)
+        self.postgres_data_access.update(query, params)
         return {"details": "Shift updated successfully"}
 
-    async def _validate_shift_exists(self, shift_id: str) -> None:
+    def _validate_shift_exists(self, shift_id: str) -> None:
         """
         Validate that a shift with the given ID exists.
 
@@ -368,7 +368,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
         Raises:
             ValueError: If the shift does not exist.
         """
-        existing_shift = await self._get_existing_shift(shift_id)
+        existing_shift = self._get_existing_shift(shift_id)
         if not existing_shift:
             raise NotFoundError(f"Shift with ID {shift_id} does not exist")
 
@@ -390,11 +390,11 @@ class PostgressShiftRepository(CRUDShiftRepository):
         params = [column_value, shift_id]
         return query, params
 
-    async def get_media(self, shift_id: int) -> Media:
+    def get_media(self, shift_id: int) -> Media:
         pass
 
-    async def add_media(self, shift_id: int, media: Media) -> Media:
+    def add_media(self, shift_id: int, media: Media) -> Media:
         pass
 
-    async def delete_shift(self, sid: str):
+    def delete_shift(self, sid: str):
         pass

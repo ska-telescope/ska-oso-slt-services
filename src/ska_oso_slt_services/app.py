@@ -24,7 +24,6 @@ SLT_MAJOR_VERSION = version("ska-oso-slt-services").split(".")[0]
 # to avoid clashes in deployments, for example in CICD
 API_PREFIX = f"/{KUBE_NAMESPACE}/slt/api/v{SLT_MAJOR_VERSION}"
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 PRODUCTION = os.getenv("PRODUCTION", "false").lower() == "true"
 
 LOGGER = logging.getLogger(__name__)

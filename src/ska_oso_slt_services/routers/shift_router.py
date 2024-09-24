@@ -30,7 +30,7 @@ router = APIRouter(prefix="/shift")
 
 
 @router.get("/shift", tags=["shifts"], summary="Get a shift")
-async def get_shift(
+def get_shift(
     shift_id: Optional[str] = None,
     shift_service: ShiftService = shift_service_dependency,
 ):
@@ -43,7 +43,7 @@ async def get_shift(
     Raises:
         HTTPException: If the shift is not found.
     """
-    shifts = await shift_service.get_shift(shift_id=shift_id)
+    shifts = shift_service.get_shift(shift_id=shift_id)
     return shifts, HTTPStatus.OK
 
 
@@ -52,7 +52,7 @@ async def get_shift(
     tags=["shifts"],
     summary="Retrieve shift data based on user and date query",
 )
-async def get_shifts(
+def get_shifts(
     user_query: UserQuery = Depends(),
     data_query: DateQuery = Depends(),
     shift_service: ShiftService = shift_service_dependency,
@@ -63,14 +63,12 @@ async def get_shifts(
     """
 
     LOGGER.debug("user_query: %s", user_query)
-    shifts = await shift_service.get_shifts(user_query, data_query)
+    shifts = shift_service.get_shifts(user_query, data_query)
     return shifts, HTTPStatus.OK
 
 
 @router.post("/shifts/create", tags=["shifts"], summary="Create a new shift")
-async def create_shift(
-    shift: Shift, shift_service: ShiftService = shift_service_dependency
-):
+def create_shift(shift: Shift, shift_service: ShiftService = shift_service_dependency):
     """
     Create a new shift.
 
@@ -80,14 +78,12 @@ async def create_shift(
     Returns:
         Shift: The created shift.
     """
-    shifts = await shift_service.create_shift(shift)
+    shifts = shift_service.create_shift(shift)
     return shifts, HTTPStatus.CREATED
 
 
 @router.put("/shifts/update", tags=["shifts"], summary="Update an existing shift")
-async def update_shift(
-    shift: Shift, shift_service: ShiftService = shift_service_dependency
-):
+def update_shift(shift: Shift, shift_service: ShiftService = shift_service_dependency):
     """
     Update an existing shift.
 
@@ -98,7 +94,7 @@ async def update_shift(
     Raises:
         HTTPException: If the shift is not found.
     """
-    shifts = await shift_service.update_shift(shift)
+    shifts = shift_service.update_shift(shift)
     return shifts, HTTPStatus.OK
 
 
@@ -107,7 +103,7 @@ async def update_shift(
     tags=["shifts"],
     summary="Partially update an existing shift",
 )
-async def patch_shift(
+def patch_shift(
     shift_id: Optional[str],
     column_name: Optional[str],
     column_value: Optional[str],
@@ -123,7 +119,7 @@ async def patch_shift(
     Raises:
         HTTPException: If the shift is not found.
     """
-    shift = await shift_service.patch_shift(
+    shift = shift_service.patch_shift(
         shift_id=shift_id, column_name=column_name, column_value=column_value
     )
     return shift, HTTPStatus.OK
