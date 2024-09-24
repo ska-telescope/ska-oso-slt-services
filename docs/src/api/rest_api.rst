@@ -130,3 +130,64 @@ For example, to retrieve slt shift between shift_start and shift_end from the st
       ]
 
 The SLT API endpoints, with the accepted requests and expected responses, are documented below:   
+
+1. Create a new shift
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   @app.post("/shifts", response_model=Shift)
+   async def create_shift(shift: ShiftCreate):
+       """
+       Create a new shift.
+
+       :param shift: ShiftCreate object containing shift details
+       :return: Created Shift object
+       """
+
+2. Get all shifts
+~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   @app.get("/shifts", response_model=List[Shift])
+   async def get_shifts(
+       shift_start: Optional[datetime] = None,
+       shift_end: Optional[datetime] = None
+   ):
+       """
+       Retrieve all shifts, optionally filtered by start and end times.
+
+       :param shift_start: Optional start time for filtering shifts
+       :param shift_end: Optional end time for filtering shifts
+       :return: List of Shift objects
+       """
+
+3. Get a specific shift
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   @app.get("/shifts/{shift_id}", response_model=Shift)
+   async def get_shift(shift_id: str):
+       """
+       Retrieve a specific shift by its ID.
+
+       :param shift_id: Unique identifier of the shift
+       :return: Shift object
+       """
+
+4. Update a shift
+~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   @app.put("/shifts/{shift_id}", response_model=Shift)
+   async def update_shift(shift_id: str, shift_update: ShiftUpdate):
+       """
+       Update an existing shift.
+
+       :param shift_id: Unique identifier of the shift to update
+       :param shift_update: ShiftUpdate object containing fields to update
+       :return: Updated Shift object
+       """
