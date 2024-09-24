@@ -3,6 +3,7 @@ Shift Router used for routes the request to appropriate method
 """
 
 import logging
+from functools import lru_cache
 from http import HTTPStatus
 from typing import Optional
 
@@ -17,23 +18,32 @@ from ska_oso_slt_services.services.shift_service import ShiftService
 LOGGER = logging.getLogger(__name__)
 
 
+class ShiftServiceSingleton:
+    _instance = None
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = ShiftService([PostgressShiftRepository])
+        return cls._instance
+
+
+@lru_cache()
 def get_shift_service() -> ShiftService:
     """
     Dependency to get the ShiftService instance
     """
-    return ShiftService([PostgressShiftRepository])
+    return ShiftServiceSingleton.get_instance()
 
 
-shift_service_dependency = Depends(get_shift_service)
+shift_service = get_shift_service()
+
 
 router = APIRouter(prefix="/shift")
 
 
 @router.get("/shift", tags=["shifts"], summary="Get a shift")
-def get_shift(
-    shift_id: Optional[str] = None,
-    shift_service: ShiftService = shift_service_dependency,
-):
+def get_shift(shift_id: Optional[str] = None):
     """
     Retrieve a specific shift by its ID.
 
@@ -52,11 +62,7 @@ def get_shift(
     tags=["shifts"],
     summary="Retrieve shift data based on user and date query",
 )
-def get_shifts(
-    user_query: UserQuery = Depends(),
-    data_query: DateQuery = Depends(),
-    shift_service: ShiftService = shift_service_dependency,
-):
+def get_shifts(user_query: UserQuery = Depends(), data_query: DateQuery = Depends()):
     """
     Retrieve all shifts.
     This endpoint returns a list of all shifts in the system.
@@ -68,7 +74,7 @@ def get_shifts(
 
 
 @router.post("/shifts/create", tags=["shifts"], summary="Create a new shift")
-def create_shift(shift: Shift, shift_service: ShiftService = shift_service_dependency):
+def create_shift(shift: Shift):
     """
     Create a new shift.
 
@@ -83,7 +89,7 @@ def create_shift(shift: Shift, shift_service: ShiftService = shift_service_depen
 
 
 @router.put("/shifts/update", tags=["shifts"], summary="Update an existing shift")
-def update_shift(shift: Shift, shift_service: ShiftService = shift_service_dependency):
+def update_shift(shift: Shift):
     """
     Update an existing shift.
 
@@ -104,10 +110,7 @@ def update_shift(shift: Shift, shift_service: ShiftService = shift_service_depen
     summary="Partially update an existing shift",
 )
 def patch_shift(
-    shift_id: Optional[str],
-    column_name: Optional[str],
-    column_value: Optional[str],
-    shift_service: ShiftService = shift_service_dependency,
+    shift_id: Optional[str], column_name: Optional[str], column_value: Optional[str]
 ):
     """
     Partially update an existing shift.
