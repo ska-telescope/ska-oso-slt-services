@@ -137,7 +137,7 @@ The SLT API endpoints, with the accepted requests and expected responses, are do
 .. code-block:: python
 
    @app.post("/shifts", response_model=Shift)
-   async def create_shift(shift: ShiftCreate):
+   def create_shift(shift: ShiftCreate):
        """
        Create a new shift.
 
@@ -151,7 +151,7 @@ The SLT API endpoints, with the accepted requests and expected responses, are do
 .. code-block:: python
 
    @app.get("/shifts", response_model=List[Shift])
-   async def get_shifts(
+   def get_shifts(
        shift_start: Optional[datetime] = None,
        shift_end: Optional[datetime] = None
    ):
@@ -169,7 +169,7 @@ The SLT API endpoints, with the accepted requests and expected responses, are do
 .. code-block:: python
 
    @app.get("/shifts/{shift_id}", response_model=Shift)
-   async def get_shift(shift_id: str):
+   def get_shift(shift_id: str):
        """
        Retrieve a specific shift by its ID.
 
@@ -183,7 +183,7 @@ The SLT API endpoints, with the accepted requests and expected responses, are do
 .. code-block:: python
 
    @app.put("/shifts/{shift_id}", response_model=Shift)
-   async def update_shift(shift_id: str, shift_update: ShiftUpdate):
+   def update_shift(shift_id: str, shift_update: ShiftUpdate):
        """
        Update an existing shift.
 

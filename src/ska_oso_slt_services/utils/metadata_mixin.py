@@ -1,8 +1,8 @@
 import logging
-from datetime import datetime, timezone
 from typing import Optional, TypeVar
 
 from ska_oso_slt_services.domain.shift_models import Metadata
+from ska_oso_slt_services.utils.date_utils import get_datetime_for_timezone
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ def update_metadata(
         shift.metadata = metadata_cls(
             created_on=metadata.created_on,
             created_by=metadata.created_by,
-            last_modified_on=datetime.now(timezone.utc),
+            last_modified_on=get_datetime_for_timezone("UTC"),
             last_modified_by=last_modified_by,
         )
     return shift
@@ -48,7 +48,7 @@ def set_new_metadata(shift: T, created_by: Optional[str] = None) -> T:
     if created_by is None:
         created_by = "DefaultUser"
 
-    now = datetime.now(timezone.utc)
+    now = get_datetime_for_timezone("UTC")
 
     metadata_cls = Metadata
     shift.metadata = metadata_cls(

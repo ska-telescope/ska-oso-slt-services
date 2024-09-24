@@ -1,10 +1,11 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from ska_oso_slt_services.utils.codec import SLTObject
+from ska_oso_slt_services.utils.date_utils import get_datetime_for_timezone
 
 
 class Metadata(SLTObject):
@@ -12,11 +13,11 @@ class Metadata(SLTObject):
 
     created_by: Optional[str] = None
     created_on: AwareDatetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: get_datetime_for_timezone("UTC")
     )
     last_modified_by: Optional[str] = None
     last_modified_on: AwareDatetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: get_datetime_for_timezone("UTC")
     )
 
 
@@ -80,7 +81,7 @@ class Shift(SLTObject):
 
     shift_id: Optional[str] = None
     shift_start: AwareDatetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: get_datetime_for_timezone("UTC")
     )
     shift_end: Optional[datetime] = None
     shift_operator: Optional[str] = None

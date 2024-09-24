@@ -1,9 +1,9 @@
-from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
 from ska_oso_slt_services import create_app  # Import your create_app function
+from ska_oso_slt_services.utils.date_utils import get_datetime_for_timezone
 
 # Create the FastAPI app instance
 app = create_app()
@@ -14,7 +14,7 @@ client = TestClient(app)
 
 def test_create_shift():
     # Prepare test data with metadata
-    current_time = datetime.now(timezone.utc)
+    current_time = get_datetime_for_timezone("UTC")
     shift_data = {
         "shift_operator": "test",
         "metadata": {
@@ -80,19 +80,19 @@ def test_get_shift():
     # Mock shift data
     mock_shift = {
         "shift_id": "test-id",
-        "shift_start": datetime.now(tz=timezone.utc),
-        "shift_end": datetime.now(tz=timezone.utc),
+        "shift_start": get_datetime_for_timezone("UTC"),
+        "shift_end": get_datetime_for_timezone("UTC"),
         "shift_operator": "test",
         "shift_logs": [
-            {"info": {}, "source": "test", "log_time": datetime.now(tz=timezone.utc)}
+            {"info": {}, "source": "test", "log_time": get_datetime_for_timezone("UTC")}
         ],
         "media": [{"type": "test", "path": "test"}],
         "annotations": "test",
         "comments": "test",
         "created_by": "test",
-        "created_on": datetime.now(tz=timezone.utc),
+        "created_on": get_datetime_for_timezone("UTC"),
         "last_modified_by": "test",
-        "last_modified_on": datetime.now(tz=timezone.utc),
+        "last_modified_on": get_datetime_for_timezone("UTC"),
     }
 
     # Create a mock for the database session
@@ -127,37 +127,37 @@ def test_get_shifts():
     mock_shifts = [
         {
             "shift_id": "test-id-1",
-            "shift_start": datetime.now(tz=timezone.utc),
-            "shift_end": datetime.now(tz=timezone.utc),
+            "shift_start": get_datetime_for_timezone("UTC"),
+            "shift_end": get_datetime_for_timezone("UTC"),
             "shift_operator": "test-operator-1",
             "shift_logs": [
                 {
                     "info": {},
                     "source": "test",
-                    "log_time": datetime.now(tz=timezone.utc),
+                    "log_time": get_datetime_for_timezone("UTC"),
                 }
             ],
             "media": [{"type": "test", "path": "test"}],
             "annotations": "test-annotation-1",
             "comments": "test-comment-1",
             "created_by": "test-user-1",
-            "created_on": datetime.now(tz=timezone.utc),
+            "created_on": get_datetime_for_timezone("UTC"),
             "last_modified_by": "test-user-1",
-            "last_modified_on": datetime.now(tz=timezone.utc),
+            "last_modified_on": get_datetime_for_timezone("UTC"),
         },
         {
             "shift_id": "test-id-2",
-            "shift_start": datetime.now(tz=timezone.utc),
-            "shift_end": datetime.now(tz=timezone.utc),
+            "shift_start": get_datetime_for_timezone("UTC"),
+            "shift_end": get_datetime_for_timezone("UTC"),
             "shift_operator": "test-operator-2",
             "shift_logs": [],
             "media": [],
             "annotations": "test-annotation-2",
             "comments": "test-comment-2",
             "created_by": "test-user-2",
-            "created_on": datetime.now(tz=timezone.utc),
+            "created_on": get_datetime_for_timezone("UTC"),
             "last_modified_by": "test-user-2",
-            "last_modified_on": datetime.now(tz=timezone.utc),
+            "last_modified_on": get_datetime_for_timezone("UTC"),
         },
     ]
 
@@ -192,7 +192,7 @@ def test_update_shift():
     # Existing shift data
     existing_shift = {
         "shift_id": "test-id-1",
-        "shift_start": datetime.now(tz=timezone.utc),
+        "shift_start": get_datetime_for_timezone("UTC"),
         "shift_end": None,
         "shift_operator": "old-operator",
         "shift_logs": [],
@@ -200,9 +200,9 @@ def test_update_shift():
         "annotations": "old-annotation",
         "comments": "old-comment",
         "created_by": "test-user-1",
-        "created_on": datetime.now(tz=timezone.utc),
+        "created_on": get_datetime_for_timezone("UTC"),
         "last_modified_by": "test-user-1",
-        "last_modified_on": datetime.now(tz=timezone.utc),
+        "last_modified_on": get_datetime_for_timezone("UTC"),
     }
 
     # Updated shift data

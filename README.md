@@ -84,7 +84,7 @@ Generally the API URL should be available at  `https://k8s.stfc.skao.int/$KUBE_N
 
 
 ## Fast API
-To start the Flask server run the following command in a terminal bash prompt
+To start the Fast API server run the following command in a terminal bash prompt
 
 ```
 fastapi dev src/ska_oso_slt_services/app.py
