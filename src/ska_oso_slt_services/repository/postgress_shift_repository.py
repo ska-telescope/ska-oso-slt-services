@@ -316,7 +316,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
             str: The merged comments.
         """
         if existing_comments:
-            return f"{new_comments} {existing_comments}"
+            return f"{existing_comments} {new_comments}"
         return new_comments
 
     async def _update_shift_in_database(self, shift: Shift) -> None:

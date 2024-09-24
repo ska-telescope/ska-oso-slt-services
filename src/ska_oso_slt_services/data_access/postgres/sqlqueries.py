@@ -133,9 +133,7 @@ def select_latest_query(
         QueryAndParameters: A tuple of the query and parameters,
         which psycopg will safely combine.
     """
-    columns = table_details.table_details.column_map.keys()
-    mapping_columns = [key for key in table_details.table_details.metadata_map.keys()]
-    columns = list(columns) + mapping_columns
+    columns = table_details.get_columns_with_metadata_with_extra_keys()
     where_clause = sql.SQL("WHERE {identifier_field} = %s ORDER BY id").format(
         identifier_field=sql.Identifier(table_details.table_details.identifier_field),
     )
@@ -228,7 +226,7 @@ def select_by_user_query(
         QueryAndParameters: A tuple of the query and parameters.
     """
 
-    columns = table_details.get_columns_with_metadata()
+    columns = table_details.get_columns_with_metadata_with_extra_keys()
     if qry_params.match_type:
         match_type_formatters: Dict[str, str] = {
             "equals": "{}",
@@ -289,7 +287,7 @@ def select_by_date_query(
     Raises:
         ValueError: If an unsupported query type is provided.
     """
-    columns = table_details.get_columns_with_metadata()
+    columns = table_details.get_columns_with_metadata_with_extra_keys()
     mapping_columns = [key for key in table_details.table_details.metadata_map.keys()]
     columns = list(columns) + mapping_columns
     if qry_params.shift_start:
