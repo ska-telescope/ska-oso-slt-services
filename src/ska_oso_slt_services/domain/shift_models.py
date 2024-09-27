@@ -110,6 +110,12 @@ class MatchType(Enum):
     STARTS_WITH = "starts_with"
     CONTAINS = "contains"
 
+class Status(Enum):
+    # add doc string for MatchType Enum
+    """
+    Enum representing the different types of matching available for filtering shifts.
+    """
+    CREATED = "created"
 
 class DateQuery(BaseModel):
     """
@@ -133,8 +139,23 @@ class UserQuery(BaseModel):
     :param shift_id: Optional[str] = None
 
     """
-
-    comments: Optional[str] = None
     shift_operator: Optional[str] = None
     shift_id: Optional[str] = None
     match_type: MatchType = MatchType.EQUALS
+
+class TextBasedQuery(BaseModel):
+    """
+    Represents a base class for text-based queries.
+    :param text Optional[str]: The text to search for.
+    :param match_type MatchType: The type of matching to perform.
+    """
+
+    search_text: Optional[str] = None
+    match_type: MatchType = MatchType.EQUALS
+
+class jsonBasedQuery(BaseModel):
+    """
+    Represents a query for filtering shifts based on JSON data.
+    :param json_data Optional[dict]: The JSON data to search for.
+    """
+    entity_status: Status = Status.CREATED
