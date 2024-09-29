@@ -1,7 +1,12 @@
 from abc import abstractmethod
 from typing import List, Optional
 
-from ska_oso_slt_services.domain.shift_models import DateQuery, Shift, UserQuery, TextBasedQuery
+from ska_oso_slt_services.domain.shift_models import (
+    DateQuery,
+    Shift,
+    TextBasedQuery,
+    UserQuery,
+)
 from ska_oso_slt_services.repository.shift_repository import ShiftRepository
 
 

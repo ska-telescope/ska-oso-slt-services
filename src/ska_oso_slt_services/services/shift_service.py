@@ -6,9 +6,9 @@ from ska_oso_slt_services.domain.shift_models import (
     DateQuery,
     Metadata,
     Shift,
-    UserQuery,
     TextBasedQuery,
-    jsonBasedQuery
+    UserQuery,
+    jsonBasedQuery,
 )
 from ska_oso_slt_services.repository.postgress_shift_repository import (
     CRUDShiftRepository,
@@ -66,7 +66,7 @@ class ShiftService:
         user_query: Optional[UserQuery] = None,
         date_query: Optional[DateQuery] = None,
         text_based_query: Optional[TextBasedQuery] = None,
-        json_based_query: Optional[jsonBasedQuery] = None
+        json_based_query: Optional[jsonBasedQuery] = None,
     ) -> Optional[dict]:
         """
         Retrieve a list of shifts based on the provided query parameters.
@@ -83,7 +83,9 @@ class ShiftService:
         if not self.postgres_repository:
             raise ValueError("PostgresShiftRepository is not available")
 
-        shifts = self.postgres_repository.get_shifts(user_query, date_query, text_based_query, json_based_query)
+        shifts = self.postgres_repository.get_shifts(
+            user_query, date_query, text_based_query, json_based_query
+        )
         if not shifts:
             raise NotFoundError("No shifts found for the given query.")
         LOGGER.info("Shifts: %s", shifts)

@@ -61,6 +61,18 @@ class ShiftLogs(SLTObject):
     log_time: Optional[datetime] = None
 
 
+class Logs(SLTObject):
+    """
+    Represents logs associated with a shift in the SLT Shift Log Tool.
+
+    :param info Optional[dict]: Information about the log.
+    :param source Optional[str]: The source of the log.
+    :param log_time Optional[datetime]: The time the log was created.
+    """
+
+    logs: Optional[List[ShiftLogs]] = None
+
+
 class Shift(SLTObject):
     """
     Represents a shift in the SLT Shift Log Tool.
@@ -85,7 +97,7 @@ class Shift(SLTObject):
     )
     shift_end: Optional[datetime] = None
     shift_operator: Optional[str] = None
-    shift_logs: Optional[List[ShiftLogs]] = None
+    shift_logs: Optional[Logs] = None
     media: Optional[List[Media]] = None
     annotations: Optional[str] = None
     comments: Optional[str] = None
@@ -110,12 +122,22 @@ class MatchType(Enum):
     STARTS_WITH = "starts_with"
     CONTAINS = "contains"
 
-class Status(Enum):
+
+class ENTITY(Enum):
     # add doc string for MatchType Enum
     """
     Enum representing the different types of matching available for filtering shifts.
     """
-    CREATED = "created"
+    SBI_STATUS = "sbi_status"
+
+
+class STATUS(Enum):
+    # add doc string for MatchType Enum
+    """
+    Enum representing the different types of matching available for filtering shifts.
+    """
+    CREATED = "Created"
+
 
 class DateQuery(BaseModel):
     """
@@ -139,9 +161,11 @@ class UserQuery(BaseModel):
     :param shift_id: Optional[str] = None
 
     """
+
     shift_operator: Optional[str] = None
     shift_id: Optional[str] = None
     match_type: MatchType = MatchType.EQUALS
+
 
 class TextBasedQuery(BaseModel):
     """
@@ -153,9 +177,12 @@ class TextBasedQuery(BaseModel):
     search_text: Optional[str] = None
     match_type: MatchType = MatchType.EQUALS
 
+
 class jsonBasedQuery(BaseModel):
     """
     Represents a query for filtering shifts based on JSON data.
     :param json_data Optional[dict]: The JSON data to search for.
     """
-    entity_status: Status = Status.CREATED
+
+    entity: ENTITY = ENTITY.SBI_STATUS
+    status: STATUS = STATUS.CREATED

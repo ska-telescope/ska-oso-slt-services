@@ -10,21 +10,21 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     insert_query,
     patch_query,
     select_by_date_query,
+    select_by_text_query,
     select_by_user_query,
     select_latest_query,
+    select_logs_by_status,
     select_metadata_query,
-    select_by_text_query,
     update_query,
-    select_by_json_field_query
 )
 from ska_oso_slt_services.domain.shift_models import (
     DateQuery,
     Media,
     Metadata,
     Shift,
-    UserQuery,
     TextBasedQuery,
-    jsonBasedQuery
+    UserQuery,
+    jsonBasedQuery,
 )
 from ska_oso_slt_services.repository.shift_repository import CRUDShiftRepository
 from ska_oso_slt_services.utils.date_utils import get_datetime_for_timezone
@@ -54,7 +54,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
         user_query: Optional[UserQuery] = None,
         date_query: Optional[DateQuery] = None,
         text_based_query: Optional[TextBasedQuery] = None,
-        json_based_query: Optional[jsonBasedQuery] = None
+        json_based_query: Optional[jsonBasedQuery] = None,
     ) -> List[Shift]:
         """
         Retrieve shifts based on user or date query.
@@ -76,7 +76,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
         if text_based_query:
             query, params = select_by_text_query(self.table_details, text_based_query)
         if json_based_query:
-            query, params = select_by_json_field_query(self.table_details, json_based_query)
+            query, params = select_logs_by_status(self.table_details, json_based_query)
         else:
             query, params = select_by_user_query(self.table_details, user_query)
         shifts = self.postgres_data_access.get(query, params)

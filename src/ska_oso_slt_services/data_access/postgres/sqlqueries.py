@@ -7,12 +7,20 @@ selecting, and querying shifts.
 """
 
 from datetime import datetime
-from typing import Any, Dict, Tuple, Union, List
+from typing import Any, Dict, List, Tuple, Union
 
 from psycopg import sql
 
 from ska_oso_slt_services.data_access.postgres.mapping import TableDetails
-from ska_oso_slt_services.domain.shift_models import DateQuery, Shift, UserQuery, TextBasedQuery
+from ska_oso_slt_services.domain.shift_models import (
+    DateQuery,
+    Logs,
+    Shift,
+    ShiftLogs,
+    TextBasedQuery,
+    UserQuery,
+    jsonBasedQuery,
+)
 
 SqlTypes = Union[str, int, datetime]
 QueryAndParameters = Tuple[sql.Composed, Tuple[SqlTypes]]
@@ -353,384 +361,123 @@ def select_by_text_query(
     """
     columns = get_all_columns(table_details)
     search_columns = get_search_columns(table_details)
-    
-    query, params = build_search_query(table_details, columns, search_columns, qry_params)
-    
+
+    query, params = build_search_query(
+        table_details, columns, search_columns, qry_params
+    )
+
     return query, params
 
+
 def get_all_columns(table_details: TableDetails) -> List[str]:
-    return list(table_details.get_columns_with_metadata_with_extra_keys()) + \
-           list(table_details.table_details.metadata_map.keys())
+    return list(table_details.get_columns_with_metadata_with_extra_keys()) + list(
+        table_details.table_details.metadata_map.keys()
+    )
+
 
 def get_search_columns(table_details: TableDetails) -> List[str]:
     return [table_details.table_details.text_base_search_fields]
 
+
 def build_search_query(
-    table_details: TableDetails, 
-    columns: List[str], 
-    search_columns: List[str], 
-    qry_params: TextBasedQuery
+    table_details: TableDetails,
+    columns: List[str],
+    search_columns: List[str],
+    qry_params: TextBasedQuery,
 ) -> Tuple[sql.Composed, Tuple[str, ...]]:
     if qry_params.match_type.value == "equals":
-        return build_full_text_search_query(table_details, columns, search_columns, qry_params)
+        return build_full_text_search_query(
+            table_details, columns, search_columns, qry_params
+        )
     elif qry_params.match_type.value in ["starts_with", "contains"]:
         return build_like_query(table_details, columns, search_columns[0], qry_params)
     else:
         raise ValueError(f"Unsupported match_type: {qry_params.match_type}")
 
+
 def build_full_text_search_query(
-    table_details: TableDetails, 
-    columns: List[str], 
-    search_columns: List[str], 
-    qry_params: TextBasedQuery
+    table_details: TableDetails,
+    columns: List[str],
+    search_columns: List[str],
+    qry_params: TextBasedQuery,
 ) -> Tuple[sql.Composed, Tuple[str, str]]:
-    combined_tsvector = sql.SQL(' || ').join(
+    combined_tsvector = sql.SQL(" || ").join(
         sql.SQL("to_tsvector('english', {}::text)").format(sql.Identifier(col))
         for col in search_columns
     )
-    
-    query = sql.SQL("""
+
+    query = sql.SQL(
+        """
         SELECT {fields},
             ts_rank({combined_tsvector}, plainto_tsquery('english', %s)) AS search_rank
         FROM {table}
         WHERE {combined_tsvector} @@ plainto_tsquery('english', %s)
         ORDER BY search_rank DESC
-    """).format(
-        fields=sql.SQL(', ').join(map(sql.Identifier, columns)),
+    """
+    ).format(
+        fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
         table=sql.Identifier(table_details.table_details.table_name),
-        combined_tsvector=combined_tsvector
+        combined_tsvector=combined_tsvector,
     )
-    
+
     return query, (qry_params.search_text, qry_params.search_text)
 
+
 def build_like_query(
-    table_details: TableDetails, 
-    columns: List[str], 
-    search_column: str, 
-    qry_params: TextBasedQuery
+    table_details: TableDetails,
+    columns: List[str],
+    search_column: str,
+    qry_params: TextBasedQuery,
 ) -> Tuple[sql.Composed, Tuple[str]]:
-    like_pattern = f"{qry_params.search_text}%" if qry_params.match_type == "starts_with" else f"%{qry_params.search_text}%"
-    
-    query = sql.SQL("""
+    like_pattern = (
+        f"{qry_params.search_text}%"
+        if qry_params.match_type == "starts_with"
+        else f"%{qry_params.search_text}%"
+    )
+
+    query = sql.SQL(
+        """
         SELECT {fields}
         FROM {table}
         WHERE {search_column} ILIKE %s
-    """).format(
-        fields=sql.SQL(', ').join(map(sql.Identifier, columns)),
+    """
+    ).format(
+        fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
         table=sql.Identifier(table_details.table_details.table_name),
-        search_column=sql.Identifier(search_column)
+        search_column=sql.Identifier(search_column),
     )
-    
+
     return query, (like_pattern,)
 
-from psycopg2 import sql
-from typing import List, Tuple, Any, Dict
 
-class JSONFieldQuery:
-    def __init__(self, conditions: Dict[str, Any]):
-        self.conditions = conditions
+def select_logs_by_status(table_details: TableDetails, qry_params: DateQuery):
+    # Get the dynamic columns
+    status = "Created"
+    dynamic_columns = table_details.get_columns_with_metadata_with_extra_keys()
+    column_selection = ", ".join(dynamic_columns)
 
-
-def select_by_json_field_query(
-    table_details: TableDetails, 
-    qry_params: JSONFieldQuery
-) -> Tuple[sql.Composed, Tuple[Any, ...]]:
+    # Build the dynamic column selection part of the query_
+    query_str = f"""
+        SELECT
+            {column_selection},
+            jsonb_build_object(
+                'logs', 
+                jsonb_agg(
+                    jsonb_build_object(
+                        'info', log->'info',
+                        'source', log->'source',
+                        'log_time', log->'log_time'
+                    )
+                )
+            ) as shift_logs
+        FROM 
+            {table_details.table_details.table_name},
+            jsonb_array_elements(shift_logs->'logs') AS log
+        WHERE 
+            log->'info'->>'sbi_status' = %s
+        GROUP BY 
+            {column_selection}
     """
-    Creates a query to select records based on multiple conditions in a JSON array column.
+    params = (qry_params.status.value,)
 
-    Args:
-        table_details (TableDetails): The information about the table to query.
-        qry_params (JSONFieldQuery): The query parameters including multiple JSON field conditions.
-
-    Returns:
-        Tuple[sql.Composed, Tuple[Any, ...]]: A tuple of the query and parameters.
-    """
-    columns = get_all_columns(table_details)
-    
-    query, params = build_json_field_query(table_details, columns, qry_params)
-    
-    return query, params
-
-def get_all_columns(table_details: TableDetails) -> List[str]:
-    return table_details.get_columns_with_metadata_with_extra_keys()
-
-def build_json_field_query(
-    table_details: TableDetails, 
-    columns: List[str], 
-    qry_params: JSONFieldQuery
-) -> Tuple[sql.Composed, List[Any]]:
-    conditions = []
-    params = []
-    qry_params = JSONFieldQuery({
-     "sbi_status": "Created"})
-    for json_path, search_value in qry_params.conditions.items():
-        json_condition = build_json_condition(table_details.table_details.json_base_search_fields, json_path, search_value)
-        conditions.append(json_condition)
-        params.append(search_value)
-    import pdb;pdb.set_trace()
-    where_clause = sql.SQL(" AND ").join(conditions)
-    
-    query = sql.SQL("""
-        SELECT {fields}
-        FROM {table}
-        WHERE {where_clause}
-    """).format(
-        fields=sql.SQL(', ').join(map(sql.Identifier, columns)),
-        table=sql.Identifier(table_details.table_details.table_name),
-        where_clause=where_clause
-    )
-    
-    return query, tuple(params)
-
-def build_json_condition(json_column: str, json_path: str, search_value: Any) -> sql.Composed:
-    json_access = build_json_access(json_column, json_path)
-    
-    return sql.SQL("{} = %s").format(json_access)
-
-def build_json_access(json_column: str, json_path: str) -> sql.Composed:
-    path_parts = json_path.split('.')
-    result = sql.Identifier(json_column)
-    
-    for part in path_parts:
-        if part == '*':
-            # Use jsonb_array_elements to search in all array elements
-            result = sql.SQL("jsonb_array_elements({})").format(result)
-        elif part.isdigit():
-            result = sql.SQL("{}->{}").format(result, sql.Literal(int(part)))
-        else:
-            result = sql.SQL("{}->>{}").format(result, sql.Literal(part))
-    
-    return result
-
-# from psycopg2 import sql
-# from typing import List, Tuple, Any, Dict
-
-# def select_by_json_field_query(
-#     table_details: TableDetails, 
-#     qry_params: JSONFieldQuery
-# ) -> Tuple[str, Tuple[Any, ...]]:
-#     """
-#     Creates a query to select records based on multiple conditions in a JSON array column.
-
-#     Args:
-#         table_details (TableDetails): The information about the table to query.
-#         qry_params (JSONFieldQuery): The query parameters including multiple JSON field conditions.
-
-#     Returns:
-#         Tuple[str, Tuple[Any, ...]]: A tuple of the query string and parameters.
-#     """
-#     columns = get_all_columns(table_details)
-    
-#     query, params = build_json_field_query(table_details, columns, qry_params)
-    
-#     # Convert the sql.Composed object to a string
-#     query_string = query.as_string(table_details.connection)
-    
-#     return query_string, params
-
-# # ... (rest of the functions remain the same)
-
-# class TableDetails:
-#     def __init__(self, table_name: str, json_column_name: str, connection):
-#         self.table_name = table_name
-#         self.json_column_name = json_column_name
-#         self.connection = connection
-
-#     def get_columns_with_metadata_with_extra_keys(self):
-#         # Implement this method based on your needs
-#         return ["id", self.json_column_name]
-
-# # Example usage
-# import psycopg2
-
-# # Establish your database connection
-# conn = psycopg2.connect(
-#     host="your_host",
-#     database="your_database",
-#     user="your_user",
-#     password="your_password"
-# )
-
-# table_details = TableDetails(
-#     table_name="your_table_name",
-#     json_column_name="jsonb_column",
-#     connection=conn
-# )
-
-# qry_params = JSONFieldQuery({
-#     "*.info.sbi_status": "Created",
-#     "*.info.telescope": "ska_mid",
-#     "*.source": "ODA"
-# })
-
-
-# print(query_string)
-# print(params)
-
-# # Execute the query
-# with conn.cursor() as cur:
-#     cur.execute(query_string, params)
-#     results = cur.fetchall()
-
-# print(results)
-
-# # Don't forget to close your connection when you're done
-# conn.close()
-
-
-
-# from psycopg2 import sql
-# from typing import List, Tuple, Any, Dict
-
-# class JSONFieldQuery:
-#     def __init__(self, conditions: Dict[str, Any]):
-#         self.conditions = conditions
-
-# def select_by_json_field_query(
-#     table_details: TableDetails, 
-#     qry_params: JSONFieldQuery
-# ) -> Tuple[sql.Composed, Tuple[Any, ...]]:
-#     """
-#     Creates a query to select records based on multiple conditions in a JSON array column.
-
-#     Args:
-#         table_details (TableDetails): The information about the table to query.
-#         qry_params (JSONFieldQuery): The query parameters including multiple JSON field conditions.
-
-#     Returns:
-#         Tuple[sql.Composed, Tuple[Any, ...]]: A tuple of the query and parameters.
-#     """
-#     qry_params = JSONFieldQuery({
-#     "*.info.sbi_status": "Created"})
-#     columns = get_all_columns(table_details)
-    
-#     query, params = build_json_field_query(table_details, columns, qry_params)
-    
-#     return query, params
-
-# def get_all_columns(table_details: TableDetails) -> List[str]:
-#     return table_details.get_columns_with_metadata_with_extra_keys()
-
-# def build_json_field_query(
-#     table_details: TableDetails, 
-#     columns: List[str], 
-#     qry_params: JSONFieldQuery
-# ) -> Tuple[sql.Composed, List[Any]]:
-#     conditions = []
-#     params = []
-
-#     for json_path, search_value in qry_params.conditions.items():
-#         json_condition = build_json_condition(table_details.table_details.json_base_search_fields, json_path, search_value)
-#         conditions.append(json_condition)
-#         params.append(search_value)
-
-#     where_clause = sql.SQL(" AND ").join(conditions)
-    
-#     query = sql.SQL("""
-#         SELECT {fields}
-#         FROM {table}
-#         WHERE {where_clause}
-#     """).format(
-#         fields=sql.SQL(', ').join(map(sql.Identifier, columns)),
-#         table=sql.Identifier(table_details.table_details.table_name),
-#         where_clause=where_clause
-#     )
-#     return query, tuple(params)
-
-# def build_json_condition(json_column: str, json_path: str, search_value: Any) -> sql.Composed:
-#     json_access = build_json_access(json_column, json_path)
-    
-#     return sql.SQL("{} = %s").format(json_access)
-
-# def build_json_access(json_column: str, json_path: str) -> sql.Composed:
-#     path_parts = json_path.split('.')
-#     result = sql.Identifier(json_column)
-    
-#     for part in path_parts:
-#         if part == '*':
-#             # Use jsonb_array_elements to search in all array elements
-#             result = sql.SQL("jsonb_array_elements({})").format(result)
-#         elif part.isdigit():
-#             result = sql.SQL("{}->{}").format(result, sql.Literal(int(part)))
-#         else:
-#             result = sql.SQL("{}->>{}").format(result, sql.Literal(part))
-    
-#     return result
-
-
-# from psycopg2 import sql
-# from typing import List, Tuple, Any, Dict
-
-# def select_by_json_field_query(
-#     table_details: TableDetails, 
-#     qry_params: JSONFieldQuery
-# ) -> Tuple[str, Tuple[Any, ...]]:
-#     """
-#     Creates a query to select records based on multiple conditions in a JSON array column.
-
-#     Args:
-#         table_details (TableDetails): The information about the table to query.
-#         qry_params (JSONFieldQuery): The query parameters including multiple JSON field conditions.
-
-#     Returns:
-#         Tuple[str, Tuple[Any, ...]]: A tuple of the query string and parameters.
-#     """
-#     columns = get_all_columns(table_details)
-    
-#     query, params = build_json_field_query(table_details, columns, qry_params)
-    
-#     # Convert the sql.Composed object to a string
-#     query_string = query.as_string(table_details.connection)
-    
-#     return query_string, params
-
-# def build_json_field_query(
-#     table_details: TableDetails, 
-#     columns: List[str], 
-#     qry_params: JSONFieldQuery
-# ) -> Tuple[sql.Composed, List[Any]]:
-#     conditions = []
-#     params = []
-
-#     for json_path, search_value in qry_params.conditions.items():
-#         json_condition = build_json_condition(table_details.json_column_name, json_path, search_value)
-#         conditions.append(json_condition)
-#         params.append(search_value)
-
-#     where_clause = sql.SQL(" AND ").join(conditions)
-    
-#     query = sql.SQL("""
-#         SELECT {fields}
-#         FROM {table}
-#         WHERE {where_clause}
-#     """).format(
-#         fields=sql.SQL(', ').join(map(sql.Identifier, columns)),
-#         table=sql.Identifier(table_details.table_name),
-#         where_clause=where_clause
-#     )
-    
-#     return query, tuple(params)
-
-# # ... (rest of the code remains the same)
-
-# # Example usage
-# table_details = TableDetails(
-#     table_name="your_table_name",
-#     json_column_name="jsonb_column",
-#     connection=your_database_connection  # Make sure to pass your database connection here
-# )
-
-# qry_params = JSONFieldQuery({
-#     "*.info.sbi_status": "Created",
-#     "*.info.telescope": "ska_mid",
-#     "*.source": "ODA"
-# })
-
-# query_string, params = select_by_json_field_query(table_details, qry_params)
-
-# print(query_string)
-# print(params)
-
-    
-
-
+    return query_str, params

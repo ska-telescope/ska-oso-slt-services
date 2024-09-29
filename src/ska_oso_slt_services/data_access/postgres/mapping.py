@@ -32,7 +32,7 @@ class TableDetails:
     table_name: str
     identifier_field: str
     text_base_search_fields: str
-    json_base_search_fields:str
+    json_base_search_fields: str
     column_map: dict
     column_map_extra_keys: dict
     metadata_map: dict
