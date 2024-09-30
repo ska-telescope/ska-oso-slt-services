@@ -14,12 +14,9 @@ from psycopg import sql
 from ska_oso_slt_services.data_access.postgres.mapping import TableDetails
 from ska_oso_slt_services.domain.shift_models import (
     DateQuery,
-    Logs,
     Shift,
-    ShiftLogs,
     TextBasedQuery,
     UserQuery,
-    jsonBasedQuery,
 )
 
 SqlTypes = Union[str, int, datetime]
@@ -350,7 +347,8 @@ def select_by_text_query(
     table_details: TableDetails, qry_params: TextBasedQuery
 ) -> QueryAndParameters:
     """
-    Creates a query to select shifts based on text-based criteria using full-text search.
+    Creates a query to select shifts based on text-based criteria
+    using full-text search.
 
     Args:
         table_details (TableDetails): The information about the table to query.
@@ -452,7 +450,6 @@ def build_like_query(
 
 def select_logs_by_status(table_details: TableDetails, qry_params: DateQuery):
     # Get the dynamic columns
-    status = "Created"
     dynamic_columns = table_details.get_columns_with_metadata_with_extra_keys()
     column_selection = ", ".join(dynamic_columns)
 
@@ -461,7 +458,7 @@ def select_logs_by_status(table_details: TableDetails, qry_params: DateQuery):
         SELECT
             {column_selection},
             jsonb_build_object(
-                'logs', 
+                'logs',
                 jsonb_agg(
                     jsonb_build_object(
                         'info', log->'info',
@@ -470,12 +467,12 @@ def select_logs_by_status(table_details: TableDetails, qry_params: DateQuery):
                     )
                 )
             ) as shift_logs
-        FROM 
+        FROM
             {table_details.table_details.table_name},
             jsonb_array_elements(shift_logs->'logs') AS log
-        WHERE 
+        WHERE
             log->'info'->>'sbi_status' = %s
-        GROUP BY 
+        GROUP BY
             {column_selection}
     """
     params = (qry_params.status.value,)

@@ -6,6 +6,7 @@ from ska_oso_slt_services.domain.shift_models import (
     Shift,
     TextBasedQuery,
     UserQuery,
+    jsonBasedQuery,
 )
 from ska_oso_slt_services.repository.shift_repository import ShiftRepository
 
@@ -24,6 +25,7 @@ class EDAShiftRepository(ShiftRepository):
         user_query: Optional[UserQuery] = None,
         date_query: Optional[DateQuery] = None,
         text_based_query: Optional[TextBasedQuery] = None,
+        json_based_query: Optional[jsonBasedQuery] = None,
     ) -> List[Shift]:
         """
         Retrieve a list of shifts within the specified start and end times.
