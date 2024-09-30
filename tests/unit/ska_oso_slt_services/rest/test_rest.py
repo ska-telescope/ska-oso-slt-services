@@ -189,7 +189,10 @@ def test_get_shifts():
         return_value=mock_shifts,
     ):
         # Send a GET request to the endpoint
-        response = client.get("/ska-oso-slt-services/slt/api/v0/shift/shifts")
+        response = client.get(
+            "/ska-oso-slt-services/slt/api/v0/shift/shifts"
+            "?entity=sbi_status&status=Created"
+        )
 
     # Assert the response status code
     assert response.status_code == 200

@@ -149,7 +149,7 @@ class DateQuery(BaseModel):
 
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None
-    query_type: QueryType = QueryType.CREATED_BETWEEN
+    query_type: Optional[QueryType] = None
 
 
 class UserQuery(BaseModel):
@@ -164,10 +164,10 @@ class UserQuery(BaseModel):
 
     shift_operator: Optional[str] = None
     shift_id: Optional[str] = None
-    match_type: MatchType = MatchType.EQUALS
+    match_type: Optional[MatchType] = None
 
 
-class TextBasedQuery(BaseModel):
+class TextQuery(BaseModel):
     """
     Represents a base class for text-based queries.
     :param text Optional[str]: The text to search for.
@@ -175,14 +175,14 @@ class TextBasedQuery(BaseModel):
     """
 
     search_text: Optional[str] = None
-    match_type: MatchType = MatchType.EQUALS
+    match_type: Optional[MatchType] = None
 
 
-class jsonBasedQuery(BaseModel):
+class JsonQuery(BaseModel):
     """
     Represents a query for filtering shifts based on JSON data.
     :param json_data Optional[dict]: The JSON data to search for.
     """
 
-    entity: ENTITY = ENTITY.SBI_STATUS
-    status: STATUS = STATUS.CREATED
+    entity: Optional[ENTITY] = None
+    status: Optional[STATUS] = None

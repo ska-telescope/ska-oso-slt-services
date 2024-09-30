@@ -11,10 +11,10 @@ from fastapi import APIRouter, Depends
 
 from ska_oso_slt_services.domain.shift_models import (
     DateQuery,
+    JsonQuery,
     Shift,
-    TextBasedQuery,
+    TextQuery,
     UserQuery,
-    jsonBasedQuery,
 )
 from ska_oso_slt_services.repository.postgress_shift_repository import (
     PostgressShiftRepository,
@@ -71,8 +71,8 @@ def get_shift(shift_id: Optional[str] = None):
 def get_shifts(
     user_query: UserQuery = Depends(),
     data_query: DateQuery = Depends(),
-    text_query: TextBasedQuery = Depends(),
-    json_query: jsonBasedQuery = Depends(),
+    text_query: TextQuery = Depends(),
+    json_query: JsonQuery = Depends(),
 ):
     """
     Retrieve all shifts.

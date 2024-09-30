@@ -14,8 +14,9 @@ from psycopg import sql
 from ska_oso_slt_services.data_access.postgres.mapping import TableDetails
 from ska_oso_slt_services.domain.shift_models import (
     DateQuery,
+    JsonQuery,
     Shift,
-    TextBasedQuery,
+    TextQuery,
     UserQuery,
 )
 
@@ -293,8 +294,6 @@ def select_by_date_query(
         ValueError: If an unsupported query type is provided.
     """
     columns = table_details.get_columns_with_metadata_with_extra_keys()
-    mapping_columns = [key for key in table_details.table_details.metadata_map.keys()]
-    columns = list(columns) + mapping_columns
     if qry_params.shift_start:
         if qry_params.shift_end:
             where_clause = sql.SQL(
@@ -344,7 +343,7 @@ def select_by_date_query(
 
 
 def select_by_text_query(
-    table_details: TableDetails, qry_params: TextBasedQuery
+    table_details: TableDetails, qry_params: TextQuery
 ) -> QueryAndParameters:
     """
     Creates a query to select shifts based on text-based criteria
@@ -352,12 +351,12 @@ def select_by_text_query(
 
     Args:
         table_details (TableDetails): The information about the table to query.
-        qry_params (TextBasedQuery): The text-based query parameters.
+        qry_params (TextQuery): The text-based query parameters.
 
     Returns:
         QueryAndParameters: A tuple of the query and parameters.
     """
-    columns = get_all_columns(table_details)
+    columns = list(table_details.get_columns_with_metadata_with_extra_keys())
     search_columns = get_search_columns(table_details)
 
     query, params = build_search_query(
@@ -365,12 +364,6 @@ def select_by_text_query(
     )
 
     return query, params
-
-
-def get_all_columns(table_details: TableDetails) -> List[str]:
-    return list(table_details.get_columns_with_metadata_with_extra_keys()) + list(
-        table_details.table_details.metadata_map.keys()
-    )
 
 
 def get_search_columns(table_details: TableDetails) -> List[str]:
@@ -381,8 +374,25 @@ def build_search_query(
     table_details: TableDetails,
     columns: List[str],
     search_columns: List[str],
-    qry_params: TextBasedQuery,
+    qry_params: TextQuery,
 ) -> Tuple[sql.Composed, Tuple[str, ...]]:
+    """
+    Builds a search query based on the provided parameters.
+
+    Args:
+        table_details (TableDetails): The information about the table to query.
+        columns (List[str]): The list of columns to select.
+        search_columns (List[str]): The list of columns to search within.
+        qry_params (TextQuery): The text-based query parameters.
+
+    Returns:
+        Tuple[sql.Composed, Tuple[str, ...]]:
+        A tuple containing the query and parameters.
+
+    Raises:
+        ValueError: If an unsupported match_type is provided.
+    """
+
     if qry_params.match_type.value == "equals":
         return build_full_text_search_query(
             table_details, columns, search_columns, qry_params
@@ -397,8 +407,21 @@ def build_full_text_search_query(
     table_details: TableDetails,
     columns: List[str],
     search_columns: List[str],
-    qry_params: TextBasedQuery,
+    qry_params: TextQuery,
 ) -> Tuple[sql.Composed, Tuple[str, str]]:
+    """
+    Builds a full-text search query using the provided parameters.
+
+    Args:
+        table_details (TableDetails): The information about the table to query.
+        columns (List[str]): The list of columns to select.
+        search_columns (List[str]): The list of columns to search within.
+        qry_params (TextQuery): The text-based query parameters.
+
+    Returns:
+        Tuple[sql.Composed, Tuple[str, str]]: A tuple containing
+        the query and parameters.
+    """
     combined_tsvector = sql.SQL(" || ").join(
         sql.SQL("to_tsvector('english', {}::text)").format(sql.Identifier(col))
         for col in search_columns
@@ -425,8 +448,20 @@ def build_like_query(
     table_details: TableDetails,
     columns: List[str],
     search_column: str,
-    qry_params: TextBasedQuery,
+    qry_params: TextQuery,
 ) -> Tuple[sql.Composed, Tuple[str]]:
+    """
+    Builds a LIKE query using the provided parameters.
+
+    Args:
+        table_details (TableDetails): The information about the table to query.
+        columns (List[str]): The list of columns to select.
+        search_column (str): The column to search within.
+        qry_params (TextQuery): The text-based query parameters.
+
+    Returns:
+        Tuple[sql.Composed, Tuple[str]]: A tuple containing the query and parameters.
+    """
     like_pattern = (
         f"{qry_params.search_text}%"
         if qry_params.match_type == "starts_with"
@@ -448,7 +483,19 @@ def build_like_query(
     return query, (like_pattern,)
 
 
-def select_logs_by_status(table_details: TableDetails, qry_params: DateQuery):
+def select_logs_by_status(
+    table_details: TableDetails, qry_params: JsonQuery
+) -> Tuple[str, Tuple[str]]:
+    """
+    Creates a query to select logs based on the status of the shift.
+
+    Args:
+        table_details (TableDetails): The information about the table to query.
+        qry_params (JsonQuery): The JSON-based query parameters.
+
+    Returns:
+        QueryAndParameters: A tuple of the query and parameters.
+    """
     # Get the dynamic columns
     dynamic_columns = table_details.get_columns_with_metadata_with_extra_keys()
     column_selection = ", ".join(dynamic_columns)
