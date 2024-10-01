@@ -31,6 +31,8 @@ class TableDetails:
 
     table_name: str
     identifier_field: str
+    text_base_search_fields: str
+    json_base_search_fields: str
     column_map: dict
     column_map_extra_keys: dict
     metadata_map: dict
@@ -62,6 +64,8 @@ class ShiftLogMapping:
         return TableDetails(
             table_name="tab_oda_slt",
             identifier_field="shift_id",
+            text_base_search_fields="comments",
+            json_base_search_fields="shift_logs",
             column_map={
                 "shift_id": lambda shift: shift.shift_id,
                 "shift_start": lambda shift: shift.shift_start,

@@ -7,8 +7,10 @@ from datetime import datetime, timezone
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.domain.shift_models import (
     DateQuery,
+    JsonQuery,
     Metadata,
     Shift,
+    TextQuery,
     UserQuery,
     ShiftLogs
 )
@@ -67,6 +69,8 @@ class ShiftService:
         self,
         user_query: Optional[UserQuery] = None,
         date_query: Optional[DateQuery] = None,
+        text_query: Optional[TextQuery] = None,
+        json_query: Optional[JsonQuery] = None,
     ) -> Optional[dict]:
         """
         Retrieve a list of shifts based on the provided query parameters.
@@ -76,6 +80,10 @@ class ShiftService:
             for filtering shifts by user.
             date_query (Optional[DateQuery]): Query parameters
             for filtering shifts by date.
+            text_query (Optional[TextQuery]): Query parameters
+            for filtering shifts by text.
+            json_query (Optional[JsonQuery]): Query parameters
+            for filtering shifts by JSON-based criteria.
 
         Returns:
             List[Shift]: A list of shifts matching the query parameters.
@@ -83,7 +91,9 @@ class ShiftService:
         if not self.postgres_repository:
             raise ValueError("PostgresShiftRepository is not available")
 
-        shifts = self.postgres_repository.get_shifts(user_query, date_query)
+        shifts = self.postgres_repository.get_shifts(
+            user_query, date_query, text_query, json_query
+        )
         if not shifts:
             raise NotFoundError("No shifts found for the given query.")
         LOGGER.info("Shifts: %s", shifts)

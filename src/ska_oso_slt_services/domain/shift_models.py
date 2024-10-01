@@ -61,6 +61,18 @@ class ShiftLogs(SLTObject):
     log_time: Optional[datetime] = None
 
 
+class Logs(SLTObject):
+    """
+    Represents logs associated with a shift in the SLT Shift Log Tool.
+
+    :param info Optional[dict]: Information about the log.
+    :param source Optional[str]: The source of the log.
+    :param log_time Optional[datetime]: The time the log was created.
+    """
+
+    logs: Optional[List[ShiftLogs]] = None
+
+
 class Shift(SLTObject):
     """
     Represents a shift in the SLT Shift Log Tool.
@@ -85,7 +97,7 @@ class Shift(SLTObject):
     )
     shift_end: Optional[datetime] = None
     shift_operator: Optional[str] = None
-    shift_logs: Optional[List[ShiftLogs]] = None
+    shift_logs: Optional[Logs] = None
     media: Optional[List[Media]] = None
     annotations: Optional[str] = None
     comments: Optional[str] = None
@@ -111,6 +123,22 @@ class MatchType(Enum):
     CONTAINS = "contains"
 
 
+class ENTITY(Enum):
+    # add doc string for MatchType Enum
+    """
+    Enum representing the different types of matching available for filtering shifts.
+    """
+    SBI_STATUS = "sbi_status"
+
+
+class STATUS(Enum):
+    # add doc string for MatchType Enum
+    """
+    Enum representing the different types of matching available for filtering shifts.
+    """
+    CREATED = "Created"
+
+
 class DateQuery(BaseModel):
     """
     Represents a query for filtering shifts based on date range.
@@ -121,7 +149,7 @@ class DateQuery(BaseModel):
 
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None
-    query_type: QueryType = QueryType.CREATED_BETWEEN
+    query_type: Optional[QueryType] = None
 
 
 class UserQuery(BaseModel):
@@ -134,7 +162,27 @@ class UserQuery(BaseModel):
 
     """
 
-    comments: Optional[str] = None
     shift_operator: Optional[str] = None
     shift_id: Optional[str] = None
-    match_type: MatchType = MatchType.EQUALS
+    match_type: Optional[MatchType] = None
+
+
+class TextQuery(BaseModel):
+    """
+    Represents a base class for text-based queries.
+    :param text Optional[str]: The text to search for.
+    :param match_type MatchType: The type of matching to perform.
+    """
+
+    search_text: Optional[str] = None
+    match_type: Optional[MatchType] = None
+
+
+class JsonQuery(BaseModel):
+    """
+    Represents a query for filtering shifts based on JSON data.
+    :param json_data Optional[dict]: The JSON data to search for.
+    """
+
+    entity: Optional[ENTITY] = None
+    status: Optional[STATUS] = None

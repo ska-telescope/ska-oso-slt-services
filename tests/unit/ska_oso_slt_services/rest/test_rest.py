@@ -83,9 +83,15 @@ def test_get_shift():
         "shift_start": get_datetime_for_timezone("UTC"),
         "shift_end": get_datetime_for_timezone("UTC"),
         "shift_operator": "test",
-        "shift_logs": [
-            {"info": {}, "source": "test", "log_time": get_datetime_for_timezone("UTC")}
-        ],
+        "shift_logs": {
+            "logs": [
+                {
+                    "info": {},
+                    "source": "test",
+                    "log_time": get_datetime_for_timezone("UTC"),
+                }
+            ]
+        },
         "media": [{"type": "test", "path": "test"}],
         "annotations": "test",
         "comments": "test",
@@ -109,7 +115,6 @@ def test_get_shift():
     ):
         # Send a GET request to the endpoint
         response = client.get("/ska-oso-slt-services/slt/api/v0/shift/shift")
-
     # Assert the response status code
     assert response.status_code == 200
 
@@ -130,13 +135,15 @@ def test_get_shifts():
             "shift_start": get_datetime_for_timezone("UTC"),
             "shift_end": get_datetime_for_timezone("UTC"),
             "shift_operator": "test-operator-1",
-            "shift_logs": [
-                {
-                    "info": {},
-                    "source": "test",
-                    "log_time": get_datetime_for_timezone("UTC"),
-                }
-            ],
+            "shift_logs": {
+                "logs": [
+                    {
+                        "info": {},
+                        "source": "test",
+                        "log_time": get_datetime_for_timezone("UTC"),
+                    }
+                ]
+            },
             "media": [{"type": "test", "path": "test"}],
             "annotations": "test-annotation-1",
             "comments": "test-comment-1",
@@ -150,7 +157,15 @@ def test_get_shifts():
             "shift_start": get_datetime_for_timezone("UTC"),
             "shift_end": get_datetime_for_timezone("UTC"),
             "shift_operator": "test-operator-2",
-            "shift_logs": [],
+            "shift_logs": {
+                "logs": [
+                    {
+                        "info": {},
+                        "source": "test",
+                        "log_time": get_datetime_for_timezone("UTC"),
+                    }
+                ]
+            },
             "media": [],
             "annotations": "test-annotation-2",
             "comments": "test-comment-2",
@@ -174,7 +189,10 @@ def test_get_shifts():
         return_value=mock_shifts,
     ):
         # Send a GET request to the endpoint
-        response = client.get("/ska-oso-slt-services/slt/api/v0/shift/shifts")
+        response = client.get(
+            "/ska-oso-slt-services/slt/api/v0/shift/shifts"
+            "?entity=sbi_status&status=Created"
+        )
 
     # Assert the response status code
     assert response.status_code == 200
@@ -195,7 +213,7 @@ def test_update_shift():
         "shift_start": get_datetime_for_timezone("UTC"),
         "shift_end": None,
         "shift_operator": "old-operator",
-        "shift_logs": [],
+        "shift_logs": {},
         "media": [],
         "annotations": "old-annotation",
         "comments": "old-comment",
@@ -210,7 +228,7 @@ def test_update_shift():
         "shift_id": "test-id-1",
         "shift_start": "2024-09-14T16:49:54.889Z",
         "shift_operator": "old-operator",
-        "shift_logs": [],
+        "shift_logs": {},
         "media": [],
         "annotations": "old-annotation",
         "comments": "old-comment",
@@ -272,7 +290,15 @@ def test_patch_shift():
         "shift_id": "test-id-1",
         "shift_start": "2024-09-14T16:49:54.889Z",
         "shift_operator": "old-operator",
-        "shift_logs": [],
+        "shift_logs": {
+            "logs": [
+                {
+                    "info": {},
+                    "source": "test",
+                    "log_time": get_datetime_for_timezone("UTC"),
+                }
+            ]
+        },
         "media": [],
         "annotations": "old-annotation",
         "comments": "old-comment",

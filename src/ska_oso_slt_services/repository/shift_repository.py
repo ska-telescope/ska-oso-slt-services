@@ -1,7 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from ska_oso_slt_services.domain.shift_models import DateQuery, Media, Shift, UserQuery
+from ska_oso_slt_services.domain.shift_models import (
+    DateQuery,
+    JsonQuery,
+    Media,
+    Shift,
+    TextQuery,
+    UserQuery,
+)
 
 
 class ShiftRepository(ABC):
@@ -18,6 +25,8 @@ class ShiftRepository(ABC):
         self,
         user_query: Optional[UserQuery] = None,
         date_query: Optional[DateQuery] = None,
+        text_query: Optional[TextQuery] = None,
+        json_query: Optional[JsonQuery] = None,
     ) -> List[Shift]:
         """
         Retrieve a list of shifts within the specified start and end times.
@@ -26,6 +35,13 @@ class ShiftRepository(ABC):
         , no start time filter is applied.
         :param shift_end: Optional[datetime]: The end time to filter shifts. If None,
          no end time filter is applied.
+         :param user_query: Optional[UserQuery]: The user query to filter
+         shifts. If None,
+         no user filter is applied.
+         :param text_query: Optional[TextQuery]: The text query to filter
+         shifts. If None, no text filter is applied.
+         :param json_query: Optional[JsonQuery]: The json query to filter
+         shifts. If None, no json filter is applied.
 
         :returns: A list of Shift objects that fall within the specified time range.
 

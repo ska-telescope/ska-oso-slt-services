@@ -71,25 +71,21 @@ class PostgresDataAccess:
         """
         Get data from the database.
 
-        :param query: The SQL query to be executed.
-        :param connection: The database connection object.
+        :param query: The SQL query to be executed (as sql.Composed).
+        :param params: The parameters for the SQL query.
         :return: The result of the query.
         """
-
         try:
             with self.postgres_connection.connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(query, params)
-                    conn.commit()
                     return cursor.fetchall()
         except (DatabaseError, InternalError, DataError) as e:
-            # Handle database-related exceptions
-            LOGGER.info("Error executing get query: %s", e)
-            raise e
+            LOGGER.error("Error executing get query: %s", e)
+            raise
         except Exception as e:
-            # Handle other exceptions
-            LOGGER.info("Unexpected error: %s", e)
-            raise e
+            LOGGER.error("Unexpected error: %s", e)
+            raise
 
     def get_one(self, query: sql.Composed, params: Tuple) -> Tuple[Any, ...]:
         """
