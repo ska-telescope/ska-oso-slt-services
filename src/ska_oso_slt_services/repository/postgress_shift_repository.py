@@ -1,6 +1,7 @@
 import logging
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, timedelta, timezone
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
@@ -306,3 +307,48 @@ class PostgressShiftRepository(CRUDShiftRepository):
 
     def delete_shift(self, sid: str):
         pass
+
+    def get_oda_data(self, filter_date):
+        filter_date_tz = datetime.fromisoformat(filter_date).replace(
+            tzinfo=timezone(timedelta(hours=0, minutes=0))
+        )
+        eb_query = """SELECT eb_id, info,sbd_id,sbi_id,sbd_version,version,created_on,
+                        created_by,last_modified_on,last_modified_by
+                    FROM tab_oda_eb
+                    WHERE last_modified_on >= %s
+        """
+        eb_params = [filter_date_tz]
+        eb_rows = self.postgres_data_access.execute_query_or_update(
+            query=eb_query, params=tuple(eb_params), query_type="GET"
+        )
+
+        info = {}
+        if eb_rows:
+            for eb in eb_rows:
+                request_responses = eb["info"].get("request_responses", [])
+
+                if not request_responses:
+                    sbi_current_status = "Created"
+                else:
+                    ok_count = sum(
+                        1
+                        for response in request_responses
+                        if response["status"] == "OK"
+                    )
+                    error_count = sum(
+                        1
+                        for response in request_responses
+                        if response["status"] == "ERROR"
+                    )
+
+                    if error_count > 0:
+                        sbi_current_status = "failed"
+                    elif ok_count == 5:  # Assuming the total number of blocks is 5
+                        sbi_current_status = "completed"
+                    else:
+                        sbi_current_status = "executing"
+
+                info[eb["eb_id"]] = eb["info"]
+                info[eb["eb_id"]]["sbi_status"] = sbi_current_status
+        return info
+
