@@ -5,12 +5,15 @@ This module provides classes and functions to facilitate mapping between
 entity objects and SQL queries, focusing on shift-related data.
 """
 
+import json
 from dataclasses import dataclass
 from datetime import datetime
 from types import MappingProxyType
-from typing import Callable, Dict, Tuple, Union
+from typing import Any, Callable, Dict, Tuple, Union
 
-from ska_oso_slt_services.domain.shift_models import Shift
+from pydantic import BaseModel
+
+from ska_oso_slt_services.domain.shift_models import Logs, Shift
 
 SqlTypes = Union[str, int, datetime]
 
@@ -44,6 +47,22 @@ class TableDetails:
             "last_modified_by": lambda shift: shift.metadata.last_modified_by,
         }
     )
+
+
+# First, let's create a mock serializer function
+def mock_default_serializer(obj: Any) -> dict:
+    if isinstance(obj, BaseModel):
+        return obj.dict()
+    elif isinstance(obj, (list, tuple)):
+        return [mock_default_serializer(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {key: mock_default_serializer(value) for key, value in obj.items()}
+    elif hasattr(obj, "__dict__"):
+        return {
+            key: mock_default_serializer(value) for key, value in obj.__dict__.items()
+        }
+    else:
+        return obj
 
 
 class ShiftLogMapping:
@@ -80,6 +99,30 @@ class ShiftLogMapping:
             },
         )
 
+    def get_shift_log_columns(self) -> Tuple[str]:
+        """
+        Get a tuple of column names for media fields.
+
+        Returns:
+            Tuple[str]: A tuple containing column names for media fields.
+        """
+        return ["shift_logs"]
+
+    def get_shift_log_params(self, shift) -> Tuple[SqlTypes]:
+        """
+        Get parameter values for media fields.
+
+        Returns:
+            Tuple[SqlTypes]: A tuple containing parameter values
+            for media fields.
+        """
+        column_map_extra_keys = {
+            "shift_logs": lambda shift: json.dumps(
+                shift.shift_logs.model_dump(), default=str, indent=2
+            ),
+        }
+        return tuple(map_fn(shift) for map_fn in column_map_extra_keys.values())
+
     def get_columns_with_metadata(self) -> Tuple[str]:
         """
         Get a tuple of column names including metadata fields.
@@ -114,6 +157,18 @@ class ShiftLogMapping:
             Tuple[str]: A tuple containing only metadata field names.
         """
         return tuple(self.table_details.metadata_map.keys())
+
+    def get_metadata_params(self, shift) -> Tuple[SqlTypes]:
+        """
+        Get parameter values for metadata fields.
+
+        Returns:
+            Tuple[SqlTypes]: A tuple containing parameter values
+            for all metadata fields.
+        """
+        return tuple(
+            map_fn(shift) for map_fn in self.table_details.metadata_map.values()
+        )
 
     def get_params_with_metadata(self, shift) -> Tuple[SqlTypes]:
         """

@@ -1,18 +1,19 @@
 import logging
-from typing import Any, Dict, List, Optional, Type
-from deepdiff import DeepDiff
-
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Type
+
+from deepdiff import DeepDiff
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.domain.shift_models import (
     DateQuery,
     JsonQuery,
+    Logs,
     Metadata,
     Shift,
+    ShiftLogs,
     TextQuery,
     UserQuery,
-    ShiftLogs
 )
 from ska_oso_slt_services.repository.postgress_shift_repository import (
     CRUDShiftRepository,
@@ -127,7 +128,7 @@ class ShiftService:
         Returns:
             dict: The updated shift data.
         """
-        metadata = self.postgres_repository.get_latest_metadata(shift_data)
+        metadata = self.postgres_repository.get_latest_metadata(shift_data.shift_id)
         shift = update_metadata(
             shift_data, metadata=metadata, last_modified_by=shift_data.shift_operator
         )
@@ -145,7 +146,7 @@ class ShiftService:
         Args:
             shift_id (str): The ID of the shift to delete.
         """
-        self.postgres_repository.delete_shift(shift_id)    
+        self.postgres_repository.delete_shift(shift_id)
 
     def _prepare_shift_with_metadata(self, shift: Dict[Any, Any]) -> Shift:
         """
@@ -179,7 +180,7 @@ class ShiftService:
             "last_modified_on": shift["last_modified_on"],
             "last_modified_by": shift["last_modified_by"],
         }
-    
+
     def _extract_eb_id_from_key(self, key: str) -> str:
         """
         Extract the EB SID from a given key string.
@@ -196,7 +197,6 @@ class ShiftService:
                 f"Unexpected key format: {key}"
             ) from e
 
-
     def updated_shift_log_info(self, current_shift_id: int):
         """
         Update the shift log information based on new information from external data
@@ -206,11 +206,11 @@ class ShiftService:
         :returns: The updated Shift object in JSON format and an HTTP status code.
         """
         shift_logs_info = {}
-        import pdb; pdb.set_trace()
         current_shift_data = self.postgres_repository.get_shift(current_shift_id)
         current_shift_data = Shift.model_validate(current_shift_data)
-        if current_shift_data.shift_logs["logs"]:
-            for x in current_shift_data.shift_logs["logs"]:
+        if current_shift_data.shift_logs.logs:
+            for x in current_shift_data.shift_logs.logs:
+                x = ShiftLogs.model_validate(x)
                 if x.info["eb_id"] not in shift_logs_info:
                     shift_logs_info[x.info["eb_id"]] = x.info
                     shift_logs_info[x.info["eb_id"]]["log_time"] = x.log_time
@@ -222,21 +222,25 @@ class ShiftService:
             for k in shift_logs_info:
                 del shift_logs_info[k]["log_time"]
 
-        created_after_eb_sbi_info =  self.postgres_repository.get_oda_data(
+        created_after_eb_sbi_info = self.postgres_repository.get_oda_data(
             filter_date=current_shift_data.shift_start.isoformat()
         )
 
         if created_after_eb_sbi_info:
-            diff = DeepDiff(shift_logs_info, created_after_eb_sbi_info, ignore_order=True)
+            diff = DeepDiff(
+                shift_logs_info, created_after_eb_sbi_info, ignore_order=True
+            )
             new_eb_ids = set(
                 self._extract_eb_id_from_key(key)
                 for key in diff.get("dictionary_item_added", [])
             )
 
-            changed_eb_ids = set([
-                self._extract_eb_id_from_key(key)
-                for key in diff.get("values_changed", {}).keys()
-            ])
+            changed_eb_ids = set(
+                [
+                    self._extract_eb_id_from_key(key)
+                    for key in diff.get("values_changed", {}).keys()
+                ]
+            )
 
             new_eb_ids_merged_set = set()
             new_eb_ids_merged_set.update(new_eb_ids)
@@ -245,28 +249,41 @@ class ShiftService:
             new_eb_ids_merged = list(new_eb_ids_merged_set)
 
             LOGGER.info("------>New or Modified EB found in ODA %s", new_eb_ids_merged)
+            shift_lgs = Logs()
+            shift_logs_array: List[ShiftLogs] = []
             if new_eb_ids_merged:
-                new_shift_logs = []
                 for new_or_updated_eb_id in new_eb_ids_merged:
                     new_info = created_after_eb_sbi_info[new_or_updated_eb_id]
-                    new_shift_log = ShiftLogs(
-                        info=new_info, log_time=datetime.now(tz=timezone.utc), source="ODA"
+                    new_log = ShiftLogs(
+                        info=new_info,
+                        log_time=datetime.now(tz=timezone.utc),
+                        source="ODA",
                     )
-                    new_shift_logs.append(new_shift_log)
+                    shift_logs_array.append(new_log)
 
+                    # shift_lgs.logs = [ShiftLogs(
+                    #     info=new_info, log_time=datetime.now(tz=timezone.utc), source="ODA"
+                    # )]
                 if current_shift_data.shift_logs:
-                    new_shift_logs.extend(current_shift_data.shift_logs)
+                    shift_logs_array.extend(current_shift_data.shift_logs.logs)
+                shift_lgs.logs = shift_logs_array
+                metadata = self.postgres_repository.get_latest_metadata(
+                    current_shift_id
+                )
 
-                updated_shift = Shift(sid=current_shift_id, shift_logs=new_shift_logs)
+                updated_shift = Shift(shift_id=current_shift_id, shift_logs=shift_lgs)
+                shift = update_metadata(
+                    updated_shift,
+                    metadata=metadata,
+                    last_modified_by=current_shift_data.shift_operator,
+                )
 
-                updated_shift_with_info = self.postgres_repository.update_shift(shift=updated_shift)
+                updated_shift_with_info = self.postgres_repository.patch_shift(
+                    shift=shift
+                )
                 LOGGER.info("------> Shift Logs have been updated successfully")
                 LOGGER.info(updated_shift_with_info)
-                return (
-                    updated_shift_with_info.model_dump(
-                        mode="JSON", exclude_unset=True, exclude_none=True
-                    ),
-                )
+                return shift
             else:
                 LOGGER.info("------> NO New Logs found in ODA")
                 return ""

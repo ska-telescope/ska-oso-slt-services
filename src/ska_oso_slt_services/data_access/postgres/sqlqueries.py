@@ -93,11 +93,20 @@ def update_query(table_details: TableDetails, shift: Shift) -> QueryAndParameter
     return query, params + (shift.shift_id,)
 
 
+def shift_logs_patch_query(
+    table_details: TableDetails, shift: Shift
+) -> Tuple[str, tuple]:
+    columns = table_details.get_shift_log_columns()
+    params = table_details.get_shift_log_params(shift)
+    return patch_query(table_details, columns, params, shift.shift_id, shift=shift)
+
+
 def patch_query(
     table_details: TableDetails,
     column_names: list[str],
-    values: list[Any],
+    params: list[Any],
     shift_id: int,
+    shift: Shift = None,
 ) -> Tuple[str, tuple]:
     """
     Creates a query and parameters to patch specific columns of a shift entry.
@@ -106,21 +115,28 @@ def patch_query(
         table_details (TableDetails): The information about
         the table to perform the patch on.
         column_names (list[str]): List of column names to be updated.
-        values (list[Any]): List of values corresponding to the column names.
+        params (list[Any]): List of values corresponding to the column names.
         shift_id (int): The ID of the shift to be patched.
 
     Returns:
         Tuple[str, tuple]: A tuple of the query string and parameters.
     """
-    params = tuple(values) + (shift_id,)
-    placeholders = ",".join(["%s"] * len(values))
-    query = f"""
-    UPDATE {table_details.table_details.table_name}
-    SET ({','.join(tuple(column_names,))}) = ROW({placeholders})
-    WHERE {table_details.table_details.identifier_field}=%s
-    RETURNING id;
-    """
-    return query, params
+
+    params = params + table_details.get_metadata_params(shift)
+    columns = column_names + list(table_details.get_metadata_columns())
+    query = sql.SQL(
+        """
+        UPDATE {table} SET ({fields}) = ({values})
+        WHERE id=(SELECT id FROM {table} WHERE {identifier_field}=%s)
+        RETURNING id;
+        """
+    ).format(
+        identifier_field=sql.Identifier(table_details.table_details.identifier_field),
+        table=sql.Identifier(table_details.table_details.table_name),
+        fields=sql.SQL(",").join(map(sql.Identifier, columns)),
+        values=sql.SQL(",").join(sql.Placeholder() * len(params)),
+    )
+    return query, params + (shift_id,)
 
 
 def select_latest_query(

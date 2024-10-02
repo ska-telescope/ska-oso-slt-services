@@ -108,7 +108,7 @@ class PostgresDataAccess:
             # Handle other exceptions
             LOGGER.info("Unexpected error: %s", e)
             raise e
-    
+
     def execute_query_or_update(
         self, query: str, query_type: str, params: tuple | List = None
     ):
@@ -121,7 +121,7 @@ class PostgresDataAccess:
         :return: The result of the query if query_type is GET; otherwise, None.
         """
         try:
-            with self.connection_pool.connection() as conn:
+            with self.postgres_connection.connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(query, params)
                     if query_type == "GET":
@@ -143,4 +143,3 @@ class PostgresDataAccess:
                 f"Error executing {query_type.value} query: {query} with params:"
                 f" {params}. Error: {str(error)}"
             )
-

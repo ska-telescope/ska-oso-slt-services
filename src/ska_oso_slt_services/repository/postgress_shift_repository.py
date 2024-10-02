@@ -1,7 +1,7 @@
 import logging
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Tuple
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
@@ -16,6 +16,7 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     select_latest_query,
     select_logs_by_status,
     select_metadata_query,
+    shift_logs_patch_query,
     update_query,
 )
 from ska_oso_slt_services.domain.shift_models import (
@@ -176,12 +177,12 @@ class PostgressShiftRepository(CRUDShiftRepository):
         self._update_shift_in_database(shift)
         return shift
 
-    def get_latest_metadata(self, shift: Shift) -> Optional[Metadata]:
+    def get_latest_metadata(self, shift_id: Shift) -> Optional[Metadata]:
         """Get latest metadata for update."""
 
         query, params = select_metadata_query(
             table_details=self.table_details,
-            shift_id=shift.shift_id,
+            shift_id=shift_id,
         )
         meta_data = self.postgres_data_access.get_one(query, params)
         return Metadata.model_validate(meta_data)
@@ -250,7 +251,11 @@ class PostgressShiftRepository(CRUDShiftRepository):
         self.postgres_data_access.update(query, params)
 
     def patch_shift(
-        self, shift_id: str | None, column_name: str | None, column_value: str | None
+        self,
+        shift_id: str | None = None,
+        column_name: str | None = None,
+        column_value: str | None = None,
+        shift: Shift | None = None,
     ) -> Dict[str, str]:
         """
         Patch a specific column of a shift.
@@ -268,13 +273,16 @@ class PostgressShiftRepository(CRUDShiftRepository):
             DatabaseError: If there's an error in the database operation.
             RuntimeError: For any unexpected errors during the operation.
         """
-        if not all([shift_id, column_name, column_value]):
-            raise NotFoundError(
-                "shift_id, column_name, and column_value must be provided"
-            )
-
-        self._validate_shift_exists(shift_id)
-        query, params = self._build_patch_query(shift_id, column_name, column_value)
+        if shift and shift.shift_logs:
+            self._validate_shift_exists(shift.shift_id)
+            query, params = shift_logs_patch_query(self.table_details, shift)
+        else:
+            if not all([shift_id, column_name, column_value]):
+                raise NotFoundError(
+                    "shift_id, column_name, and column_value must be provided"
+                )
+            self._validate_shift_exists(shift_id)
+            query, params = self._build_patch_query(shift_id, column_name, column_value)
         self.postgres_data_access.update(query, params)
         return {"details": "Shift updated successfully"}
 
@@ -306,6 +314,7 @@ class PostgressShiftRepository(CRUDShiftRepository):
         Returns:
             Tuple[str, List[Any]]: A tuple containing the SQL query and its parameters.
         """
+
         query = patch_query(self.table_details, [column_name], [column_value], shift_id)
         params = [column_value, shift_id]
         return query, params
@@ -362,4 +371,3 @@ class PostgressShiftRepository(CRUDShiftRepository):
                 info[eb["eb_id"]] = eb["info"]
                 info[eb["eb_id"]]["sbi_status"] = sbi_current_status
         return info
-

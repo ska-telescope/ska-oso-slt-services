@@ -142,10 +142,9 @@ def patch_shift(
 @router.patch(
     "/shifts/patch/update_shift_log_info/{shift_id}",
     tags=["shifts"],
-    summary="Update Shift Log info")
-def patch_shift_log_info(
-    shift_id: Optional[str]
-):
+    summary="Update Shift Log info",
+)
+def patch_shift_log_info(shift_id: Optional[str]):
     """
     Partially update an existing shift.
 
@@ -156,7 +155,5 @@ def patch_shift_log_info(
     Raises:
         HTTPException: If the shift is not found.
     """
-    shift = shift_service.updated_shift_log_info(
-        current_shift_id=shift_id
-    )
+    shift = shift_service.updated_shift_log_info(current_shift_id=shift_id)
     return shift, HTTPStatus.OK
