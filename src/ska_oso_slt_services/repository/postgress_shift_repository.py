@@ -76,9 +76,9 @@ class PostgressShiftRepository(CRUDShiftRepository):
         """
         if date_query.shift_start and date_query.shift_end:
             query, params = select_by_date_query(self.table_details, date_query)
-        if text_query and text_query.search_text:
+        elif text_query and text_query.search_text:
             query, params = select_by_text_query(self.table_details, text_query)
-        if json_query and json_query.status:
+        elif json_query and json_query.status:
             query, params = select_logs_by_status(self.table_details, json_query)
         else:
             query, params = select_by_user_query(self.table_details, user_query)
