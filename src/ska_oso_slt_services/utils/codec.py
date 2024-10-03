@@ -35,28 +35,28 @@ class SLTObject(BaseModel):
             default = PydanticUndefined
         return getattr(self, key) == default
 
-    # @staticmethod
-    # def _is_empty(value: Any) -> bool:
-    #     return value in (None, [], {})
+    @staticmethod
+    def _is_empty(value: Any) -> bool:
+        return value in (None, [], {})
 
-    # def _exclude_default_nulls_and_empty(
-    #     self, dumped: dict[str, Any]
-    # ) -> dict[str, Any]:
-    #     """To avoid cluttering JSON output, we want to omit
-    #     any None, [], {} values that are present by default,
-    #     but preserve any 'empty' values that were deliberately
-    #     set by callers."""
-    #     filtered = {
-    #         key: val
-    #         for key, val in dumped.items()
-    #         if not (self._is_empty(val) and self._is_default(key))
-    #     }
-    #     return filtered
+    def _exclude_default_nulls_and_empty(
+        self, dumped: dict[str, Any]
+    ) -> dict[str, Any]:
+        """To avoid cluttering JSON output, we want to omit
+        any None, [], {} values that are present by default,
+        but preserve any 'empty' values that were deliberately
+        set by callers."""
+        filtered = {
+            key: val
+            for key, val in dumped.items()
+            if not (self._is_empty(val) and self._is_default(key))
+        }
+        return filtered
 
-    # @model_serializer(mode="wrap")
-    # def _serialize(
-    #     self, default_serializer: SerializerFunctionWrapHandler
-    # ) -> dict[str, Any]:
-    #     dumped = default_serializer(self)
-    #     without_nulls = self._exclude_default_nulls_and_empty(dumped)
-    #     return without_nulls
+    @model_serializer(mode="wrap")
+    def _serialize(
+        self, default_serializer: SerializerFunctionWrapHandler
+    ) -> dict[str, Any]:
+        dumped = default_serializer(self)
+        without_nulls = self._exclude_default_nulls_and_empty(dumped)
+        return without_nulls

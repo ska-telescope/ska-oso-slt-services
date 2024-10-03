@@ -286,7 +286,7 @@ class ShiftService:
                 return shift
             else:
                 LOGGER.info("------> NO New Logs found in ODA")
-                return ""
+                return "NO New Logs found in ODA"
         else:
             LOGGER.info("------> NO New Logs found in ODA")
-            return ""
+            return "NO New Logs found in ODA"

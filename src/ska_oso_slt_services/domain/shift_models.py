@@ -137,6 +137,7 @@ class STATUS(Enum):
     Enum representing the different types of matching available for filtering shifts.
     """
     CREATED = "Created"
+    MODIFIED = "Modified"
 
 
 class DateQuery(BaseModel):
