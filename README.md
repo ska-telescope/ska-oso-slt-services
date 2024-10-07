@@ -56,6 +56,12 @@ Install the Helm umbrella chart into a Kubernetes cluster with ingress enabled:
 ```
 make k8s-install-chart
 ```
+#### Kafka deployment:
+When you run k8s-install-chart along with the required charts kafka will also be deployed along with required topics.
+1. For communication between **ODA** to **SLT services** **oda-to-slt-topic**
+2. For communication between **SLT services** to **SLT UI** **slt-to-frontend-topic**
+
+no additional steps are required for it.
 
 The Swagger UI should be available external to the cluster at `http://<KUBE_HOST>/<KUBE_NAMESPACE>/slt/api/v0/ui/` and the API accesible via the same URL.
 
