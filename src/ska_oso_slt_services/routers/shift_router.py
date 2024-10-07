@@ -19,31 +19,31 @@ from ska_oso_slt_services.domain.shift_models import (
 from ska_oso_slt_services.repository.postgress_shift_repository import (
     PostgressShiftRepository,
 )
-from ska_oso_slt_services.services.shift_service import ShiftService
+from ska_oso_slt_services.services.shift_service import ShiftService, ShiftLogUpdater,get_shift_service
 
 LOGGER = logging.getLogger(__name__)
-
-
-class ShiftServiceSingleton:
-    _instance = None
-
-    @classmethod
-    def get_instance(cls):
-        if cls._instance is None:
-            cls._instance = ShiftService([PostgressShiftRepository])
-        return cls._instance
-
-
-@lru_cache()
-def get_shift_service() -> ShiftService:
-    """
-    Dependency to get the ShiftService instance
-    """
-    return ShiftServiceSingleton.get_instance()
-
-
+#
+#
+# class ShiftServiceSingleton:
+#     _instance = None
+#
+#     @classmethod
+#     def get_instance(cls):
+#         if cls._instance is None:
+#             cls._instance = ShiftService([PostgressShiftRepository])
+#         return cls._instance
+#
+#
+# @lru_cache()
+# def get_shift_service() -> ShiftService:
+#     """
+#     Dependency to get the ShiftService instance
+#     """
+#     return ShiftServiceSingleton.get_instance()
+#
+#
 shift_service = get_shift_service()
-
+shift_log_updater = ShiftLogUpdater()
 
 router = APIRouter(prefix="/shift")
 
@@ -96,6 +96,10 @@ def create_shift(shift: Shift):
         Shift: The created shift.
     """
     shifts = shift_service.create_shift(shift)
+    print("Current shift id is: ",shifts.shift_id)
+    shift_log_updater.update_shift_id(shifts.shift_id)
+
+
     return shifts, HTTPStatus.CREATED
 
 

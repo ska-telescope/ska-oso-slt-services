@@ -70,15 +70,27 @@ REST_POD_NAME=$(shell kubectl get pods -o name -n $(KUBE_NAMESPACE) -l app=ska-o
 
 
 MINIKUBE_NFS_SHARES_ROOT ?=
-
-
-dev-up: K8S_CHART_PARAMS = \
-	--set ska-oso-slt-services.rest.image.tag=$(VERSION) \
-	--set ska-oso-slt-services.rest.ingress.enabled=true
-dev-up: k8s-namespace k8s-install-chart k8s-wait ## bring up developer deployment
-
+	
 dev-down: k8s-uninstall-chart k8s-delete-namespace  ## tear down developer deployment
 
 # The docs build fails unless the ska-oso-slt-services package is installed locally as importlib.metadata.version requires it.
 docs-pre-build:
 	poetry install --only-root
+
+
+# Add a new target for Kafka installation
+kafka-install:
+	@echo "Adding Strimzi Helm repository and installing Kafka operator..."
+	helm repo add strimzi https://strimzi.io/charts/
+	helm repo update
+	helm upgrade --install strimzi strimzi/strimzi-kafka-operator --namespace $(KUBE_NAMESPACE)
+
+
+# Modify the dev-up target to include Kafka installation
+dev-up: K8S_CHART_PARAMS = \
+	--set ska-oso-slt-services.rest.image.tag=$(VERSION) \
+	--set ska-oso-slt-services.rest.ingress.enabled=true
+dev-up: k8s-namespace k8s-install-chart k8s-wait kafka-install ## bring up developer deployment
+
+
+k8s-install-chart: kafka-install k8s-pre-install-chart k8s-do-install-chart k8s-post-install-chart ## install the helm chart with name HELM_RELEASE and path K8S_UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE
