@@ -3,9 +3,9 @@ import socket
 
 
 class KafkaConfig:
-    # BOOTSTRAP_SERVER = os.getenv("BOOTSTRAP_SERVER"
-    # ,"kafka-cluster-kafka-bootstrap:9092")
-    BOOTSTRAP_SERVER = os.getenv("BOOTSTRAP_SERVER", "192.168.49.2:30616")
+    BOOTSTRAP_SERVER = os.getenv(
+        "BOOTSTRAP_SERVER", "kafka-cluster-kafka-bootstrap:9092"
+    )
     GROUP_ID = os.getenv("GROUP_ID", "my_consumer_group")
     AUTO_OFFSET_RESET = os.getenv("AUTO_OFFSET_RESET", "latest")
     CLIEND_ID = os.getenv("CLIEND_ID", socket.gethostname())

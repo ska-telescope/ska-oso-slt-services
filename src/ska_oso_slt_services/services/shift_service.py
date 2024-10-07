@@ -254,7 +254,7 @@ class ShiftService:
 
             new_eb_ids_merged = list(new_eb_ids_merged_set)
 
-            LOGGER.info("------>New or Modified EB found in ODA %s", new_eb_ids_merged)
+            LOGGER.info("New or Modified EB found in ODA %s", new_eb_ids_merged)
             shift_lgs = Logs()
             shift_logs_array: List[ShiftLogs] = []
             if new_eb_ids_merged:
@@ -283,14 +283,14 @@ class ShiftService:
                 updated_shift_with_info = self.postgres_repository.patch_shift(
                     shift=shift
                 )
-                LOGGER.info("------> Shift Logs have been updated successfully")
+                LOGGER.info("Shift Logs have been updated successfully")
                 LOGGER.info(updated_shift_with_info)
                 return shift
             else:
-                LOGGER.info("------> NO New Logs found in ODA")
+                LOGGER.info(" NO New Logs found in ODA")
                 return "NO New Logs found in ODA"
         else:
-            LOGGER.info("------> NO New Logs found in ODA")
+            LOGGER.info("NO New Logs found in ODA")
             return "NO New Logs found in ODA"
 
 
@@ -319,11 +319,13 @@ shift_service = get_shift_service()
 # Callback for successful delivery or error
 def delivery_report(err, msg):
     if err is not None:
-        LOGGER.error(f"Message delivery failed: {err}")
+        LOGGER.error("Message delivery failed: %s", err)
     else:
         LOGGER.error(
-            f"Message delivered to {msg.topic()} "
-            f"[{msg.partition()}] at offset {msg.offset()}"
+            "Message delivered to %s [%s] at offset %s",
+            msg.topic(),
+            msg.partition(),
+            msg.offset(),
         )
 
 
@@ -346,7 +348,7 @@ class ShiftLogUpdater:
         }
 
         self.consumer = Consumer(consumer_conf)
-        LOGGER.info(f"KAFKA CONFIGURED WITH FOLLOWING CONFIGURATION {consumer_conf}")
+        LOGGER.info("KAFKA CONFIGURED WITH FOLLOWING CONFIGURATION %s", consumer_conf)
 
         self.producer = Producer(producer_conf)
 
@@ -358,7 +360,7 @@ class ShiftLogUpdater:
         try:
             self.consumer.subscribe([self.consumer_topic])
             metadata = self.consumer.list_topics(timeout=10.0)
-            LOGGER.debug(f"Subscribed to topics: {metadata.topics}")
+            LOGGER.debug("Subscribed to topics: %s", metadata.topics)
             while True:
                 LOGGER.debug("Checking for new data")
 
@@ -367,28 +369,32 @@ class ShiftLogUpdater:
                     LOGGER.debug("No new notification from ODA")
                     continue
                 if msg.error():
-                    if msg.error().code() == KafkaError._PARTITION_EOF:
+                    if (
+                        msg.error().code()
+                        == KafkaError._PARTITION_EOF  # pylint: disable=W0212
+                    ):
                         LOGGER.debug("End of partition")
                     else:
-                        LOGGER.info(f"Error occurred: {msg.error()}")
+                        LOGGER.info("Error occurred: %s", msg.error())
                 else:
                     LOGGER.info(
-                        f"Received message: {msg.value().decode('utf-8')}"
-                        f" from partition {msg.partition()}"
+                        "Received message: %s from partition %s",
+                        msg.value().decode("utf-8"),
+                        msg.partition(),
                     )
                     shift_service.updated_shift_log_info(self.current_shift_id)
                     message = (
-                        f"Current Shift {self.current_shift_id}"
-                        f" Logs have been updated kindly check..."
+                        "Current Shift %s  Logs have been updated kindly check...",
+                        self.current_shift_id,
                     )
                     self.producer.produce(
                         self.producer_topic,
-                        message.encode("utf-8"),
+                        message[0].encode("utf-8"),
                         callback=delivery_report,
                     )
                     self.producer.flush()
 
-                    LOGGER.info(f"Message to frontend: {message}")
+                    LOGGER.info("Message to frontend: %s,message")
 
         finally:
             self.consumer.close()
