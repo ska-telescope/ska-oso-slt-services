@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Type
 
+from confluent_kafka import Consumer, KafkaError, Producer
 from deepdiff import DeepDiff
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
@@ -21,12 +22,9 @@ from ska_oso_slt_services.repository.postgress_shift_repository import (
     CRUDShiftRepository,
     PostgressShiftRepository,
 )
-from ska_oso_slt_services.utils.metadata_mixin import set_new_metadata, update_metadata
-from confluent_kafka import Consumer, KafkaError, Producer
-import socket
 from ska_oso_slt_services.services.config import KafkaConfig
+from ska_oso_slt_services.utils.metadata_mixin import set_new_metadata, update_metadata
 
-import logging
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
@@ -215,9 +213,7 @@ class ShiftService:
         shift_logs_info = {}
         current_shift_data = self.postgres_repository.get_shift(current_shift_id)
         current_shift_data = Shift.model_validate(current_shift_data)
-        # import pdb
-        # pdb.set_trace()
-        print("@@@@@@@@current_shift_data",current_shift_data)
+
         if current_shift_data.shift_logs and current_shift_data.shift_logs.logs:
             for x in current_shift_data.shift_logs.logs:
                 x = ShiftLogs.model_validate(x)
@@ -270,10 +266,6 @@ class ShiftService:
                         source="ODA",
                     )
                     shift_logs_array.append(new_log)
-
-                    # shift_lgs.logs = [ShiftLogs(
-                    #     info=new_info, log_time=datetime.now(tz=timezone.utc), source="ODA"
-                    # )]
                 if current_shift_data.shift_logs:
                     shift_logs_array.extend(current_shift_data.shift_logs.logs)
                 shift_lgs.logs = shift_logs_array
@@ -301,7 +293,8 @@ class ShiftService:
             LOGGER.info("------> NO New Logs found in ODA")
             return "NO New Logs found in ODA"
 
-#have moved this code from shift_router to shift_service as also required by update API
+
+# have moved this code from shift_router to shift_service as also required by update API
 class ShiftServiceSingleton:
     _instance = None
 
@@ -326,9 +319,13 @@ shift_service = get_shift_service()
 # Callback for successful delivery or error
 def delivery_report(err, msg):
     if err is not None:
-        print(f"Message delivery failed: {err}")
+        LOGGER.error(f"Message delivery failed: {err}")
     else:
-        print(f"Message delivered to {msg.topic()} [{msg.partition()}] at offset {msg.offset()}")
+        LOGGER.error(
+            f"Message delivered to {msg.topic()} "
+            f"[{msg.partition()}] at offset {msg.offset()}"
+        )
+
 
 class ShiftLogUpdater:
     def __init__(self):
@@ -337,29 +334,24 @@ class ShiftLogUpdater:
         self.thread = threading.Thread(target=self._background_task, daemon=True)
         self.thread_started = False
 
-
         consumer_conf = {
-            'bootstrap.servers': KafkaConfig.BOOTSTRAP_SERVER,
-            'group.id': KafkaConfig.GROUP_ID,
-            'auto.offset.reset': KafkaConfig.AUTO_OFFSET_RESET
+            "bootstrap.servers": KafkaConfig.BOOTSTRAP_SERVER,
+            "group.id": KafkaConfig.GROUP_ID,
+            "auto.offset.reset": KafkaConfig.AUTO_OFFSET_RESET,
         }
-
 
         producer_conf = {
-            'bootstrap.servers': KafkaConfig.BOOTSTRAP_SERVER,
-            'client.id': KafkaConfig.CLIEND_ID
+            "bootstrap.servers": KafkaConfig.BOOTSTRAP_SERVER,
+            "client.id": KafkaConfig.CLIEND_ID,
         }
-
 
         self.consumer = Consumer(consumer_conf)
         LOGGER.info(f"KAFKA CONFIGURED WITH FOLLOWING CONFIGURATION {consumer_conf}")
-
 
         self.producer = Producer(producer_conf)
 
         self.producer_topic = KafkaConfig.PRODUCER_TOPIC
         self.consumer_topic = KafkaConfig.CONSUMER_TOPIC
-
 
     def _background_task(self):
 
@@ -380,17 +372,26 @@ class ShiftLogUpdater:
                     else:
                         LOGGER.info(f"Error occurred: {msg.error()}")
                 else:
-                    LOGGER.info(f"Received message: {msg.value().decode('utf-8')} from partition {msg.partition()}")
+                    LOGGER.info(
+                        f"Received message: {msg.value().decode('utf-8')}"
+                        f" from partition {msg.partition()}"
+                    )
                     shift_service.updated_shift_log_info(self.current_shift_id)
-                    message = f"Current Shift {self.current_shift_id} Logs have been updated kindly check..."
-                    self.producer.produce(self.producer_topic, message.encode('utf-8'), callback=delivery_report)
+                    message = (
+                        f"Current Shift {self.current_shift_id}"
+                        f" Logs have been updated kindly check..."
+                    )
+                    self.producer.produce(
+                        self.producer_topic,
+                        message.encode("utf-8"),
+                        callback=delivery_report,
+                    )
                     self.producer.flush()
 
                     LOGGER.info(f"Message to frontend: {message}")
 
         finally:
             self.consumer.close()
-
 
     def start(self):
         if not self.thread_started:

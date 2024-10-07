@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, Tuple, Union
 
 from pydantic import BaseModel
 
-from ska_oso_slt_services.domain.shift_models import Logs, Shift
+from ska_oso_slt_services.domain.shift_models import Shift
 
 SqlTypes = Union[str, int, datetime]
 
