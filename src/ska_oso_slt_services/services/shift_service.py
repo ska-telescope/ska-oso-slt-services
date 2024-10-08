@@ -294,7 +294,6 @@ class ShiftService:
             return "NO New Logs found in ODA"
 
 
-# have moved this code from shift_router to shift_service as also required by update API
 class ShiftServiceSingleton:
     _instance = None
 
@@ -330,6 +329,10 @@ def delivery_report(err, msg):
 
 
 class ShiftLogUpdater:
+    """
+    Class for updating Shift Logs
+    """
+
     def __init__(self):
         self.current_shift_id: Optional[int] = None
         self.lock = threading.Lock()
@@ -356,6 +359,11 @@ class ShiftLogUpdater:
         self.consumer_topic = KafkaConfig.CONSUMER_TOPIC
 
     def _background_task(self):
+        """
+        Checks if new EB data is added or updated to ODA using Kafka Topic
+        Once found Updates the same into the Current Shift and sends Notification to
+        SLT UI through Topic.
+        """
 
         try:
             self.consumer.subscribe([self.consumer_topic])
@@ -364,23 +372,23 @@ class ShiftLogUpdater:
             while True:
                 LOGGER.debug("Checking for new data")
 
-                msg = self.consumer.poll(timeout=float(KafkaConfig.TOPIC_POLL_TIME))
-                if msg is None:
+                message = self.consumer.poll(timeout=float(KafkaConfig.TOPIC_POLL_TIME))
+                if message is None:
                     LOGGER.debug("No new notification from ODA")
                     continue
-                if msg.error():
+                if message.error():
                     if (
-                        msg.error().code()
+                        message.error().code()
                         == KafkaError._PARTITION_EOF  # pylint: disable=W0212
                     ):
                         LOGGER.debug("End of partition")
                     else:
-                        LOGGER.info("Error occurred: %s", msg.error())
+                        LOGGER.info("Error occurred: %s", message.error())
                 else:
                     LOGGER.info(
                         "Received message: %s from partition %s",
-                        msg.value().decode("utf-8"),
-                        msg.partition(),
+                        message.value().decode("utf-8"),
+                        message.partition(),
                     )
                     shift_service.updated_shift_log_info(self.current_shift_id)
                     message = (
@@ -400,12 +408,23 @@ class ShiftLogUpdater:
             self.consumer.close()
 
     def start(self):
+        """
+        Starts the background polling thread if it has not already been started.
+        This method ensures that the polling of Kafka topics begins only once.
+        """
         if not self.thread_started:
             LOGGER.debug("\n\nPolling Started")
             self.thread.start()
             self.thread_started = True
 
     def update_shift_id(self, shift_id: int):
+        """
+        Updates the current shift ID and ensures that the background thread is started
+        for polling Kafka topics.
+
+        Args:
+            shift_id (int): The ID of the shift to be updated.
+        """
         with self.lock:
             self.current_shift_id = shift_id
             self.start()
