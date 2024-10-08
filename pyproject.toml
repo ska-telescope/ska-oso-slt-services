@@ -38,7 +38,7 @@ psycopg2-binary = "^2.9.9"
 pillow = "^10.4.0"
 tzdata = "^2024.2"
 deepdiff = "^7.0.0"
-confluent-kafka = "2.5.3"
+confluent-kafka = "^2.5.3"
 
 
 
