@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 from elasticsearch import Elasticsearch
 
-from ska_oso_slt_services.data_access.logdb_data_access import LOGDBConnection
+from ska_oso_slt_services.infrastructure.logdb_connection import LOGDBConnection
 
 
 class TestLOGDBConnection:

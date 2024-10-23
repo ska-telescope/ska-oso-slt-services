@@ -21,7 +21,4 @@ ska-db-oda-umbrella:
     enabled: true
   pgadmin4:
     enabled: true
-  ska-ser-skuid:
-    skuid:
-      enabled: true
 

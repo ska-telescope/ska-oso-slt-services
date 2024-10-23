@@ -32,17 +32,18 @@ autodoc_mock_imports = ["gitlab"]
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.napoleon',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.ifconfig',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
-              'myst_parser',
-              "sphinxcontrib.openapi"]
+            'sphinx.ext.napoleon',
+            'sphinx.ext.doctest',
+            'sphinx.ext.intersphinx',
+            'sphinx.ext.todo',
+            'sphinx.ext.coverage',
+            'sphinx.ext.mathjax',
+            'sphinx.ext.ifconfig',
+            'sphinx.ext.viewcode',
+            'sphinx.ext.githubpages',
+            'myst_parser',
+            "sphinxcontrib.openapi",
+            ]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
