@@ -9,6 +9,10 @@ subsystem: ska-oso-slt-services
 
 global:
   minikube: true
+  aws_server_bucket_name:
+  aws_server_public_key:
+  aws_server_secret_key:
+  aws_server_bucket_region:
   cluster_domain: techops.internal.skao.int
 
 rest:
@@ -31,21 +35,29 @@ rest:
       password: secretpassword # TODO BTN-2449 will extract this
       db:
         name: ~
-  use_skuid: true
-  skuid:
-    url:
-  resources:
-    requests:
-      cpu:  100m
-      memory: 1024Mi
-    limits:
-      cpu:  1000m
-      memory: 1024Mi
   ingress:
     enabled: true
-
+        
 nodeSelector: {}
 
 affinity: {}
 
 tolerations: []
+
+
+secretProvider:
+  enabled: true
+  provider:
+    name: "vault"
+    vaultAddress: "https://vault.skao.int"
+    roleName: "kube-role"
+    secretsPath: "kv/data/users/dayanand_arade/s3_bucket"
+    secrets:
+    - secretKey: "aws_server_bucket_name"
+      targetEnv: AWS_SERVER_BUCKET_NAME
+    - secretKey: "aws_server_public_key"
+      targetEnv: AWS_SERVER_PUBLIC_KEY
+    - secretKey: "aws_server_secret_key"
+      targetEnv: AWS_SERVER_SECRET_KEY
+    - secretKey: "aws_server_bucket_region"
+      targetEnv: AWS_SERVER_BUCKET_REGION

@@ -9,6 +9,11 @@ CAR_OCI_REGISTRY_USERNAME ?= ska-telescope
 PROJECT_NAME = ska-oso-slt-services
 KUBE_NAMESPACE ?= ska-oso-slt-services
 RELEASE_NAME ?= test
+AWS_SLT_BUCKET_NAME ?=
+AWS_SERVER_PUBLIC_KEY ?=
+AWS_SERVER_SECRET_KEY ?=
+AWS_SERVER_BUCKET_REGION ?=
+
 
 # Set sphinx documentation build to fail on warnings (as it is configured
 # in .readthedocs.yaml as well)
@@ -19,7 +24,7 @@ K8S_CHART = ska-oso-slt-services-umbrella
 
 POSTGRES_HOST ?= $(RELEASE_NAME)-postgresql
 K8S_CHART_PARAMS += \
-  --set ska-db-oda-umbrella.pgadmin4.serverDefinitions.servers.firstServer.Host=$(POSTGRES_HOST)
+  --set ska-db-slt-umbrella.pgadmin4.serverDefinitions.servers.firstServer.Host=$(POSTGRES_HOST)
 
 # For the test, dev and integration environment, use the freshly built image in the GitLab registry
 ENV_CHECK := $(shell echo $(CI_ENVIRONMENT_SLUG) | egrep 'test|dev|integration')
@@ -74,7 +79,11 @@ MINIKUBE_NFS_SHARES_ROOT ?=
 
 dev-up: K8S_CHART_PARAMS = \
 	--set ska-oso-slt-services.rest.image.tag=$(VERSION) \
-	--set ska-oso-slt-services.rest.ingress.enabled=true
+	--set ska-oso-slt-services.rest.ingress.enabled=true \
+	--set global.env.aws_slt_bucket_name=$(AWS_SLT_BUCKET_NAME) \
+	--set global.env.aws_server_public_key=$(AWS_SERVER_PUBLIC_KEY) \
+	--set global.env.aws_server_secret_key=$(AWS_SERVER_SECRET_KEY) \
+	--set global.env.aws_server_bucket_region=$(AWS_SERVER_BUCKET_REGION) \
 dev-up: k8s-namespace k8s-install-chart k8s-wait ## bring up developer deployment
 
 dev-down: k8s-uninstall-chart k8s-delete-namespace  ## tear down developer deployment

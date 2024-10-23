@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
 from typing import List, Optional
 
-from ska_oso_slt_services.models.data_models import Media, Shift
+from ska_oso_slt_services.domain.shift_models import MatchType, SbiEntityStatus, Shift
 
 
 class ShiftRepository(ABC):
@@ -16,17 +15,19 @@ class ShiftRepository(ABC):
 
     @abstractmethod
     def get_shifts(
-        self, shift_start: Optional[datetime], shift_end: Optional[datetime]
+        self,
+        shift: Optional[Shift] = None,
+        match_type: Optional[MatchType] = None,
+        entity_status: Optional[SbiEntityStatus] = None,
     ) -> List[Shift]:
         """
-        Retrieve a list of shifts within the specified start and end times.
+        Retrieve a list of shifts based on the provided filters.
 
-        :param shift_start: Optional[datetime]: The start time to filter shifts. If None
-        , no start time filter is applied.
-        :param shift_end: Optional[datetime]: The end time to filter shifts. If None,
-         no end time filter is applied.
+        :param shift: The shift object to filter by.
+        :param match_type: The match type to filter by.
+        :param entity_status: The entity status to filter by.
 
-        :returns: A list of Shift objects that fall within the specified time range.
+        :returns: A list of Shift objects matching the provided filters.
 
         :raises: NotImplementedError if the method is not implemented by a subclass.
         """
@@ -82,40 +83,13 @@ class CRUDShiftRepository(ShiftRepository):
         raise NotImplementedError
 
     @abstractmethod
-    def delete_shift(self, sid: str) -> bool:
+    def delete_shift(self, shift_id: str) -> bool:
         """
         Delete a shift by its SID.
 
-        :param sid: The SID of the shift to delete.
+        :param shift_id: The SID of the shift to delete.
 
         :returns: True if the shift was deleted successfully, False otherwise.
-
-        :raises: NotImplementedError if the method is not implemented by a subclass.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_media(self, shift_id: str) -> List[Media]:
-        """
-        Retrieve a list of media associated with a shift.
-
-        :param sid: The SID of the shift to retrieve media for.
-
-        :returns: A list of Media objects associated with the specified shift.
-
-        :raises: NotImplementedError if the method is not implemented by a subclass.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def add_media(self, shift_id: str, media: Media) -> bool:
-        """
-        Add media to a shift.
-
-        :param sid: The SID of the shift to add media to.
-        :param media: The Media object to add.
-
-        :returns: True if the media was added successfully, False otherwise.
 
         :raises: NotImplementedError if the method is not implemented by a subclass.
         """

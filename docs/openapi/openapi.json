@@ -1,0 +1,733 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/ska-oso-slt-services/slt/api/v0/shift": {
+      "get": {
+        "tags": [
+          "shifts"
+        ],
+        "summary": "Get a shift",
+        "description": "Retrieve a specific shift by its ID.\n\nArgs:\n    shift_id (str): The unique identifier of the shift.\n\nRaises:\n    HTTPException: If the shift is not found.",
+        "operationId": "get_shift_ska_oso_slt_services_slt_api_v0_shift_get",
+        "parameters": [
+          {
+            "name": "shift_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Shift Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shifts": {
+      "get": {
+        "tags": [
+          "shifts"
+        ],
+        "summary": "Retrieve shift data based on shift attributes like shift_id,match type and entity status",
+        "description": "Retrieve all shifts.\nThis endpoint returns a list of all shifts in the system.",
+        "operationId": "get_shifts_ska_oso_slt_services_slt_api_v0_shifts_get",
+        "parameters": [
+          {
+            "name": "shift_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Shift Id"
+            }
+          },
+          {
+            "name": "shift_start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Shift Start"
+            }
+          },
+          {
+            "name": "shift_end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Shift End"
+            }
+          },
+          {
+            "name": "shift_operator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Shift Operator"
+            }
+          },
+          {
+            "name": "annotations",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Annotations"
+            }
+          },
+          {
+            "name": "comments",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Comments"
+            }
+          },
+          {
+            "name": "match_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Filter"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Match Type"
+            }
+          },
+          {
+            "name": "sbi_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SbiStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sbi Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shifts/create": {
+      "post": {
+        "tags": [
+          "shifts"
+        ],
+        "summary": "Create a new shift",
+        "description": "Create a new shift.\n\nArgs:\n    shift (ShiftCreate): The shift data to create.\n\nReturns:\n    Shift: The created shift.",
+        "operationId": "create_shift_ska_oso_slt_services_slt_api_v0_shifts_create_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Shift"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shifts/update/{shift_id}": {
+      "put": {
+        "tags": [
+          "shifts"
+        ],
+        "summary": "Update an existing shift",
+        "description": "Update an existing shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift (ShiftUpdate): The updated shift data.\n\nRaises:\n    HTTPException: If the shift is not found.",
+        "operationId": "update_shift_ska_oso_slt_services_slt_api_v0_shifts_update__shift_id__put",
+        "parameters": [
+          {
+            "name": "shift_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shift Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Shift"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shifts/upload_image/{shift_id}": {
+      "put": {
+        "tags": [
+          "shifts"
+        ],
+        "summary": "Upload image for shift",
+        "description": "Function that requests to endpoint GET /upload/signedurl/{filename}\nare mapped to\n\n:param filename: filename of the uploaded document\n:return: a string \"/upload/signedurl/{filename}\"",
+        "operationId": "add_media_ska_oso_slt_services_slt_api_v0_shifts_upload_image__shift_id__put",
+        "parameters": [
+          {
+            "name": "shift_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Shift Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_add_media_ska_oso_slt_services_slt_api_v0_shifts_upload_image__shift_id__put"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shifts/download_images/{shift_id}": {
+      "get": {
+        "tags": [
+          "shifts"
+        ],
+        "summary": "download shift image",
+        "operationId": "get_media_ska_oso_slt_services_slt_api_v0_shifts_download_images__shift_id__get",
+        "parameters": [
+          {
+            "name": "shift_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Shift Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_add_media_ska_oso_slt_services_slt_api_v0_shifts_upload_image__shift_id__put": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_add_media_ska_oso_slt_services_slt_api_v0_shifts_upload_image__shift_id__put"
+      },
+      "Filter": {
+        "type": "string",
+        "enum": [
+          "equals",
+          "starts_with",
+          "contains"
+        ],
+        "title": "Filter",
+        "description": "Enum representing the different types of matching available for filtering shifts."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Media": {
+        "properties": {
+          "file_extension": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Extension"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "unique_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unique Id"
+          }
+        },
+        "type": "object",
+        "title": "Media",
+        "description": "Represents media associated with a shift in the SLT Shift Log Tool.\n\n:param type Optional[str]: The type of media (e.g., image, video).\n:param path Optional[str]: The path to the media file."
+      },
+      "Metadata": {
+        "properties": {
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created On"
+          },
+          "last_modified_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Modified By"
+          },
+          "last_modified_on": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Modified On"
+          }
+        },
+        "type": "object",
+        "title": "Metadata",
+        "description": "Represents metadata about other entities."
+      },
+      "SbiStatus": {
+        "type": "string",
+        "enum": [
+          "Created",
+          "In Progress",
+          "Completed",
+          "Cancelled"
+        ],
+        "title": "SbiStatus",
+        "description": "Enum representing the different status values for\nan SBI entity in the SLT Shift Log Tool.\n:param CREATED: The SBI entity has been created.\n:param IN_PROGRESS: The SBI entity is in progress.\n:param COMPLETED: The SBI entity has been completed.\n:param CANCELLED: The SBI entity has been cancelled."
+      },
+      "Shift": {
+        "properties": {
+          "shift_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shift Id"
+          },
+          "shift_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shift Start"
+          },
+          "shift_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shift End"
+          },
+          "shift_operator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shift Operator"
+          },
+          "annotations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annotations"
+          },
+          "comments": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments"
+          },
+          "shift_logs": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ShiftLogs"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shift Logs"
+          },
+          "media": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Media"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Metadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "Shift",
+        "description": "Represents a shift in the SLT Shift Log Tool.\n\n\n:param shift_logs Optional[List[ShiftLogs]]: The logs associated with the shift.\n:param media Optional[List[Media]]: The media associated with the shift.\n:param metadata Optional[Metadat]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
+      },
+      "ShiftLogs": {
+        "properties": {
+          "info": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Info"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "log_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Log Time"
+          }
+        },
+        "type": "object",
+        "title": "ShiftLogs",
+        "description": "Represents logs associated with a shift in the SLT Shift Log Tool.\n\n:param info Optional[dict]: Information about the log.\n:param source Optional[str]: The source of the log.\n:param log_time Optional[datetime]: The time the log was created."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

@@ -2,7 +2,7 @@ from threading import Lock
 
 from pyhdbpp.timescaledb import TimescaleDbReader
 
-from ska_oso_slt_services.data_access.config import EDADBConfig
+from ska_oso_slt_services.infrastructure.config import EDADBConfig
 
 
 class EDADBConnection:
@@ -30,13 +30,15 @@ class EDADBConnection:
         Create EDA DB Connection
         :return: EDA DB Connection
         """
-        return TimescaleDbReader({
-            "database": EDADBConfig.DATABASE,
-            "user": EDADBConfig.USER,
-            "password": EDADBConfig.PASSWORD,
-            "port": EDADBConfig.PORT,
-            "host": EDADBConfig.HOST,
-        })
+        return TimescaleDbReader(
+            {
+                "database": EDADBConfig.DATABASE,
+                "user": EDADBConfig.USER,
+                "password": EDADBConfig.PASSWORD,
+                "port": EDADBConfig.PORT,
+                "host": EDADBConfig.HOST,
+            }
+        )
 
     def get_connection(self) -> TimescaleDbReader:
         """
