@@ -1,9 +1,11 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from ska_oso_slt_services import create_app  # Import your create_app function
 from ska_oso_slt_services.app import API_PREFIX
+from ska_oso_slt_services.utils.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.utils.date_utils import get_datetime_for_timezone
 
 # Create the FastAPI app instance
@@ -277,3 +279,68 @@ def test_update_shift():
     assert updated_shift_response[0]["shift_id"] == existing_shift["shift_id"]
     assert updated_shift_response[0]["shift_operator"] == update_data["shift_operator"]
     assert updated_shift_response[0]["annotations"] == update_data["annotations"]
+
+
+def test_update_shift_after_end():
+    existing_shift = MagicMock()
+    existing_shift.shift_id = "test-id-1"
+    existing_shift.shift_start = get_datetime_for_timezone("UTC")
+    existing_shift.shift_end = get_datetime_for_timezone("UTC")  # Shift has ended
+    existing_shift.shift_operator = "test-operator"
+    existing_shift.shift_logs = {
+        "logs": [
+            {
+                "info": {},
+                "source": "test",
+                "log_time": get_datetime_for_timezone("UTC"),
+            }
+        ]
+    }
+    existing_shift.media = []
+    existing_shift.annotations = "existing-annotation"
+    existing_shift.comments = "existing-comment"
+    existing_shift.created_by = "test-user"
+    existing_shift.created_on = get_datetime_for_timezone("UTC")
+    existing_shift.last_modified_by = "test-user"
+    existing_shift.last_modified_on = get_datetime_for_timezone("UTC")
+
+    with patch(
+        "ska_oso_slt_services.services.shift_service.ShiftService.get_shift",
+        return_value=existing_shift,
+    ):
+        invalid_update_data = {
+            "shift_id": "test-id-1",
+            "shift_start": "2024-09-14T16:49:54.889Z",
+            "shift_operator": "new-operator",
+            "annotations": "updated-annotation",
+        }
+
+        with pytest.raises(ShiftEndedException):
+            client.put(
+                f"{API_PREFIX}/shifts/update/test-id-1",
+                json=invalid_update_data,
+            )
+
+        valid_update_data = {
+            "shift_id": "test-id-1",
+            "annotations": "updated-annotation",
+            "shift_start": "2024-09-14T16:49:54.889Z",
+        }
+
+        with patch(
+            "ska_oso_slt_services.services.shift_service.ShiftService.update_shift",
+            return_value={**existing_shift.__dict__, **valid_update_data},
+        ):
+            response = client.put(
+                f"{API_PREFIX}/shifts/update/test-id-1",
+                json=valid_update_data,
+            )
+
+        assert (
+            response.status_code == 200
+        ), "Expected status code 200 for valid update with annotations only"
+        updated_shift = response.json()
+        assert updated_shift[0]["annotations"] == valid_update_data["annotations"], (
+            f"Expected annotations to be '{valid_update_data['annotations']}',"
+            f" but got '{updated_shift[0]['annotations']}'"
+        )

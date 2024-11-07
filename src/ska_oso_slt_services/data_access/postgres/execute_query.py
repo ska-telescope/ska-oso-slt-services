@@ -14,7 +14,6 @@ class PostgresDataAccess:
     """
 
     def __init__(self):
-
         self.postgres_connection = PostgresConnection().get_connection()
 
     def insert(self, query: sql.Composed, params: Tuple) -> int:
