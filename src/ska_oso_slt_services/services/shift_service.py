@@ -13,6 +13,7 @@ from ska_oso_slt_services.repository.postgress_shift_repository import (
     CRUDShiftRepository,
     PostgresShiftRepository,
 )
+from ska_oso_slt_services.utils.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.utils.metadata_mixin import set_new_metadata, update_metadata
 
 LOGGER = logging.getLogger(__name__)
@@ -129,13 +130,28 @@ class ShiftService:
         Update an existing shift.
 
         Args:
-            shift_id (str): The unique identifier of the shift to update.
             shift_data (Shift): A shift object for update shift.
 
         Returns:
             Shift: The updated shift data.
+
+        Raises:
+            ShiftEndedException : If after shift end fields are updated other
+            than annotation
         """
+
         shift_data.shift_id = shift_id
+        current_shift_status = self.get_shift(shift_id=shift_data.shift_id)
+        if current_shift_status.shift_end:
+            # TODO remove hardcoding of fields here as this are only used once
+            # so separate config file currently not feasible
+            if {k for k, v in vars(shift_data).items() if v} - {
+                "shift_id",
+                "annotations",
+                "shift_start",
+            }:
+                raise ShiftEndedException()
+
         metadata = self.postgres_repository.get_latest_metadata(shift_data.shift_id)
         if not metadata:
             raise NotFoundError(f"No shift found with ID: {shift_data.shift_id}")
@@ -161,6 +177,8 @@ class ShiftService:
         )
         if not stored_shift:
             raise NotFoundError(f"No shift found with ID: {shift_id}")
+        if stored_shift.shift_end:
+            raise ShiftEndedException()
         shift = update_metadata(
             stored_shift,
             metadata=metadata,
