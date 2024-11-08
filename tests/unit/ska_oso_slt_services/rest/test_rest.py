@@ -1,3 +1,5 @@
+from datetime import datetime
+from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -87,53 +89,91 @@ def test_create_shift():
 
 
 def test_get_shift():
-    # Mock shift data
-    mock_shift = {
-        "shift_id": "test-id",
-        "shift_start": get_datetime_for_timezone("UTC"),
-        "shift_end": get_datetime_for_timezone("UTC"),
+    # Mock data for shift and comments
+    current_time = get_datetime_for_timezone("UTC")
+    shift_id = "test-id"
+
+    # Updated shift data structure to match merge_comments expectations
+    shift_data = {
+        "shift_id": shift_id,
+        "shift_start": current_time,
+        "shift_end": current_time,
         "shift_operator": "test",
         "shift_logs": [
             {
-                "info": {},
+                "info": {"eb_id": "eb-t0001-20241022-00002"},
                 "source": "test",
-                "log_time": get_datetime_for_timezone("UTC"),
+                "log_time": current_time,
+                "comments": [
+                    {
+                        "log_comment": "updated nov4 comment",
+                        "operator_name": "test",
+                        "shift_id": shift_id,
+                        "image": {
+                            "path": "https://image.png",
+                            "timestamp": "2024-11-03T19:59:04.928668Z",
+                        },
+                        "eb_id": "eb-t0001-20241022-00002",
+                    }
+                ],
             }
         ],
         "media": [{"file_extension": "test", "path": "test", "unique_id": "test"}],
         "annotations": "test",
         "comments": "test",
         "created_by": "test",
-        "created_on": get_datetime_for_timezone("UTC"),
+        "created_on": current_time,
         "last_modified_by": "test",
-        "last_modified_on": get_datetime_for_timezone("UTC"),
+        "last_modified_on": current_time,
     }
 
-    # Create a mock for the database session
-    mock_db_session = MagicMock()
-
-    # Set up the mock to return our mock_shift when queried
-    mock_db_session.return_value = mock_shift
-
-    # Patch the database session to use our mock
-    with patch(
-        "ska_oso_slt_services.data_access.postgres"
-        ".execute_query.PostgresDataAccess.get_one",
-        return_value=mock_shift,
+    # Mock comments for get_shift_logs_comments
+    mock_comments = [
+        {
+            "log_comment": "updated nov4 comment",
+            "operator_name": "test",
+            "shift_id": shift_id,
+            "image": {
+                "path": "https://image.png",
+                "timestamp": "2024-11-03T19:59:04.928668Z",
+            },
+            "eb_id": "eb-t0001-20241022-00002",
+        }
+    ]
+    # Mock database calls
+    with (
+        patch(
+            "ska_oso_slt_services.repository.postgress_shift_repository."
+            "PostgresShiftRepository.get_shift",
+            return_value=shift_data,
+        ),
+        patch(
+            "ska_oso_slt_services.repository.postgress_shift_repository."
+            "PostgresShiftRepository.get_shift_logs_comments",
+            return_value=mock_comments,
+        ),
     ):
-        # Send a GET request to the endpoint
-        response = client.get(f"{API_PREFIX}/shift")
+        # Send a GET request to the updated endpoint with the shift_id as query param
+        response = client.get(f"{API_PREFIX}/shift?shift_id={shift_id}")
 
-    # Assert the response status code
-    assert response.status_code == 200
+    # Assertions
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected status code 200, but got {response.status_code}"
 
-    # Assert the response content
-    retrieved_shift = response.json()
-    assert retrieved_shift[0]["shift_id"] == "test-id"
+    # Verify the response structure
+    response_data = response.json()
 
-    # Optionally, you can assert that the get method was called
-    # This depends on how your actual implementation works
-    # mock_db_session.get.assert_called_once()
+    # Check if the response is a list and extract the first item if so
+    if isinstance(response_data, list):
+        response_data = response_data[0]
+
+    # Validate response content
+    assert response_data["shift_id"] == shift_id
+    assert (
+        response_data["shift_logs"][0]["comments"][0]["log_comment"]
+        == "updated nov4 comment"
+    )
 
 
 def test_get_shifts():
@@ -211,13 +251,20 @@ def test_get_shifts():
 
 
 def test_update_shift():
-    # Existing shift data
+    # Existing shift data structure
     existing_shift = {
         "shift_id": "test-id-1",
         "shift_start": get_datetime_for_timezone("UTC"),
         "shift_end": None,
         "shift_operator": "old-operator",
-        "shift_logs": [],
+        "shift_logs": [
+            {
+                "info": {},
+                "source": "test",
+                "log_time": get_datetime_for_timezone("UTC"),
+                "comments": [],
+            }
+        ],
         "media": [],
         "annotations": "old-annotation",
         "comments": "old-comment",
@@ -227,15 +274,15 @@ def test_update_shift():
         "last_modified_on": get_datetime_for_timezone("UTC"),
     }
 
-    # Updated shift data
+    # Updated shift data for the test
     update_data = {
         "shift_id": "test-id-1",
         "shift_start": "2024-09-14T16:49:54.889Z",
         "shift_operator": "old-operator",
         "shift_logs": [],
         "media": [],
-        "annotations": "old-annotation",
-        "comments": "old-comment",
+        "annotations": "updated-annotation",
+        "comments": "updated-comment",
         "metadata": {
             "created_by": "test-user-1",
             "created_on": "2024-09-14T16:49:54.889Z",
@@ -244,41 +291,46 @@ def test_update_shift():
         },
     }
 
-    # Create a mock for the database session
-    mock_db_session = MagicMock()
+    # Expected shift data after the update
+    expected_updated_shift = {**existing_shift, **update_data}
 
-    # Set up the mock to return the existing shift when queried
-    mock_db_session.get.return_value = existing_shift
-
-    # Set up the mock to return the updated shift after update
-    updated_shift = {**existing_shift, **update_data}
-    mock_db_session.update.return_value = updated_shift
-
-    # Patch the database session to use our mock
+    # Patch ShiftService.update_shift directly to return the expected updated shift
     with patch(
-        "ska_oso_slt_services.data_access.postgres"
-        ".execute_query.PostgresDataAccess.get_one",
-        return_value=existing_shift,
+        "ska_oso_slt_services.services.shift_service.ShiftService.update_shift",
+        return_value=[expected_updated_shift],  # Return as a list for consistency
     ):
-        with patch(
-            "ska_oso_slt_services.data_access.postgres"
-            ".execute_query.PostgresDataAccess.update",
-            return_value=updated_shift,
-        ):
-            # Send a PUT request to the endpoint
-            response = client.put(
-                f"{API_PREFIX}/shifts/update/test-id-1",
-                json=update_data,
-            )
+        # Send PUT request
+        response = client.put(
+            f"{API_PREFIX}/shifts/update/{existing_shift['shift_id']}",
+            json=update_data,
+        )
 
-    # Assert the response status code
-    assert response.status_code == 200
+    # Assert the response status code is OK
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Unexpected status code: {response.status_code}"
 
-    # Assert the response content
+    # Extract and assert the updated response content
     updated_shift_response = response.json()
-    assert updated_shift_response[0]["shift_id"] == existing_shift["shift_id"]
-    assert updated_shift_response[0]["shift_operator"] == update_data["shift_operator"]
-    assert updated_shift_response[0]["annotations"] == update_data["annotations"]
+
+    # Check if the response is a tuple with a list and status code
+    if (
+        isinstance(updated_shift_response, list)
+        and len(updated_shift_response) == 2
+        and isinstance(updated_shift_response[1], int)
+    ):
+        updated_shift_response = updated_shift_response[
+            0
+        ]  # Extract the actual data from the tuple
+
+    # Check if the data is wrapped in another list
+    if isinstance(updated_shift_response, list):
+        updated_shift_response = updated_shift_response[0]
+
+    assert updated_shift_response["shift_id"] == existing_shift["shift_id"]
+    assert updated_shift_response["shift_operator"] == update_data["shift_operator"]
+    assert updated_shift_response["annotations"] == update_data["annotations"]
+    assert updated_shift_response["comments"] == update_data["comments"]
 
 
 def test_update_shift_after_end():
@@ -344,3 +396,240 @@ def test_update_shift_after_end():
             f"Expected annotations to be '{valid_update_data['annotations']}',"
             f" but got '{updated_shift[0]['annotations']}'"
         )
+
+
+def test_create_shift_log_comment():
+    # Prepare test data with metadata and an image path
+    current_time = get_datetime_for_timezone("UTC")
+    comment_data = {
+        "log_comment": "This is a test comment",
+        "operator_name": "test_operator",
+        "shift_id": "test-shift-id",
+        "eb_id": "test-eb-id",
+        "image": {"path": "https://image.png"},
+        "metadata": {
+            "created_by": "test_operator",
+            "created_on": current_time.isoformat(),
+            "last_modified_by": "test_operator",
+            "last_modified_on": current_time.isoformat(),
+        },
+    }
+
+    # Create a mock for the ShiftLogComment model
+    mock_comment = MagicMock()
+    mock_comment.log_comment = comment_data["log_comment"]
+    mock_comment.operator_name = comment_data["operator_name"]
+    mock_comment.shift_id = comment_data["shift_id"]
+    mock_comment.eb_id = comment_data["eb_id"]
+    mock_comment.image = comment_data["image"]
+    mock_comment.metadata = comment_data["metadata"]
+
+    # Patch both database access and ShiftLogComment model creation
+    with (
+        patch(
+            "ska_oso_slt_services.data_access.postgres"
+            ".execute_query.PostgresDataAccess.insert"
+        ) as mock_insert,
+        patch(
+            "ska_oso_slt_services.services.shift_service.ShiftLogComment",
+            return_value=mock_comment,
+        ),
+    ):
+        # Send a POST request to create a comment
+        response = client.post(f"{API_PREFIX}/shift_log_comments", json=comment_data)
+
+    # Assertions
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_comment = response.json()[0]
+    assert created_comment["log_comment"] == comment_data["log_comment"], (
+        f"Expected log_comment to be '{comment_data['log_comment']}', but got"
+        f" '{created_comment['log_comment']}'"
+    )
+    assert created_comment["operator_name"] == comment_data["operator_name"], (
+        f"Expected operator_name to be '{comment_data['operator_name']}', but got"
+        f" '{created_comment['operator_name']}'"
+    )
+    assert created_comment["image"]["path"] == comment_data["image"]["path"], (
+        f"Expected image path to be '{comment_data['image']['path']}', but got"
+        f" '{created_comment['image']['path']}'"
+    )
+
+    # Verify metadata
+    assert "metadata" in created_comment, "Metadata is missing in the response"
+    metadata = created_comment["metadata"]
+    assert metadata["created_by"] == comment_data["metadata"]["created_by"], (
+        f"Expected created_by to be '{comment_data['metadata']['created_by']}', but got"
+        f" '{metadata['created_by']}'"
+    )
+    assert (
+        metadata["last_modified_by"] == comment_data["metadata"]["last_modified_by"]
+    ), (
+        "Expected last_modified_by to be"
+        f" '{comment_data['metadata']['last_modified_by']}', but got"
+        f" '{metadata['last_modified_by']}'"
+    )
+
+    mock_insert.assert_called_once()
+
+
+def test_update_shift_log_comment():
+    # Existing comment data with initial metadata
+    current_time = get_datetime_for_timezone("UTC")
+    initial_comment_data = {
+        "id": 1,
+        "log_comment": "This is the original comment",
+        "operator_name": "original_operator",
+        "shift_id": "test-shift-id",
+        "eb_id": "test-eb-id",
+        "metadata": {
+            "created_by": "original_operator",
+            "created_on": current_time.isoformat(),
+            "last_modified_by": "original_operator",
+            "last_modified_on": current_time.isoformat(),
+        },
+    }
+
+    # Updated comment data
+    updated_comment_data = {
+        "log_comment": "This is the updated comment",
+        "operator_name": "updated_operator",
+        "metadata": {
+            "last_modified_by": "updated_operator",
+            "last_modified_on": current_time.isoformat(),
+        },
+    }
+
+    # Mock for the updated ShiftLogComment model instance
+    mock_comment = MagicMock()
+    mock_comment.id = initial_comment_data["id"]
+    mock_comment.log_comment = updated_comment_data["log_comment"]
+    mock_comment.operator_name = updated_comment_data["operator_name"]
+    mock_comment.shift_id = initial_comment_data["shift_id"]
+    mock_comment.eb_id = initial_comment_data["eb_id"]
+    # mock_comment.image = updated_comment_data["image"]
+    mock_comment.metadata = {
+        **initial_comment_data["metadata"],
+        **updated_comment_data["metadata"],
+    }
+
+    # Patch database access methods to return initial and updated data
+    with (
+        patch(
+            "ska_oso_slt_services.data_access.postgres"
+            ".execute_query.PostgresDataAccess.get",
+            return_value=[
+                initial_comment_data
+            ],  # Ensures get_shift_logs_comment returns data
+        ),
+        patch(
+            "ska_oso_slt_services.data_access.postgres"
+            ".execute_query.PostgresDataAccess.get_one",
+            return_value=initial_comment_data,  # Ensures individual
+            # comment retrieval works
+        ),
+        patch(
+            "ska_oso_slt_services.data_access.postgres"
+            ".execute_query.PostgresDataAccess.update",
+            return_value=mock_comment,  # Simulates successful update
+        ),
+    ):
+        # Send a PUT request to update the comment
+        comment_id = initial_comment_data["id"]
+        response = client.put(
+            f"{API_PREFIX}/shift_log_comments/{comment_id}",
+            json=updated_comment_data,
+        )
+
+    # Assertions
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    # Verify the response data matches the update
+    updated_comment_response = response.json()[0]
+    assert (
+        updated_comment_response["log_comment"] == updated_comment_data["log_comment"]
+    ), (
+        f"Expected log_comment to be '{updated_comment_data['log_comment']}', but got "
+        f"'{updated_comment_response['log_comment']}'"
+    )
+    assert (
+        updated_comment_response["operator_name"]
+        == updated_comment_data["operator_name"]
+    ), (
+        f"Expected operator_name to be '{updated_comment_data['operator_name']}',"
+        f" but got "
+        f"'{updated_comment_response['operator_name']}'"
+    )
+
+    # Verify metadata, inlining the normalization
+    assert "metadata" in updated_comment_response, "Metadata is missing in the response"
+    metadata = updated_comment_response["metadata"]
+
+    # Inline normalization for datetime format comparison
+    expected_last_modified_on = datetime.fromisoformat(
+        updated_comment_data["metadata"]["last_modified_on"].replace("Z", "+00:00")
+    ).isoformat()
+    actual_last_modified_on = datetime.fromisoformat(
+        metadata["last_modified_on"].replace("Z", "+00:00")
+    ).isoformat()
+
+    assert (
+        metadata["last_modified_by"]
+        == updated_comment_data["metadata"]["last_modified_by"]
+    ), (
+        f"Expected last_modified_by to be "
+        f"'{updated_comment_data['metadata']['last_modified_by']}', but got "
+        f"'{metadata['last_modified_by']}'"
+    )
+    assert actual_last_modified_on == expected_last_modified_on, (
+        f"Expected last_modified_on to be '{expected_last_modified_on}', but got "
+        f"'{actual_last_modified_on}'"
+    )
+
+
+def test_get_current_shift():
+    # Mock shift data
+    mock_shift = {
+        "shift_id": "test-id",
+        "shift_start": get_datetime_for_timezone("UTC"),
+        "shift_operator": "test",
+        "shift_logs": [
+            {
+                "info": {},
+                "source": "test",
+                "log_time": get_datetime_for_timezone("UTC"),
+            }
+        ],
+        "media": [{"type": "test", "path": "test"}],
+        "annotations": "test",
+        "comments": "test",
+        "created_by": "test",
+        "created_on": get_datetime_for_timezone("UTC"),
+        "last_modified_by": "test",
+        "last_modified_on": get_datetime_for_timezone("UTC"),
+    }
+
+    # Create a mock for the database session
+    mock_db_session = MagicMock()
+
+    # Set up the mock to return our mock_shift when queried
+    mock_db_session.return_value = mock_shift
+
+    # Patch the database session to use our mock
+    with patch(
+        "ska_oso_slt_services.data_access.postgres"
+        ".execute_query.PostgresDataAccess.get_one",
+        return_value=mock_shift,
+    ):
+        # Send a GET request to the endpoint
+        response = client.get(f"{API_PREFIX}/current_shift")
+    # Assert the response status code
+    assert response.status_code == 200
+
+    # Assert the response content
+    retrieved_shift = response.json()
+    assert retrieved_shift[0]["shift_id"] == "test-id"

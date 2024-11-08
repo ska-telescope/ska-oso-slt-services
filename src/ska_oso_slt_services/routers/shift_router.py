@@ -14,11 +14,12 @@ from ska_oso_slt_services.domain.shift_models import (
     SbiEntityStatus,
     Shift,
     ShiftBaseClass,
+    ShiftLogComment,
 )
 from ska_oso_slt_services.repository.postgress_shift_repository import (
     PostgresShiftRepository,
 )
-from ska_oso_slt_services.services.shift_service import ShiftService
+from ska_oso_slt_services.services.shift_service import ShiftLogUpdater, ShiftService
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ def get_shift_service() -> ShiftService:
 
 
 shift_service = get_shift_service()
+shift_log_updater = ShiftLogUpdater()
 
 
 router = APIRouter()
@@ -93,6 +95,8 @@ def create_shift(shift: Shift):
         Shift: The created shift.
     """
     shifts = shift_service.create_shift(shift)
+    shift_log_updater.update_shift_id(shifts.shift_id)
+
     return shifts, HTTPStatus.CREATED
 
 
@@ -166,3 +170,134 @@ def get_media(shift_id: Optional[str]):
     """
     image_response = shift_service.get_media(shift_id)
     return image_response, HTTPStatus.OK
+
+
+@router.post(
+    "/shift_log_comments",
+    tags=["Shift Log Comments"],
+    summary="Create a new shift log comment",
+)
+def create_shift_log_comments(shift_log_comment: ShiftLogComment):
+    """
+    Create a new shift.
+
+    Args:
+        shift (ShiftCreate): The shift data to create.
+
+    Returns:
+        ShiftLogComment: The created shift log comment.
+    """
+    shift_log_comment_obj = shift_service.create_shift_logs_comment(shift_log_comment)
+    return shift_log_comment_obj, HTTPStatus.CREATED
+
+
+@router.get(
+    "/shift_log_comments",
+    tags=["Shift Log Comments"],
+    summary="Retrieve shift log comments based on shift ID and EB ID,",
+)
+def get_shift_log_comments(shift_id: Optional[str] = None, eb_id: Optional[str] = None):
+    """
+    Retrieve all shifts.
+    This endpoint returns a list of all shifts in the system.
+
+    Args:
+        shift_id(optional): Shift ID
+        eb_id(optional): EB ID
+
+    Returns:
+        ShiftLogComment: Shift Log Comments match found
+    """
+    shift_log_comments = shift_service.get_shift_logs_comments(shift_id, eb_id)
+    return shift_log_comments, HTTPStatus.OK
+
+
+@router.put(
+    "/shift_log_comments/{comment_id}",
+    tags=["Shift Log Comments"],
+    summary="Update an existing shift",
+)
+def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogComment):
+    """
+    Update an existing shift log comment.
+
+    Args:
+        shift_id (str): The unique identifier of the shift to update.
+        shift_log_comment (ShiftLogComment): The updated shift log comment  data.
+
+    Raises:
+        HTTPException: If the shift is not found.
+    """
+
+    shift_log_comments = shift_service.update_shift_log_comments(
+        comment_id=comment_id, shift_log_comment=shift_log_comment
+    )
+    return shift_log_comments, HTTPStatus.OK
+
+
+@router.put(
+    "/shift_log_comments/upload_image/",
+    tags=["Shift Log Comments"],
+    summary="Upload image for shift",
+)
+def update_shift_log_with_image(
+    comment_id: int, operator_name: str, file: UploadFile = File(...)
+):
+    """
+    Uploads FIle to s3 and updates the relevant Shift Log comment image with the URL
+
+    Args:
+        comment_id: Comment ID
+        Operator_name: Operator Name
+        File: File to be uploaded
+
+    Returns:
+         shift_log_comment (ShiftLogComment): The updated shift log comment  data.
+    """
+
+    media = shift_service.update_shift_log_with_image(
+        comment_id=comment_id, operator_name=operator_name, file=file
+    )
+    return media, HTTPStatus.OK
+
+
+@router.get("/current_shift", tags=["shifts"], summary="Get Current Shift")
+def get_current_shift():
+    """
+    Retrieve the current active shift.
+
+    This endpoint returns the most recent shift based on the last modified or
+    created time.
+    It does not require any input parameters and is used to retrieve the latest shift
+    that is currently active in the system.
+
+    Returns:
+        Shift: The latest shift object in the system.
+        HTTPStatus: HTTP 200 OK on success.
+
+    Raises:
+        HTTPException: If there is an issue retrieving the current shift
+         or if no shift is found.
+    """
+    shift = shift_service.get_current_shift()
+    return shift, HTTPStatus.OK
+
+
+@router.patch(
+    "/shifts/patch/update_shift_log_info/{shift_id}",
+    tags=["shifts"],
+    summary="Update Shift Log info",
+)
+def patch_shift_log_info(shift_id: Optional[str]):
+    """
+    Partially update an existing shift.
+
+    Args:
+        shift_id (str): The unique identifier of the shift to update.
+        shift (ShiftUpdate): The partial shift data to update.
+
+    Raises:
+        HTTPException: If the shift is not found.
+    """
+    shift = shift_service.updated_shift_log_info(current_shift_id=shift_id)
+    return shift, HTTPStatus.OK
