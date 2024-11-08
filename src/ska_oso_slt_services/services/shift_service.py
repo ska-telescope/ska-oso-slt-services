@@ -1,18 +1,25 @@
 import logging
-from typing import Any, Dict, List, Optional, Type
+import threading
+from functools import lru_cache
+from typing import Any, Dict, List, Optional, Type, Union
+
+from confluent_kafka import Consumer, KafkaError, Producer
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
+from ska_oso_slt_services.data_access.postgres.mapping import ShiftLogCommentMapping
 from ska_oso_slt_services.domain.shift_models import (
     MatchType,
     Media,
     Metadata,
     SbiEntityStatus,
     Shift,
+    ShiftLogComment,
 )
 from ska_oso_slt_services.repository.postgress_shift_repository import (
     CRUDShiftRepository,
     PostgresShiftRepository,
 )
+from ska_oso_slt_services.services.config import KafkaConfig
 from ska_oso_slt_services.utils.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.utils.metadata_mixin import set_new_metadata, update_metadata
 
@@ -63,6 +70,28 @@ class ShiftService:
         if not self.postgres_repository:
             raise ValueError("PostgresShiftRepository is required")
 
+    def merge_comments(self, shifts: List[dict]):
+        """
+        Merge comments into shift logs for the provided list of shifts.
+
+        Args:
+            shifts (List[dict]): List of shift data dictionaries.
+
+        Returns:
+            List[dict]: List of shift data with merged comments in shift logs.
+        """
+        for shift in shifts:
+            shift_log_comments_dict = self.postgres_repository.get_shift_logs_comments(
+                shift_id=shift["shift_id"]
+            )
+            if shift.get("shift_logs"):
+                for shift_log in shift["shift_logs"]:
+                    shift_log["comments"] = []
+                    for comment in shift_log_comments_dict:
+                        if shift_log["info"]["eb_id"] == comment["eb_id"]:
+                            shift_log["comments"].append(comment)
+        return shifts
+
     def get_shift(self, shift_id: str) -> Shift:
         """
         Retrieve a shift by its ID.
@@ -73,9 +102,12 @@ class ShiftService:
         Returns:
             Shift: The shift data if found, None otherwise.
         """
-        result = self.postgres_repository.get_shift(shift_id)
-        if result:
-            shift_with_metadata = self._prepare_shift_with_metadata(result)
+        shift = self.postgres_repository.get_shift(shift_id)
+        if shift:
+            shifts_with_comments = self.merge_comments([shift])[0]
+            shift_with_metadata = self._prepare_shift_with_metadata(
+                shifts_with_comments
+            )
             return shift_with_metadata
         else:
             raise NotFoundError(f"No shift found with ID: {shift_id}")
@@ -240,3 +272,298 @@ class ShiftService:
             "last_modified_on": shift["last_modified_on"],
             "last_modified_by": shift["last_modified_by"],
         }
+
+    def create_shift_logs_comment(self, shift_log_comment_data) -> ShiftLogComment:
+        """
+        Create a new comment for a shift log with metadata.
+
+        Args:
+            shift_log_comment_data: The comment data for the shift log.
+
+        Returns:
+            ShiftLogComment: The created shift log comment.
+        """
+
+        missing_fields = []
+        if not shift_log_comment_data.shift_id:
+            missing_fields.append("shift_id")
+        if not shift_log_comment_data.eb_id:
+            missing_fields.append("eb_id")
+        if not shift_log_comment_data.operator_name:
+            missing_fields.append("operator_name")
+
+        if missing_fields:
+            raise ValueError("Following fields are required", missing_fields)
+
+        shift_log_comment = set_new_metadata(
+            shift_log_comment_data, shift_log_comment_data.operator_name
+        )
+        return self.postgres_repository.create_shift_logs_comment(
+            shift_log_comment=shift_log_comment
+        )
+
+    def get_shift_logs_comments(
+        self, shift_id: str = None, eb_id: str = None
+    ) -> List[ShiftLogComment]:
+        """
+        Retrieve comments for shift logs based on shift ID or EB ID.
+
+        Args:
+            shift_id (str, optional): The shift ID for filtering comments.
+            eb_id (str, optional): The EB ID for filtering comments.
+
+        Returns:
+            List[ShiftLogComment]: List of comments matching the specified query.
+
+        Raises:
+            NotFoundError: If no comments are found for the given filters.
+        """
+        shift_log_comments = self.postgres_repository.get_shift_logs_comments(
+            shift_id=shift_id, eb_id=eb_id
+        )
+
+        if not shift_log_comments:
+            raise NotFoundError("No shifts log comments found for the given query.")
+        LOGGER.info("Shift log comments : %s", shift_log_comments)
+
+        return shift_log_comments
+
+    def update_shift_log_comments(self, comment_id, shift_log_comment: ShiftLogComment):
+        """
+        Update an existing shift log comment with new data.
+
+        Args:
+            comment_id (int): The ID of the comment to update.
+            shift_log_comment (ShiftLogComment): The updated comment data.
+
+        Returns:
+            ShiftLogComment: The updated shift log comment.
+
+        Raises:
+            NotFoundError: If no comment is found with the provided ID.
+        """
+        shift_log_comment.id = comment_id
+        metadata = self.postgres_repository.get_latest_metadata(
+            entity_id=shift_log_comment.id, table_details=ShiftLogCommentMapping()
+        )
+        if not metadata:
+            raise NotFoundError(f"No Comment found with ID: {shift_log_comment.id}")
+
+        shift_log_comment_with_metadata = update_metadata(
+            entity=shift_log_comment,
+            metadata=metadata,
+            last_modified_by=shift_log_comment.operator_name,
+        )
+
+        return self.postgres_repository.update_shift_logs_comments(
+            shift_log_comment_with_metadata
+        )
+
+    def update_shift_log_with_image(self, comment_id, operator_name, file):
+        """
+        Update a shift log comment with an image.
+
+        Args:
+            comment_id (int): The ID of the comment to update.
+            operator_name (str): The name of the operator adding the image.
+            file: The image file to add.
+
+        Returns:
+            ShiftLogComment: The updated shift log comment with the image added.
+
+        Raises:
+            NotFoundError: If no comment is found with the provided ID.
+        """
+        metadata = self.postgres_repository.get_latest_metadata(
+            entity_id=comment_id, table_details=ShiftLogCommentMapping()
+        )
+
+        if not metadata:
+            raise NotFoundError(f"No Comment found with ID: {comment_id}")
+
+        shift_log_comment = ShiftLogComment(id=comment_id, operator_name=operator_name)
+        shift_log_comment.metadata = metadata
+
+        shift_log_comment_with_metadata = update_metadata(
+            entity=shift_log_comment,
+            metadata=metadata,
+            last_modified_by=shift_log_comment.operator_name,
+        )
+
+        return self.postgres_repository.update_shift_log_with_image(
+            shift_log_comment=shift_log_comment_with_metadata, file=file
+        )
+
+    def get_current_shift(self):
+        """
+        Retrieve the current shift.
+
+        This method fetches the most recent shift from the database, based on the
+        `created_on` timestamps. It retrieves the shift from
+        the Postgres repository and returns it with associated metadata.
+
+        Returns:
+            Shift: The most recent shift object in the system, with metadata included.
+
+        Raises:
+            ValueError: If the PostgresShiftRepository is not available.
+            NotFoundError: If no shifts are found in the system.
+        """
+
+        if not self.postgres_repository:
+            raise ValueError("PostgresShiftRepository is not available")
+
+        result = self.postgres_repository.get_current_shift()
+        if result:
+            shift_with_metadata = self._prepare_shift_with_metadata(result)
+            return shift_with_metadata
+        else:
+            raise NotFoundError("No shift found")
+
+    def updated_shift_log_info(self, current_shift_id: str) -> Union[Shift, str]:
+        """
+        Update the shift log info for a given shift ID.
+
+        Args:
+            current_shift_id (str): The ID of the shift to update.
+
+        Returns:
+            Union[Shift, str]: The updated shift object if successful, or an error
+        """
+        return self.postgres_repository.updated_shift_log_info(current_shift_id)
+
+
+class ShiftServiceSingleton:
+    _instance = None
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = ShiftService([PostgresShiftRepository])
+        return cls._instance
+
+
+@lru_cache()
+def get_shift_service() -> ShiftService:
+    """
+    Dependency to get the ShiftService instance
+    """
+    return ShiftServiceSingleton.get_instance()
+
+
+shift_service = get_shift_service()
+
+
+# Callback for successful delivery or error
+def delivery_report(err, msg):
+    if err is not None:
+        LOGGER.error("Message delivery failed: %s", err)
+    else:
+        LOGGER.error(
+            "Message delivered to %s [%s] at offset %s",
+            msg.topic(),
+            msg.partition(),
+            msg.offset(),
+        )
+
+
+class ShiftLogUpdater:
+    """
+    Class for updating Shift Logs
+    """
+
+    def __init__(self):
+        self.current_shift_id: Optional[int] = None
+        self.lock = threading.Lock()
+        self.thread = threading.Thread(target=self._background_task, daemon=True)
+        self.thread_started = False
+
+        consumer_conf = {
+            "bootstrap.servers": KafkaConfig.BOOTSTRAP_SERVER,
+            "group.id": KafkaConfig.GROUP_ID,
+            "auto.offset.reset": KafkaConfig.AUTO_OFFSET_RESET,
+        }
+
+        producer_conf = {
+            "bootstrap.servers": KafkaConfig.BOOTSTRAP_SERVER,
+            "client.id": KafkaConfig.CLIEND_ID,
+        }
+
+        self.consumer = Consumer(consumer_conf)
+        LOGGER.info("KAFKA CONFIGURED WITH FOLLOWING CONFIGURATION %s", consumer_conf)
+
+        self.producer = Producer(producer_conf)
+
+        self.producer_topic = KafkaConfig.PRODUCER_TOPIC
+        self.consumer_topic = KafkaConfig.CONSUMER_TOPIC
+
+    def _background_task(self):
+        """
+        Checks if new EB data is added or updated to ODA using Kafka Topic
+        Once found Updates the same into the Current Shift and sends Notification to
+        SLT UI through Topic.
+        """
+
+        try:
+            self.consumer.subscribe([self.consumer_topic])
+            metadata = self.consumer.list_topics(timeout=10.0)
+            LOGGER.debug("Subscribed to topics: %s", metadata.topics)
+            while True:
+                LOGGER.debug("Checking for new data")
+
+                message = self.consumer.poll(timeout=float(KafkaConfig.TOPIC_POLL_TIME))
+                if message is None:
+                    LOGGER.debug("No new notification from ODA")
+                    continue
+                if message.error():
+                    if (
+                        message.error().code()
+                        == KafkaError._PARTITION_EOF  # pylint: disable=W0212
+                    ):
+                        LOGGER.debug("End of partition")
+                    else:
+                        LOGGER.info("Error occurred: %s", message.error())
+                else:
+                    LOGGER.info(
+                        "Received message: %s from partition %s",
+                        message.value().decode("utf-8"),
+                        message.partition(),
+                    )
+                    shift_service.updated_shift_log_info(self.current_shift_id)
+                    message = (
+                        "Current Shift %s  Logs have been updated kindly check...",
+                        self.current_shift_id,
+                    )
+                    self.producer.produce(
+                        self.producer_topic,
+                        message[0].encode("utf-8"),
+                        callback=delivery_report,
+                    )
+                    self.producer.flush()
+
+                    LOGGER.info("Message to frontend: %s,message")
+
+        finally:
+            self.consumer.close()
+
+    def start(self):
+        """
+        Starts the background polling thread if it has not already been started.
+        This method ensures that the polling of Kafka topics begins only once.
+        """
+        if not self.thread_started:
+            LOGGER.debug("\n\nPolling Started")
+            self.thread.start()
+            self.thread_started = True
+
+    def update_shift_id(self, shift_id: int):
+        """
+        Updates the current shift ID and ensures that the background thread is started
+        for polling Kafka topics.
+
+        Args:
+            shift_id (int): The ID of the shift to be updated.
+        """
+        with self.lock:
+            self.current_shift_id = shift_id
+            self.start()

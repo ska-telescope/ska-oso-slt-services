@@ -46,6 +46,24 @@ class Media(SLTObject):
     unique_id: Optional[str] = None
 
 
+class ShiftLogImage(SLTObject):
+    path: str
+    timestamp: AwareDatetime = Field(
+        default_factory=lambda: get_datetime_for_timezone("UTC")
+    )
+
+
+class ShiftLogComment(SLTObject):
+
+    id: Optional[int] = None
+    log_comment: Optional[str] = None
+    operator_name: Optional[str] = None
+    shift_id: Optional[str] = None
+    image: Optional[ShiftLogImage] = None
+    eb_id: Optional[str] = None
+    metadata: Optional[Metadata] = None
+
+
 class ShiftLogs(SLTObject):
     """
     Represents logs associated with a shift in the SLT Shift Log Tool.
@@ -60,6 +78,7 @@ class ShiftLogs(SLTObject):
     info: Optional[dict] = None
     source: Optional[str] = None
     log_time: Optional[datetime] = None
+    comments: Optional[List[ShiftLogComment]] = None
 
 
 class ShiftBaseClass(SLTObject):
@@ -110,7 +129,7 @@ class Filter(Enum):
 
 class SbiStatus(Enum):
     # TODO revisit this class later might be need to
-    # add dependency of PDM or simple enter text.
+    # add dependency of PDM or simle enter text.
     """
     Enum representing the different status values for
     an SBI entity in the SLT Shift Log Tool.

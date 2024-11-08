@@ -7,18 +7,25 @@ selecting, and querying shifts.
 """
 
 from datetime import datetime
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from psycopg import sql
 
 from ska_oso_slt_services.data_access.postgres.mapping import TableDetails
-from ska_oso_slt_services.domain.shift_models import MatchType, SbiEntityStatus, Shift
+from ska_oso_slt_services.domain.shift_models import (
+    MatchType,
+    SbiEntityStatus,
+    Shift,
+    ShiftLogComment,
+)
 
 SqlTypes = Union[str, int, datetime]
 QueryAndParameters = Tuple[sql.Composed, Tuple[SqlTypes]]
 
 
-def insert_query(table_details: TableDetails, shift: Shift) -> QueryAndParameters:
+def insert_query(
+    table_details: TableDetails, entity: Shift | ShiftLogComment
+) -> QueryAndParameters:
     """
     Creates a query and parameters to insert the given entity in the table,
     effectively creating a new version by inserting a new row,
@@ -27,14 +34,14 @@ def insert_query(table_details: TableDetails, shift: Shift) -> QueryAndParameter
     Args:
         table_details (TableDetails): The information about the
         table to perform the insert on.
-        shift (Shift): The shift entity which will be persisted.
+        entity:  entity which will be persisted..
 
     Returns:
         QueryAndParameters: A tuple of the query and parameters,
         which psycopg will safely combine.
     """
     columns = table_details.get_columns_with_metadata()
-    params = table_details.get_params_with_metadata(shift)
+    params = table_details.get_params_with_metadata(entity)
     query = sql.SQL(
         """
         INSERT INTO {table}
@@ -47,11 +54,10 @@ def insert_query(table_details: TableDetails, shift: Shift) -> QueryAndParameter
         fields=sql.SQL(",").join(map(sql.Identifier, columns)),
         values=sql.SQL(",").join(sql.Placeholder() * len(params)),
     )
-
     return query, params
 
 
-def update_query(table_details: TableDetails, shift: Shift) -> QueryAndParameters:
+def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
     """
     Creates a query and parameters to update the given entity in the table,
     overwriting values in the existing row and returning the row ID.
@@ -62,15 +68,17 @@ def update_query(table_details: TableDetails, shift: Shift) -> QueryAndParameter
     Args:
         table_details (TableDetails): The information about the table
         to perform the update on.
-        shift (Shift): The shift entity which will be persisted.
+        entity: The entity which will be persisted.
 
     Returns:
         QueryAndParameters: A tuple of the query and parameters,
         which psycopg will safely combine.
     """
     columns = table_details.get_columns_with_metadata()
-    params = table_details.get_params_with_metadata(shift)
-    # query to add comments
+    params = table_details.get_params_with_metadata(entity)
+
+    # Add the identifier value (e.g., shift_id or comment_id) to the end of params
+    identifier_value = getattr(entity, table_details.table_details.identifier_field)
 
     query = sql.SQL(
         """
@@ -84,7 +92,7 @@ def update_query(table_details: TableDetails, shift: Shift) -> QueryAndParameter
         fields=sql.SQL(",").join(map(sql.Identifier, columns)),
         values=sql.SQL(",").join(sql.Placeholder() * len(params)),
     )
-    return query, params + (shift.shift_id,)
+    return query, params + (identifier_value,)
 
 
 def select_latest_query(
@@ -129,14 +137,13 @@ def select_latest_query(
 
 
 def select_metadata_query(
-    table_details: TableDetails, shift_id: str
+    table_details: TableDetails, entity_id: str | int
 ) -> QueryAndParameters:
     """
     Creates a query to select all columns for all shifts.
 
     Args:
         table_details (TableDetails): The information about the table to query.
-        shift_id (str): The identifier of the shift to search for.
 
     Returns:
         QueryAndParameters: A tuple of the query and parameters.
@@ -153,7 +160,7 @@ def select_metadata_query(
         table=sql.Identifier(table_details.table_details.table_name),
         identifier_field=sql.Identifier(table_details.table_details.identifier_field),
     )
-    return query, (shift_id,)
+    return query, (entity_id,)
 
 
 def select_by_shift_params(
@@ -470,6 +477,72 @@ def select_logs_by_status(
     return query_str, params
 
 
+def select_comments_query(
+    table_details: TableDetails,
+    id: Optional[int] = None,  # pylint: disable=W0622
+    shift_id: Optional[str] = None,
+    eb_id: Optional[str] = None,
+) -> QueryAndParameters:
+    """
+    Creates a query to select comments based on various criteria:
+    - If `id` is provided, fetch the comment with that `id`.
+    - If `shift_id` is provided, fetch all comments for that shift.
+    - If both `shift_id` and `eb_id` are provided, fetch comments matching both.
+    - If nothing is passed, fetch all comments.
+
+    Args:
+        table_details (TableDetails): The information about the table to query.
+        id (Optional[int]): The ID of the comment.
+        shift_id (Optional[str]): The ID of the shift to retrieve comments for.
+        eb_id (Optional[str]): The EB ID to filter comments for a specific shift.
+
+    Returns:
+        QueryAndParameters: A tuple of the query and parameters.
+    """
+    # Get the columns for the select statement
+    columns = table_details.get_columns_with_metadata()
+
+    # Start building the base SQL query
+    base_query = sql.SQL(
+        """
+        SELECT {fields}
+        FROM {table}
+        """
+    ).format(
+        fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
+        table=sql.Identifier(table_details.table_details.table_name),
+    )
+
+    # Initialize an empty list for where clauses and parameters
+    where_clauses = []
+    params = []
+
+    # Add conditions based on the parameters provided
+    if id is not None:
+        where_clauses.append(sql.SQL("{field} = %s").format(field=sql.Identifier("id")))
+        params.append(id)
+
+    if shift_id is not None:
+        where_clauses.append(
+            sql.SQL("{field} = %s").format(field=sql.Identifier("shift_id"))
+        )
+        params.append(shift_id)
+
+    if shift_id is not None and eb_id is not None:
+        where_clauses.append(
+            sql.SQL("{field} = %s").format(field=sql.Identifier("eb_id"))
+        )
+        params.append(eb_id)
+
+    # Build the final query based on the conditions
+    if where_clauses:
+        query = base_query + sql.SQL(" WHERE ") + sql.SQL(" AND ").join(where_clauses)
+    else:
+        query = base_query  # No conditions, return all comments
+
+    return query, tuple(params)
+
+
 def select_last_serial_id(table_details: TableDetails) -> QueryAndParameters:
     """
     Creates a query to select the last serial ID from the table.
@@ -488,3 +561,80 @@ def select_last_serial_id(table_details: TableDetails) -> QueryAndParameters:
         table=sql.Identifier(table_details.table_details.table_name),
     )
     return query, ()
+
+
+def select_latest_shift_query(table_details: TableDetails) -> QueryAndParameters:
+    """
+    Creates a query and parameters to find the latest shift in the table,
+    returning the row with the most recent timestamp created_on.
+
+    Args:
+        table_details (TableDetails): The information about the table to perform
+        the query on.
+
+    Returns:
+        QueryAndParameters: A tuple of the query and parameters, which psycopg
+         will safely combine.
+    """
+    columns = table_details.get_columns_with_metadata()
+
+    query = sql.SQL(
+        """
+        SELECT {fields}
+        FROM {table}
+        WHERE shift_end IS NULL
+        ORDER BY created_on DESC LIMIT 1
+    """
+    ).format(
+        fields=sql.SQL(",").join(map(sql.Identifier, columns)),
+        table=sql.Identifier(table_details.table_details.table_name),
+    )
+
+    params = ()
+    return query, params
+
+
+def patch_query(
+    table_details: TableDetails,
+    column_names: list[str],
+    params: list[Any],
+    shift_id: int,
+    shift: Shift = None,
+) -> Tuple[str, tuple]:
+    """
+    Creates a query and parameters to patch specific columns of a shift entry.
+
+    Args:
+        table_details (TableDetails): The information about
+        the table to perform the patch on.
+        column_names (list[str]): List of column names to be updated.
+        params (list[Any]): List of values corresponding to the column names.
+        shift_id (int): The ID of the shift to be patched.
+
+    Returns:
+        Tuple[str, tuple]: A tuple of the query string and parameters.
+    """
+
+    params = params + table_details.get_metadata_params(shift)
+    columns = column_names + list(table_details.get_metadata_columns())
+    query = sql.SQL(
+        """
+        UPDATE {table} SET ({fields}) = ({values})
+        WHERE id=(SELECT id FROM {table} WHERE {identifier_field}=%s)
+        RETURNING id;
+        """
+    ).format(
+        identifier_field=sql.Identifier(table_details.table_details.identifier_field),
+        table=sql.Identifier(table_details.table_details.table_name),
+        fields=sql.SQL(",").join(map(sql.Identifier, columns)),
+        values=sql.SQL(",").join(sql.Placeholder() * len(params)),
+    )
+    return query, params + (shift_id,)
+
+
+def shift_logs_patch_query(
+    table_details: TableDetails, shift: Shift
+) -> Tuple[str, tuple]:
+    columns = table_details.get_shift_log_columns()
+    params = table_details.get_shift_log_params(shift)
+    return patch_query(table_details, columns, params, shift.shift_id, shift=shift)

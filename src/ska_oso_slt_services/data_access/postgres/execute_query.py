@@ -115,6 +115,41 @@ class PostgresDataAccess:
             LOGGER.info("Unexpected error: %s", e)
             raise e
 
+    def execute_query_or_update(
+        self, query: str, query_type: str, params: tuple | List = None
+    ):
+        """
+        Executes a query or update operation on the database.
+
+        :param query: The SQL query to be executed.
+        :param query_type: The type of query (GET, POST, PUT, DELETE).
+        :param params: Parameters to be used in the SQL query.
+        :return: The result of the query if query_type is GET; otherwise, None.
+        """
+        try:
+            with self.postgres_connection.connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, params)
+                    if query_type == "GET":
+                        return cursor.fetchall()
+                    elif query_type in {
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                    }:
+                        returned_id_or_data = None
+                        if query_type == "POST":
+                            returned_id_or_data = cursor.fetchone()
+                        conn.commit()
+                        return returned_id_or_data
+                    else:
+                        raise ValueError(f"Unsupported query type: {query_type}")
+        except (Exception, DatabaseError) as error:
+            raise DatabaseError(  # pylint: disable=raise-missing-from
+                f"Error executing {query_type.value} query: {query} with params:"
+                f" {params}. Error: {str(error)}"
+            )
+
 
 # SLT Table creation added temporary once ODA start supporting for table creation
 # then remove this piece of code
@@ -138,27 +173,64 @@ class TableCreator:
     def create_slt_table(self):
         create_table_query = sql.SQL(
             """
-            CREATE TABLE IF NOT EXISTS tab_oda_slt(
-                id serial NOT NULL,
-                shift_id VARCHAR(20) NOT NULL,
-                shift_start timestamp with time zone NOT NULL,
-                shift_end timestamp with time zone,
-                shift_operator VARCHAR(50) NOT NULL,
-                shift_logs jsonb,
-                annotations text,
-                comments text,
-                media jsonb,
+            CREATE TABLE public.tab_oda_slt (
+                id SERIAL PRIMARY KEY,
+                shift_id VARCHAR(50) NOT NULL,
+                shift_start TIMESTAMPTZ NOT NULL,
+                shift_end TIMESTAMPTZ,
+                shift_operator VARCHAR(100) NOT NULL,
+                shift_logs JSONB,
+                annotations TEXT,
                 created_by VARCHAR(50) NOT NULL,
-                created_on timestamp with time zone NOT NULL,
-                last_modified_on timestamp with time zone NOT NULL,
+                created_on TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 last_modified_by VARCHAR(50) NOT NULL,
-                PRIMARY KEY (id, shift_id)
+                last_modified_on TIMESTAMPTZ NOT NULL,
+                CONSTRAINT unique_shift UNIQUE (shift_id, shift_start),
+                CONSTRAINT unique_shift_id UNIQUE (shift_id)
             );
-            CREATE UNIQUE INDEX IF NOT EXISTS slt_indexes
-            ON tab_oda_slt (shift_id, shift_start);
+            CREATE INDEX idx_tab_oda_slt_shift_id
+            ON public.tab_oda_slt (shift_id);
+            CREATE INDEX idx_tab_oda_slt_shift_start
+            ON public.tab_oda_slt (shift_start);
+            CREATE TABLE public.tab_oda_slt_shift_comments (
+                id SERIAL PRIMARY KEY,
+                shift_id VARCHAR(50) NOT NULL,
+                operator_name VARCHAR(100) NOT NULL,
+                comment TEXT,
+                image jsonb NULL,
+                created_by VARCHAR(100) NOT NULL,
+                created_on TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                last_modified_on TIMESTAMPTZ NOT NULL,
+                last_modified_by VARCHAR(100) NOT NULL,
+                CONSTRAINT fk_shift FOREIGN KEY (shift_id)
+                REFERENCES public.tab_oda_slt(shift_id)
+            );
+            CREATE INDEX idx_tab_oda_slt_shift_comments_shift_id
+            ON public.tab_oda_slt_shift_comments (shift_id);
+            CREATE INDEX idx_tab_oda_slt_shift_comments_operator_name
+            ON public.tab_oda_slt_shift_comments (operator_name);
+            CREATE TABLE public.tab_oda_slt_shift_log_comments (
+                id SERIAL PRIMARY KEY,
+                shift_id VARCHAR(50) NOT NULL,
+                eb_id VARCHAR(60) NOT NULL,
+                operator_name VARCHAR(100) NOT NULL,
+                log_comment TEXT,
+                image jsonb NULL,
+                created_by VARCHAR(100) NOT NULL,
+                created_on TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                last_modified_by VARCHAR(100) NOT NULL,
+                last_modified_on TIMESTAMPTZ NOT NULL,
+                CONSTRAINT fk_shift FOREIGN KEY (shift_id)
+                REFERENCES public.tab_oda_slt(shift_id)
+            );
+            CREATE INDEX idx_tab_oda_slt_shift_log_comments_shift_id
+            ON public.tab_oda_slt_shift_log_comments (shift_id);
+            CREATE INDEX idx_tab_oda_slt_shift_log_comments_eb_id
+            ON public.tab_oda_slt_shift_log_comments (eb_id);
+            CREATE INDEX idx_tab_oda_slt_shift_log_comments_operator_name
+            ON public.tab_oda_slt_shift_log_comments (operator_name);
         """
         )
-
         try:
             with self.postgres_connection.connection() as conn:
                 with conn.cursor() as cursor:
