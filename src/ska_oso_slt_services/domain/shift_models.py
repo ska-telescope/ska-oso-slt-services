@@ -68,6 +68,7 @@ class ShiftComment(SLTObject):
 
     id: Optional[int] = None
     comment: Optional[str] = None
+    operator_name: Optional[str] = None
     shift_id: Optional[str] = None
     image: Optional[ShiftLogImage] = None
     metadata: Optional[Metadata] = None

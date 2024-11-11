@@ -265,6 +265,7 @@ class ShiftCommentMapping:
             identifier_field="id",
             column_map={
                 "comment": lambda comment: _field_json_dump(comment, "comment"),
+                "operator_name": lambda comment: comment.operator_name,
                 "shift_id": lambda comment: comment.shift_id,
                 "image": lambda comment: _field_json_dump(comment, "image"),
             },

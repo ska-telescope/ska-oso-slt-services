@@ -688,7 +688,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             existing_shift_comment.operator_name = shift_comment.operator_name
         if shift_comment.shift_id:
             existing_shift_comment.shift_id = shift_comment.shift_id
-
+        if shift_comment.operator_name:
+            existing_shift_comment.operator_name = shift_comment.operator_name
         existing_shift_comment.metadata = shift_comment.metadata
         self._update_shift_in_database(
             entity=existing_shift_comment, table_details=ShiftCommentMapping()
