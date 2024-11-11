@@ -6,13 +6,17 @@ from typing import Any, Dict, List, Optional, Type, Union
 from confluent_kafka import Consumer, KafkaError, Producer
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
-from ska_oso_slt_services.data_access.postgres.mapping import ShiftLogCommentMapping
+from ska_oso_slt_services.data_access.postgres.mapping import (
+    ShiftCommentMapping,
+    ShiftLogCommentMapping,
+)
 from ska_oso_slt_services.domain.shift_models import (
     MatchType,
     Media,
     Metadata,
     SbiEntityStatus,
     Shift,
+    ShiftComment,
     ShiftLogComment,
 )
 from ska_oso_slt_services.repository.postgress_shift_repository import (
@@ -92,6 +96,15 @@ class ShiftService:
                             shift_log["comments"].append(comment)
         return shifts
 
+    def merge_shift_comments(self, shifts):
+        for shift in shifts:
+            shift_comment_dict = self.postgres_repository.get_shift_comments(
+                shift_id=shift["shift_id"]
+            )
+            shift["comments"] = shift_comment_dict
+
+        return shifts
+
     def get_shift(self, shift_id: str) -> Shift:
         """
         Retrieve a shift by its ID.
@@ -103,11 +116,17 @@ class ShiftService:
             Shift: The shift data if found, None otherwise.
         """
         shift = self.postgres_repository.get_shift(shift_id)
+
         if shift:
-            shifts_with_comments = self.merge_comments([shift])[0]
+            shifts_with_log_comments = self.merge_comments([shift])[0]
+            shifts_with_comments_and_log_comments = self.merge_shift_comments(
+                [shifts_with_log_comments]
+            )[0]
+
             shift_with_metadata = self._prepare_shift_with_metadata(
-                shifts_with_comments
+                shifts_with_comments_and_log_comments
             )
+
             return shift_with_metadata
         else:
             raise NotFoundError(f"No shift found with ID: {shift_id}")
@@ -431,6 +450,117 @@ class ShiftService:
             Union[Shift, str]: The updated shift object if successful, or an error
         """
         return self.postgres_repository.updated_shift_log_info(current_shift_id)
+
+    def create_shift_comment(self, shift_comment_data: ShiftComment) -> ShiftComment:
+        """
+        Create a new comment for a shift log with metadata.
+
+        Args:
+            shift_log_comment_data: The comment data for the shift log.
+
+        Returns:
+            ShiftLogComment: The created shift log comment.
+        """
+        if not shift_comment_data.shift_id:
+            raise ValueError("SHift id is required")
+
+        shift = self.get_shift(shift_comment_data.shift_id)
+        if not shift:
+            raise NotFoundError(
+                f"No shift found with id: {shift_comment_data.shift_id}"
+            )
+
+        shift_comment = set_new_metadata(shift_comment_data, shift.shift_operator)
+        return self.postgres_repository.create_shift_comment(
+            shift_comment=shift_comment
+        )
+
+    def get_shift_comments(self, shift_id: str = None) -> List[ShiftComment]:
+        """
+        Retrieve comments for shift logs based on shift ID or EB ID.
+
+        Args:
+            shift_id (str, optional): The shift ID for filtering comments.
+            eb_id (str, optional): The EB ID for filtering comments.
+
+        Returns:
+            List[ShiftLogComment]: List of comments matching the specified query.
+
+        Raises:
+            NotFoundError: If no comments are found for the given filters.
+        """
+        shift_comments = self.postgres_repository.get_shift_comments(shift_id=shift_id)
+
+        if not shift_comments:
+            raise NotFoundError("No shifts comments found for the given query.")
+        LOGGER.info("Shift log comments : %s", shift_comments)
+
+        return shift_comments
+
+    def get_shift_comment(self, comment_id: str = None) -> List[ShiftComment]:
+        """
+        Retrieve comments for shift logs based on shift ID or EB ID.
+
+        Args:
+            shift_id (str, optional): The shift ID for filtering comments.
+            eb_id (str, optional): The EB ID for filtering comments.
+
+        Returns:
+            List[ShiftLogComment]: List of comments matching the specified query.
+
+        Raises:
+            NotFoundError: If no comments are found for the given filters.
+        """
+        shift_comment = self.postgres_repository.get_shift_comment(
+            comment_id=comment_id
+        )
+
+        if not shift_comment:
+            raise NotFoundError("No shift comment found for the given query.")
+        LOGGER.info("Shift log comments : %s", shift_comment)
+
+        return shift_comment
+
+    def update_shift_comments(self, comment_id, shift_comment: ShiftComment):
+        """
+        Update an existing shift log comment with new data.
+
+        Args:
+            comment_id (int): The ID of the comment to update.
+            shift_log_comment (ShiftLogCommentUpdate): The updated comment data.
+
+        Returns:
+            ShiftLogCommentUpdate: The updated shift log comment.
+
+        Raises:
+            NotFoundError: If no comment is found with the provided ID.
+        """
+        # for getting shift_id to get operator name
+        existing_shift_comment = self.get_shift_comment(comment_id=comment_id)
+
+        if not existing_shift_comment:
+            raise NotFoundError(f"No comment found with id: {comment_id}")
+
+        shift = self.get_shift(existing_shift_comment["shift_id"])
+        if not shift:
+            raise NotFoundError(f"No shift found with id: {shift_comment['shift_id']}")
+
+        shift_comment.id = int(comment_id)
+        metadata = self.postgres_repository.get_latest_metadata(
+            entity_id=shift_comment.id, table_details=ShiftCommentMapping()
+        )
+        if not metadata:
+            raise NotFoundError(f"No Comment found with ID: {shift_comment.id}")
+
+        shift_log_comment_with_metadata = update_metadata(
+            entity=shift_comment,
+            metadata=metadata,
+            last_modified_by=shift.shift_operator,
+        )
+
+        return self.postgres_repository.update_shift_comments(
+            shift_log_comment_with_metadata
+        )
 
 
 class ShiftServiceSingleton:

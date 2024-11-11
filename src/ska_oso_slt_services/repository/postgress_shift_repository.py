@@ -7,6 +7,7 @@ from deepdiff import DeepDiff
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
 from ska_oso_slt_services.data_access.postgres.mapping import (
+    ShiftCommentMapping,
     ShiftLogCommentMapping,
     ShiftLogMapping,
 )
@@ -30,6 +31,7 @@ from ska_oso_slt_services.domain.shift_models import (
     Metadata,
     SbiEntityStatus,
     Shift,
+    ShiftComment,
     ShiftLogComment,
     ShiftLogImage,
     ShiftLogs,
@@ -614,3 +616,80 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             LOGGER.info("No New Logs found in ODA")
             return "NO New Logs found in ODA"
+
+    def create_shift_comment(self, shift_comment: ShiftComment):
+        """
+        Create a new comment for a shift log and save it to the database.
+
+        Args:
+            shift_comment (ShiftLogComment): The comment data to create.
+
+        Returns:
+            ShiftLogComment: The newly created shift log comment.
+        """
+        shift_comment_id = self._insert_shift_to_database(
+            table_details=ShiftCommentMapping(), entity=shift_comment
+        )
+        shift_comment.id = shift_comment_id["id"]
+
+        return shift_comment
+
+    def get_shift_comments(self, shift_id=None):
+        """
+        Retrieve comments from shift logs based on shift ID or EB ID.
+
+        Args:
+            shift_id (Optional[str]): The shift ID to filter comments by.
+
+        Returns:
+            List[Dict]: List of comments associated with the specified filters.
+        """
+        query, params = select_comments_query(
+            table_details=ShiftCommentMapping(), shift_id=shift_id
+        )
+        comments = self.postgres_data_access.get(query=query, params=params)
+        return comments
+
+    def get_shift_comment(self, comment_id):
+        """
+        Retrieve comments from shift logs based on shift ID or EB ID.
+
+        Args:
+            shift_id (Optional[str]): The shift ID to filter comments by.
+
+        Returns:
+            List[Dict]: List of comments associated with the specified filters.
+        """
+        query, params = select_comments_query(
+            table_details=ShiftCommentMapping(), id=comment_id
+        )
+        comment = self.postgres_data_access.get(query=query, params=params)[0]
+        return comment
+
+    def update_shift_comments(self, shift_comment: ShiftComment):
+        """
+        Update an existing shift log comment with new data.
+
+        Args:
+            shift_log_comment (ShiftLogCommentUpdate): The updated comment data.
+
+        Returns:
+            ShiftLogCommentUpdate: The updated shift log comment.
+        """
+        existing_shift_comment = ShiftComment.model_validate(
+            self.get_shift_comment(comment_id=shift_comment.id)
+        )
+        existing_shift_comment.id = shift_comment.id
+        if shift_comment.comment:
+            existing_shift_comment.comment = shift_comment.comment
+        # if shift_log_comment.eb_id:
+        #     existing_shift_log_comment.eb_id = shift_log_comment.eb_id
+        # if shift_log_comment.operator_name:
+        #     existing_shift_log_comment.operator_name = shift_log_comment.operator_name
+
+        existing_shift_comment.metadata = shift_comment.metadata
+        self._update_shift_in_database(
+            entity=existing_shift_comment, table_details=ShiftCommentMapping()
+        )
+
+        return existing_shift_comment

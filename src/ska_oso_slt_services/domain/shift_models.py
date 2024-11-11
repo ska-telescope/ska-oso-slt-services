@@ -64,6 +64,15 @@ class ShiftLogComment(SLTObject):
     metadata: Optional[Metadata] = None
 
 
+class ShiftComment(SLTObject):
+
+    id: Optional[int] = None
+    comment: Optional[str] = None
+    shift_id: Optional[str] = None
+    image: Optional[ShiftLogImage] = None
+    metadata: Optional[Metadata] = None
+
+
 class ShiftLogs(SLTObject):
     """
     Represents logs associated with a shift in the SLT Shift Log Tool.
@@ -98,7 +107,7 @@ class ShiftBaseClass(SLTObject):
     shift_end: Optional[datetime] = None
     shift_operator: Optional[str] = None
     annotations: Optional[str] = None
-    comments: Optional[str] = None
+    comments: Optional[List[ShiftComment]] = None
 
 
 class Shift(ShiftBaseClass):

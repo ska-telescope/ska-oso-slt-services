@@ -14,6 +14,7 @@ from ska_oso_slt_services.domain.shift_models import (
     SbiEntityStatus,
     Shift,
     ShiftBaseClass,
+    ShiftComment,
     ShiftLogComment,
 )
 from ska_oso_slt_services.repository.postgress_shift_repository import (
@@ -301,3 +302,66 @@ def patch_shift_log_info(shift_id: Optional[str]):
     """
     shift = shift_service.updated_shift_log_info(current_shift_id=shift_id)
     return shift, HTTPStatus.OK
+
+
+@router.post(
+    "/shift_comments/create",
+    tags=["shift"],
+    summary="Create a new shift comment",
+)
+def create_shift_comments(shift_comment: ShiftComment):
+    """
+    Create a new shift.
+
+    Args:
+        shift (ShiftCreate): The shift data to create.
+
+    Returns:
+        ShiftLogComment: The created shift log comment.
+    """
+    shift_comment_obj = shift_service.create_shift_comment(shift_comment)
+    return shift_comment_obj, HTTPStatus.CREATED
+
+
+@router.get(
+    "/shift_comments",
+    tags=["shift"],
+    summary="Retrieve shift log comments based on shift ID and EB ID,",
+)
+def get_shift_comments(shift_id: Optional[str] = None):
+    """
+    Retrieve all shifts.
+    This endpoint returns a list of all shifts in the system.
+
+    Args:
+        shift_id(optional): Shift ID
+        eb_id(optional): EB ID
+
+    Returns:
+        ShiftLogComment: Shift Log Comments match found
+    """
+    shift_comments = shift_service.get_shift_comments(shift_id)
+    return shift_comments, HTTPStatus.OK
+
+
+@router.put(
+    "/shift_comments/update/{comment_id}",
+    tags=["shift"],
+    summary="Update an existing shift",
+)
+def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
+    """
+    Update an existing shift log comment.
+
+    Args:
+        shift_id (str): The unique identifier of the shift to update.
+        shift_log_comment (ShiftLogCommentUpdate): The updated shift log comment  data.
+
+    Raises:
+        HTTPException: If the shift is not found.
+    """
+
+    shift_comments = shift_service.update_shift_comments(
+        comment_id=comment_id, shift_comment=shift_comment
+    )
+    return shift_comments, HTTPStatus.OK

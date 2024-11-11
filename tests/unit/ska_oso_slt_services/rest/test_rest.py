@@ -140,6 +140,12 @@ def test_get_shift():
             "eb_id": "eb-t0001-20241022-00002",
         }
     ]
+
+    mock_shift_comments = [
+        {"comment": "updated nov4 comment", "shift_id": shift_id},
+        {"comment": "updated nov4 comment", "shift_id": shift_id},
+    ]
+
     # Mock database calls
     with (
         patch(
@@ -151,6 +157,11 @@ def test_get_shift():
             "ska_oso_slt_services.repository.postgress_shift_repository."
             "PostgresShiftRepository.get_shift_logs_comments",
             return_value=mock_comments,
+        ),
+        patch(
+            "ska_oso_slt_services.repository.postgress_shift_repository."
+            "PostgresShiftRepository.get_shift_comments",
+            return_value=mock_shift_comments,
         ),
     ):
         # Send a GET request to the updated endpoint with the shift_id as query param
@@ -189,11 +200,23 @@ def test_get_shifts():
                     "info": {},
                     "source": "test",
                     "log_time": get_datetime_for_timezone("UTC"),
+                    "comments": [],  # Empty comments as per the new expected structure
                 }
             ],
             "media": [{"file_extension": "test", "path": "test", "unique_id": "test"}],
             "annotations": "test-annotation-1",
-            "comments": "test-comment-1",
+            "comments": [
+                {
+                    "id": 1,
+                    "comment": "test-comment-1",
+                    "shift_id": "test-id-1",
+                    "image": {
+                        "path": "file_path",
+                        "timestamp": get_datetime_for_timezone("UTC"),
+                    },
+                    "metadata": {},
+                }
+            ],
             "created_by": "test-user-1",
             "created_on": get_datetime_for_timezone("UTC"),
             "last_modified_by": "test-user-1",
@@ -209,23 +232,29 @@ def test_get_shifts():
                     "info": {},
                     "source": "test",
                     "log_time": get_datetime_for_timezone("UTC"),
+                    "comments": [],
                 }
             ],
             "media": [{"file_extension": "test", "path": "test", "unique_id": "test"}],
-            "annotations": "test-annotation-1",
-            "comments": "test-comment-1",
-            "created_by": "test-user-1",
+            "annotations": "test-annotation-2",
+            "comments": [
+                {
+                    "id": 2,
+                    "comment": "test-comment-1",
+                    "shift_id": "test-id-1",
+                    "image": {
+                        "path": "file_path",
+                        "timestamp": get_datetime_for_timezone("UTC"),
+                    },
+                    "metadata": {},
+                }
+            ],
+            "created_by": "test-user-2",
             "created_on": get_datetime_for_timezone("UTC"),
             "last_modified_by": "test-user-1",
             "last_modified_on": get_datetime_for_timezone("UTC"),
         },
     ]
-
-    # Create a mock for the database session
-    mock_db_session = MagicMock()
-
-    # Set up the mock to return our mock_shifts when queried
-    mock_db_session.return_value = mock_shifts
 
     # Patch the database session to use our mock
     with patch(
@@ -267,7 +296,18 @@ def test_update_shift():
         ],
         "media": [],
         "annotations": "old-annotation",
-        "comments": "old-comment",
+        "comments": [
+            {
+                "id": 1,
+                "comment": "test-comment-1",
+                "shift_id": "test-id-1",
+                "image": {
+                    "path": "file_path",
+                    "timestamp": get_datetime_for_timezone("UTC"),
+                },
+                "metadata": {},
+            }
+        ],
         "created_by": "test-user-1",
         "created_on": get_datetime_for_timezone("UTC"),
         "last_modified_by": "test-user-1",
@@ -282,7 +322,15 @@ def test_update_shift():
         "shift_logs": [],
         "media": [],
         "annotations": "updated-annotation",
-        "comments": "updated-comment",
+        "comments": [
+            {
+                "id": 2,
+                "comment": "test-comment-1",
+                "shift_id": "test-id-1",
+                "image": {"path": "file_path", "timestamp": "2024-09-14T16:49:54.889Z"},
+                "metadata": {},
+            }
+        ],
         "metadata": {
             "created_by": "test-user-1",
             "created_on": "2024-09-14T16:49:54.889Z",
@@ -612,17 +660,9 @@ def test_get_current_shift():
         "last_modified_by": "test",
         "last_modified_on": get_datetime_for_timezone("UTC"),
     }
-
-    # Create a mock for the database session
-    mock_db_session = MagicMock()
-
-    # Set up the mock to return our mock_shift when queried
-    mock_db_session.return_value = mock_shift
-
     # Patch the database session to use our mock
     with patch(
-        "ska_oso_slt_services.data_access.postgres"
-        ".execute_query.PostgresDataAccess.get_one",
+        "ska_oso_slt_services.services.shift_service.ShiftService.get_current_shift",
         return_value=mock_shift,
     ):
         # Send a GET request to the endpoint
@@ -633,3 +673,153 @@ def test_get_current_shift():
     # Assert the response content
     retrieved_shift = response.json()
     assert retrieved_shift[0]["shift_id"] == "test-id"
+
+
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.create_shift_comment")
+def test_create_shift_comments(mock_create_shift_comment):
+    # Prepare test data
+    current_time = get_datetime_for_timezone("UTC")
+    comment_data = {
+        "comment": "This is a test comment",
+        "shift_id": "test-shift-id",
+        "image": {"path": "https://example.com/image.png"},
+        "metadata": {
+            "created_by": "test_user",
+            "created_on": current_time.isoformat(),
+            "last_modified_by": "test_user",
+            "last_modified_on": current_time.isoformat(),
+        },
+    }
+
+    mock_create_shift_comment.return_value = comment_data
+
+    # Send a POST request to create a comment
+    response = client.post(f"{API_PREFIX}/shift_comments/create", json=comment_data)
+
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_comment = response.json()[0]
+    print(f"created_comment['comment'] {created_comment['comment']}")
+    print(f"comment_data['comment'] {comment_data['comment']}")
+    assert created_comment["comment"] == comment_data["comment"], (
+        f"Expected comment to be '{comment_data['comment']}'"
+        f", but got '{created_comment['comment']}'"
+    )
+
+    # Add more assertions as needed
+    assert "metadata" in created_comment, "Metadata is missing in the response"
+    metadata = created_comment["metadata"]
+    assert metadata["created_by"] == comment_data["metadata"]["created_by"], (
+        f"Expected created_by to be '{comment_data['metadata']['created_by']}'"
+        f", but got '{metadata['created_by']}'"
+    )
+    assert (
+        metadata["last_modified_by"] == comment_data["metadata"]["last_modified_by"]
+    ), (
+        f"Expected last_modified_by to be"
+        f" '{comment_data['metadata']['last_modified_by']}'"
+        f", but got '{metadata['last_modified_by']}'"
+    )
+
+    # Verify that the mocked function was called with the correct arguments
+    # mock_create_shift_comment.assert_called_once_with(comment_data)
+
+
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift_comments")
+def test_get_shift_comments(mock_get_shift_comments):
+    # Prepare test data
+    current_time = get_datetime_for_timezone("UTC")
+
+    comment_data = [
+        {
+            "comment": "This is a test comment",
+            "shift_id": "test-shift-id",
+            "image": {"path": "https://example.com/image.png"},
+            "metadata": {
+                "created_by": "test_user",
+                "created_on": current_time.isoformat(),
+                "last_modified_by": "test_user",
+                "last_modified_on": current_time.isoformat(),
+            },
+        },
+        {
+            "comment": "This is a test comment",
+            "shift_id": "test-shift-id",
+            "image": {"path": "https://example.com/image.png"},
+            "metadata": {
+                "created_by": "test_user",
+                "created_on": current_time.isoformat(),
+                "last_modified_by": "test_user",
+                "last_modified_on": current_time.isoformat(),
+            },
+        },
+    ]
+
+    mock_get_shift_comments.return_value = comment_data
+
+    # Send a POST request to create a comment
+    response = client.get(f"{API_PREFIX}/shift_comments?shift_id=test-shift-id")
+
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_comment = response.json()[0][0]
+    assert created_comment["comment"] == comment_data[0]["comment"], (
+        f"Expected comment to be '{comment_data[0]['comment']}',"
+        f" but got '{created_comment['comment']}'"
+    )
+
+    # Add more assertions as needed
+    assert "metadata" in created_comment, "Metadata is missing in the response"
+    metadata = created_comment["metadata"]
+    assert metadata["created_by"] == comment_data[0]["metadata"]["created_by"], (
+        f"Expected created_by to be '{comment_data[0]['metadata']['created_by']}',"
+        f" but got '{metadata['created_by']}'"
+    )
+    assert (
+        metadata["last_modified_by"] == comment_data[0]["metadata"]["last_modified_by"]
+    ), (
+        f"Expected last_modified_by to be"
+        f" '{comment_data[0]['metadata']['last_modified_by']}'"
+        f", but got '{metadata['last_modified_by']}'"
+    )
+
+
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.update_shift_comments")
+def test_update_shift_comments(mock_update_shift_comment):
+    # Prepare test data
+    current_time = get_datetime_for_timezone("UTC")
+
+    data_to_be_updated = {"comment": "This is a updated test comment"}
+
+    updated_comment_data = {
+        "comment": "This is a updated test comment",
+        "shift_id": "test-shift-id",
+        "image": {"path": "https://example.com/image.png"},
+        "metadata": {
+            "created_by": "test_user",
+            "created_on": current_time.isoformat(),
+            "last_modified_by": "test_user",
+            "last_modified_on": current_time.isoformat(),
+        },
+    }
+
+    mock_update_shift_comment.return_value = updated_comment_data
+
+    # Send a POST request to create a comment
+    response = client.put(
+        f"{API_PREFIX}/shift_comments/update/1", json=data_to_be_updated
+    )
+
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_comment = response.json()[0]
+    assert created_comment["comment"] == data_to_be_updated["comment"], (
+        f"Expected comment to be '{created_comment['comment']}',"
+        f" but got '{created_comment['comment']}'"
+    )
