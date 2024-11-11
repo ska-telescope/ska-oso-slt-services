@@ -682,10 +682,12 @@ class PostgresShiftRepository(CRUDShiftRepository):
         existing_shift_comment.id = shift_comment.id
         if shift_comment.comment:
             existing_shift_comment.comment = shift_comment.comment
-        # if shift_log_comment.eb_id:
-        #     existing_shift_log_comment.eb_id = shift_log_comment.eb_id
-        # if shift_log_comment.operator_name:
-        #     existing_shift_log_comment.operator_name = shift_log_comment.operator_name
+        if shift_comment.eb_id:
+            existing_shift_comment.eb_id = shift_comment.eb_id
+        if shift_comment.operator_name:
+            existing_shift_comment.operator_name = shift_comment.operator_name
+        if shift_comment.shift_id:
+            existing_shift_comment.shift_id = shift_comment.shift_id
 
         existing_shift_comment.metadata = shift_comment.metadata
         self._update_shift_in_database(
