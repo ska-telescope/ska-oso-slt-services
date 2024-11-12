@@ -123,7 +123,6 @@ class ShiftService:
                 [shifts_with_log_comments]
             )[0]
 
-
             prepare_comment_with_metadata = []
 
             for comment in shift["comments"]:
@@ -318,9 +317,7 @@ class ShiftService:
         shift_load = Shift.model_validate(shift)
         metadata_dict = self._create_metadata(shift)
         shift_load.metadata = Metadata.model_validate(metadata_dict)
-        import pdb
 
-        pdb.set_trace()
         return shift_load
 
     def _prepare_shift_comment_with_metadata(
