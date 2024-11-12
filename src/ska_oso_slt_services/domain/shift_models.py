@@ -41,9 +41,11 @@ class Media(SLTObject):
     :param path Optional[str]: The path to the media file.
     """
 
-    file_extension: Optional[str] = None
     path: Optional[str] = None
     unique_id: Optional[str] = None
+    timestamp: AwareDatetime = Field(
+        default_factory=lambda: get_datetime_for_timezone("UTC")
+    )
 
 
 class ShiftLogImage(SLTObject):
@@ -68,8 +70,9 @@ class ShiftComment(SLTObject):
 
     id: Optional[int] = None
     comment: Optional[str] = None
+    operator_name: Optional[str] = None
     shift_id: Optional[str] = None
-    image: Optional[ShiftLogImage] = None
+    image: Optional[List[Media]] = None
     metadata: Optional[Metadata] = None
 
 

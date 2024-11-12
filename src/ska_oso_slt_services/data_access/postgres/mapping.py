@@ -261,10 +261,11 @@ class ShiftCommentMapping:
             identifier field, and column mappings.
         """
         return TableDetails(
-            table_name="tab_slt_comments",
+            table_name="tab_oda_slt_shift_comments",
             identifier_field="id",
             column_map={
                 "comment": lambda comment: _field_json_dump(comment, "comment"),
+                "operator_name": lambda comment: comment.operator_name,
                 "shift_id": lambda comment: comment.shift_id,
                 "image": lambda comment: _field_json_dump(comment, "image"),
             },

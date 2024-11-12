@@ -211,44 +211,67 @@ class ShiftService:
         )
         return self.postgres_repository.update_shift(shift)
 
-    def add_media(self, shift_id, files) -> Media:
+    def post_media(self, shift_id, shift_operator, file) -> Media:
+        """
+        Create a new comment for a shift log with metadata.
+
+        Args:
+            shift_log_comment_data: The comment data for the shift log.
+
+        Returns:
+            ShiftLogComment: The created shift log comment.
+        """
+        shift = self.get_shift(shift_id)
+        if not shift:
+            raise NotFoundError(f"No shift found with id: {shift_id}")
+
+        shift_comment = ShiftComment(shift_id=shift_id, operator_name=shift_operator)
+        shift_comment = set_new_metadata(shift_comment, shift_operator)
+
+        result = self.postgres_repository.insert_shift_image(
+            file=file, shift_comment=shift_comment
+        )
+        return result
+
+    def add_media(self, comment_id, files) -> Media:
         """
         Add a media file to a shift.
 
         Args:
-            shift_id (str): The ID of the shift to add the media to.
-            file (file): The media file to add.
+            comment_id (int): The ID of the comment to add the media to.
+            files (files): The media files to add.
 
         Returns:
-            Shift: The updated shift with the added media.
+            Shift: The updated comment with the added media.
         """
-        metadata = self.postgres_repository.get_latest_metadata(shift_id)
-        stored_shift = Shift.model_validate(
-            self.postgres_repository.get_shift(shift_id)
+        metadata = self.postgres_repository.get_latest_metadata(
+            entity_id=comment_id, table_details=ShiftCommentMapping()
         )
-        if not stored_shift:
-            raise NotFoundError(f"No shift found with ID: {shift_id}")
-        if stored_shift.shift_end:
-            raise ShiftEndedException()
-        shift = update_metadata(
-            stored_shift,
-            metadata=metadata,
-            last_modified_by=stored_shift.shift_operator,
-        )
-        result = self.postgres_repository.add_media(files, shift)
-        return result.media
 
-    def get_media(self, shift_id) -> list[Media]:
+        stored_shift = ShiftComment(id=comment_id)
+        if not stored_shift:
+            raise NotFoundError(f"No comment found with ID: {comment_id}")
+
+        stored_shift.metadata = metadata
+
+        shift = update_metadata(
+            entity=stored_shift,
+            metadata=metadata,
+        )
+        result = self.postgres_repository.add_media(files=files, shift_comment=shift)
+        return result.image
+
+    def get_media(self, comment_id) -> list[Media]:
         """
         Get a media file from a shift.
 
         Args:
-            shift_id (str): The ID of the shift to get the media from.
+            comment_id (int): The ID of the comment to get the media from.
 
         Returns:
             file: The requested media file.
         """
-        return self.postgres_repository.get_media(shift_id)
+        return self.postgres_repository.get_media(comment_id)
 
     def delete_shift(self, shift_id):
         """

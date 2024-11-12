@@ -210,10 +210,12 @@ def test_get_shifts():
                     "id": 1,
                     "comment": "test-comment-1",
                     "shift_id": "test-id-1",
-                    "image": {
-                        "path": "file_path",
-                        "timestamp": get_datetime_for_timezone("UTC"),
-                    },
+                    "image": [
+                        {
+                            "path": "file_path",
+                            "timestamp": get_datetime_for_timezone("UTC"),
+                        }
+                    ],
                     "metadata": {},
                 }
             ],
@@ -242,10 +244,12 @@ def test_get_shifts():
                     "id": 2,
                     "comment": "test-comment-1",
                     "shift_id": "test-id-1",
-                    "image": {
-                        "path": "file_path",
-                        "timestamp": get_datetime_for_timezone("UTC"),
-                    },
+                    "image": [
+                        {
+                            "path": "file_path",
+                            "timestamp": get_datetime_for_timezone("UTC"),
+                        }
+                    ],
                     "metadata": {},
                 }
             ],
@@ -327,7 +331,9 @@ def test_update_shift():
                 "id": 2,
                 "comment": "test-comment-1",
                 "shift_id": "test-id-1",
-                "image": {"path": "file_path", "timestamp": "2024-09-14T16:49:54.889Z"},
+                "image": [
+                    {"path": "file_path", "timestamp": "2024-09-14T16:49:54.889Z"}
+                ],
                 "metadata": {},
             }
         ],
@@ -682,7 +688,7 @@ def test_create_shift_comments(mock_create_shift_comment):
     comment_data = {
         "comment": "This is a test comment",
         "shift_id": "test-shift-id",
-        "image": {"path": "https://example.com/image.png"},
+        "image": [{"path": "https://example.com/image.png"}],
         "metadata": {
             "created_by": "test_user",
             "created_on": current_time.isoformat(),
@@ -823,3 +829,121 @@ def test_update_shift_comments(mock_update_shift_comment):
         f"Expected comment to be '{created_comment['comment']}',"
         f" but got '{created_comment['comment']}'"
     )
+
+
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.post_media")
+def test_create_shift_comment_image(mock_shift_comment_image):
+    # Prepare test data with metadata
+    test_file = {"file": ("test_image.png", b"dummy image content", "image/png")}
+    shift_data = {
+        "operator_name": "Monica",
+        "shift_id": "shift-20241111-2",
+        "image": [
+            {
+                "path": "https://skao-611985328822-shift-log-tool-storage.s3."
+                "amazonaws.com/4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac"
+                "53284f533d34e0b5f6.jpeg",
+                "unique_id": "4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac"
+                "53284f533d34e0b5f6.jpeg",
+                "timestamp": "2024-11-11T15:46:13.223618Z",
+            }
+        ],
+        "metadata": {
+            "created_by": "Monica",
+            "created_on": "2024-11-11T15:46:12.378390Z",
+            "last_modified_by": "Monica",
+            "last_modified_on": "2024-11-11T15:46:12.378390Z",
+        },
+    }
+
+    mock_shift_comment_image.return_value = shift_data
+
+    # Send a POST request to the endpoint
+    response = client.post(
+        f"{API_PREFIX}/shift_comments/upload_image?shift_id=shift-20241111-2"
+        "&shift_operator=test",
+        files=test_file,
+    )
+
+    # Assertions
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_shift = response.json()
+    assert created_shift[0]["operator_name"] == shift_data["operator_name"], (
+        f"Expected operator_name to be '{shift_data['operator_name']}', but got"
+        f" '{created_shift[0]['operator_name']}'"
+    )
+    assert created_shift[0]["shift_id"] == shift_data["shift_id"], (
+        f"Expected shift_id to be '{shift_data['shift_id']}', but got"
+        f" '{created_shift[0]['shift_id']}'"
+    )
+
+
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.add_media")
+def test_add_shift_comment_image(mock_shift_comment_image):
+    # Prepare test data with metadata
+    test_file = {"files": ("test_image.png", b"dummy image content", "image/png")}
+    shift_data = [
+        {
+            "path": "https://skao-611985328822-shift-log-tool-storage.s3."
+            "amazonaws.com/d03269ecb544276928aad4916b0a1f5c11d6ebe9e2439d"
+            "b4708369f72fcf1746.jpeg",
+            "unique_id": "d03269ecb544276928aad4916b0a1f5c11d6ebe9e2439db"
+            "4708369f72fcf1746.jpeg",
+            "timestamp": "2024-11-11T15:42:58.481265Z",
+        }
+    ]
+
+    mock_shift_comment_image.return_value = shift_data
+
+    # Send a POST request to the endpoint
+    response = client.put(
+        f"{API_PREFIX}/shift_comments/upload_image/2", files=test_file
+    )
+
+    # Assertions
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.get_media")
+def test_get_shift_comment_image(mock_shift_comment_image):
+
+    shift_data = [
+        {
+            "file_key": "4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac"
+            "53284f533d34e0b5f6.jpeg",
+            "media_content": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxIQEh"
+            "UQEBIVFRUVFRcVFRUXFRUVGBgXFRUWFhgVFRUYHSggGBolGxUYITIhJSkrLi"
+            "4uFx8zODMtNygtLisBCgoKDg0OGBAQGi0fHx8tLS0tLS0tLS0tLS0tLS0tLS0"
+            "tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAOAA4QMBIgAC"
+            "EQEDEQH/xAAbAAABBQEBAAAAAAAAAAAAAAADAAECBAUGB//EAD0QAAEDAgQEA"
+            "wcDAwMCBwAAAAEAAhEDIQQSMUEFUWFxBiKBE5GhscHR8DJC4RQjUgcVYpLxM1"
+            "NUcoKTov/EABkBAQEBAQEBAAAAAAAAAAAAAAABAgMEBf/EAB8RAQEBAQACAgMB"
+            "AAAAAAAAAAABEQISITFBE1FhA//aAAwDAQACEQMRAD8AohqWVGyp8i+Vj0A5Us"
+            "qNkSyJgBlSyo+RNlTAHKnyouRPlTFCDU+VFDU4amAYapBqIGpw1MAw1SDUQNUg"
+            "1MMQDUQNThqmAmGGAUgE4CkAmCMJQpQnhXEQhNCJCUKgRCiQjZVEtTAAtQy1WS"
+            "1QLVcFZzUJzVac1Cc1BXyp0TKnQFyp8qLlSypi4FlSyomVKFMAoSyouVNlTALK"
+            "nyouVLKrihhqkGqYapBqYIBqkGogYpBiuAYanDUUMT5UwDDU+VEyp4TBABOApwk"
+            "ApiIwlCnCeFcEMqWVThPCYB5VEtRsqYtTDAC1QLVYIUCFcMVi1Dc1WnNQnNUMV8"
+            "qSLlSRBsqWVThPCuNBFqbKiwllTAPKllRcqfKmAWVLKi5UoTAMNUg1TATgKiIap"
+            "AKQCcNTBGE4CmGp8quCEJ4UgE8KYIQnAU4TwmCEJ4UoShMEYSU4ShMEITEIiZXAM"
+            "tUC1GITEJgruahuarJahuCgrwkiwkgJCaEXKllVwChKETKnypgGGp8qJCeEA8qWV"
+            "EhPCAYanDVOE8KiIanAUgFIBFRDU8KcJQghCUKcJQgjCUKUJ4REITwpJQgjCUKUJ"
+            "4QQhNCnCUIBwmIRCFGEAyENzUchQcEAcqSJCSYJwlClCaEVGEymoqIUJ0ydA6SaUp",
+            "content_type": "image/jpeg",
+        }
+    ]
+
+    mock_shift_comment_image.return_value = shift_data
+
+    # Send a POST request to the endpoint
+    response = client.get(f"{API_PREFIX}/shift_comments/download_images/3")
+
+    # Assertions
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
