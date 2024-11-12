@@ -124,31 +124,32 @@ class ShiftService:
             )[0]
 
             prepare_comment_with_metadata = []
-
-            for comment in shift["comments"]:
-                prepare_comment_with_metadata.append(
-                    self._prepare_shift_comment_with_metadata(comment)
-                )
+            if shift.get("comments"):
+                for comment in shift["comments"]:
+                    prepare_comment_with_metadata.append(
+                        self._prepare_shift_comment_with_metadata(comment)
+                    )
 
             per_eb_comment_metadata = []
-            for shift_log in shift["shift_logs"]:  # per_eb
-                prepare_log_comment_with_metadata = []
-                for comment in shift_log["comments"]:
-                    prepare_log_comment_with_metadata.append(
-                        self._prepare_shift_log_comment_with_metadata(comment)
-                    )
-                per_eb_comment_metadata.append(prepare_log_comment_with_metadata)
+            if shift.get("shift_logs"):
+                for shift_log in shift["shift_logs"]:  # per_eb
+                    prepare_log_comment_with_metadata = []
+                    for comment in shift_log["comments"]:
+                        prepare_log_comment_with_metadata.append(
+                            self._prepare_shift_log_comment_with_metadata(comment)
+                        )
+                    per_eb_comment_metadata.append(prepare_log_comment_with_metadata)
 
             shift_with_metadata = self._prepare_shift_with_metadata(
                 shifts_with_comments_and_log_comments
             )
             shift_with_metadata.comments = prepare_comment_with_metadata
+            if shift_with_metadata.shift_logs and per_eb_comment_metadata:
+                for i, shift_log in enumerate(
+                    shift_with_metadata.shift_logs
+                ):  # shift_log obj
 
-            for i, shift_log in enumerate(
-                shift_with_metadata.shift_logs
-            ):  # shift_log obj
-
-                shift_log.comments = per_eb_comment_metadata[i]
+                    shift_log.comments = per_eb_comment_metadata[i]
             return shift_with_metadata
         else:
             raise NotFoundError(f"No shift found with ID: {shift_id}")
@@ -179,10 +180,42 @@ class ShiftService:
         if not shifts:
             raise NotFoundError("No shifts found for the given query.")
         LOGGER.info("Shifts: %s", shifts)
+
         prepared_shifts = []
         for shift in shifts:
-            processed_shift = self._prepare_shift_with_metadata(shift)
-            prepared_shifts.append(processed_shift)
+            shifts_with_log_comments = self.merge_comments([shift])[0]
+            shifts_with_comments_and_log_comments = self.merge_shift_comments(
+                [shifts_with_log_comments]
+            )[0]
+            prepare_comment_with_metadata = []
+
+            if shift.get("comments"):
+                for comment in shift["comments"]:
+                    prepare_comment_with_metadata.append(
+                        self._prepare_shift_comment_with_metadata(comment)
+                    )
+            per_eb_comment_metadata = []
+            if shift.get("shift_logs"):
+                for shift_log in shift["shift_logs"]:  # per_eb
+                    prepare_log_comment_with_metadata = []
+                    for comment in shift_log["comments"]:
+                        prepare_log_comment_with_metadata.append(
+                            self._prepare_shift_log_comment_with_metadata(comment)
+                        )
+                    per_eb_comment_metadata.append(prepare_log_comment_with_metadata)
+
+            shift_with_metadata = self._prepare_shift_with_metadata(
+                shifts_with_comments_and_log_comments
+            )
+            shift_with_metadata.comments = prepare_comment_with_metadata
+
+            if shift_with_metadata.shift_logs and per_eb_comment_metadata:
+                for i, shift_log in enumerate(
+                    shift_with_metadata.shift_logs
+                ):  # shift_log obj
+                    shift_log.comments = per_eb_comment_metadata[i]
+
+            prepared_shifts.append(shift_with_metadata)
         return prepared_shifts
 
     def create_shift(self, shift_data) -> Shift:
@@ -495,10 +528,10 @@ class ShiftService:
         if not self.postgres_repository:
             raise ValueError("PostgresShiftRepository is not available")
 
-        result = self.postgres_repository.get_current_shift()
-        if result:
-            shift_with_metadata = self._prepare_shift_with_metadata(result)
-            return shift_with_metadata
+        shift_id = self.postgres_repository.get_current_shift()["shift_id"]
+
+        if shift_id:
+            return self.get_shift(shift_id=shift_id)
         else:
             raise NotFoundError("No shift found")
 

@@ -212,6 +212,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             existing_shift.annotations = shift.annotations
         if shift.media:
             existing_shift.media = shift.media
+        if shift.shift_operator:
+            existing_shift.shift_operator = shift.shift_operator
         existing_shift.metadata = shift.metadata
         self._update_shift_in_database(existing_shift)
         return existing_shift
