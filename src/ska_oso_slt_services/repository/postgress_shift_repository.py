@@ -17,6 +17,7 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     select_by_shift_params,
     select_by_text_query,
     select_comments_query,
+    select_last_row_id,
     select_last_serial_id,
     select_latest_query,
     select_latest_shift_query,
@@ -368,10 +369,16 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The newly created shift log comment.
         """
-        shift_log_comment_id = self._insert_shift_to_database(
+        query, params = select_last_row_id(table_details=ShiftLogCommentMapping())
+        last_id_response = self.postgres_data_access.get(query=query, params=params)
+
+        if last_id_response[0]["max"]:
+            shift_log_comment.id = last_id_response[0]["max"] + 1
+        else:
+            shift_log_comment.id = 1
+        self._insert_shift_to_database(
             table_details=ShiftLogCommentMapping(), entity=shift_log_comment
         )
-        shift_log_comment.id = shift_log_comment_id["id"]
 
         return shift_log_comment
 
@@ -639,10 +646,15 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The newly created shift log comment.
         """
-        shift_comment_id = self._insert_shift_to_database(
+        query, params = select_last_row_id(table_details=ShiftCommentMapping())
+        last_id_response = self.postgres_data_access.get(query=query, params=params)
+        if last_id_response[0]["max"]:
+            shift_comment.id = last_id_response[0]["max"] + 1
+        else:
+            shift_comment.id = 1
+        self._insert_shift_to_database(
             table_details=ShiftCommentMapping(), entity=shift_comment
         )
-        shift_comment.id = shift_comment_id["id"]
 
         return shift_comment
 

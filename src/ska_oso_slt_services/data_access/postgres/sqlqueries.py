@@ -638,3 +638,21 @@ def shift_logs_patch_query(
     columns = table_details.get_shift_log_columns()
     params = table_details.get_shift_log_params(shift)
     return patch_query(table_details, columns, params, shift.shift_id, shift=shift)
+
+
+def select_last_row_id(table_details: TableDetails) -> QueryAndParameters:
+    """
+    Creates a query to select the last (maximum) ID from the table.
+
+    Args:
+        table_details (TableDetails): The information about the table to query.
+
+    Returns:
+        QueryAndParameters: A tuple of the query and parameters.
+    """
+    query = sql.SQL(
+        """
+        SELECT MAX(id) FROM {table}
+        """
+    ).format(table=sql.Identifier(table_details.table_details.table_name))
+    return query, ()

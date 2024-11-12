@@ -123,10 +123,33 @@ class ShiftService:
                 [shifts_with_log_comments]
             )[0]
 
+
+            prepare_comment_with_metadata = []
+
+            for comment in shift["comments"]:
+                prepare_comment_with_metadata.append(
+                    self._prepare_shift_comment_with_metadata(comment)
+                )
+
+            per_eb_comment_metadata = []
+            for shift_log in shift["shift_logs"]:  # per_eb
+                prepare_log_comment_with_metadata = []
+                for comment in shift_log["comments"]:
+                    prepare_log_comment_with_metadata.append(
+                        self._prepare_shift_log_comment_with_metadata(comment)
+                    )
+                per_eb_comment_metadata.append(prepare_log_comment_with_metadata)
+
             shift_with_metadata = self._prepare_shift_with_metadata(
                 shifts_with_comments_and_log_comments
             )
+            shift_with_metadata.comments = prepare_comment_with_metadata
 
+            for i, shift_log in enumerate(
+                shift_with_metadata.shift_logs
+            ):  # shift_log obj
+
+                shift_log.comments = per_eb_comment_metadata[i]
             return shift_with_metadata
         else:
             raise NotFoundError(f"No shift found with ID: {shift_id}")
@@ -295,8 +318,28 @@ class ShiftService:
         shift_load = Shift.model_validate(shift)
         metadata_dict = self._create_metadata(shift)
         shift_load.metadata = Metadata.model_validate(metadata_dict)
+        import pdb
 
+        pdb.set_trace()
         return shift_load
+
+    def _prepare_shift_comment_with_metadata(
+        self, shift_comment: Dict[Any, Any]
+    ) -> ShiftComment:
+        shift_comment_load = ShiftComment.model_validate(shift_comment)
+        metadata_dict = self._create_metadata(shift_comment)
+        shift_comment_load.metadata = Metadata.model_validate(metadata_dict)
+
+        return shift_comment_load
+
+    def _prepare_shift_log_comment_with_metadata(
+        self, shift_log_comment: Dict[Any, Any]
+    ) -> ShiftLogComment:
+        shift_log_comment_load = ShiftLogComment.model_validate(shift_log_comment)
+        metadata_dict = self._create_metadata(shift_log_comment)
+        shift_log_comment_load.metadata = Metadata.model_validate(metadata_dict)
+
+        return shift_log_comment_load
 
     def _create_metadata(self, shift: Dict[Any, Any]) -> Dict[str, str]:
         """
@@ -537,6 +580,12 @@ class ShiftService:
         shift_comment = self.postgres_repository.get_shift_comment(
             comment_id=comment_id
         )
+
+        metadata = self.postgres_repository.get_latest_metadata(
+            entity_id=comment_id, table_details=ShiftCommentMapping()
+        )
+
+        shift_comment.metadata = metadata
 
         if not shift_comment:
             raise NotFoundError("No shift comment found for the given query.")
