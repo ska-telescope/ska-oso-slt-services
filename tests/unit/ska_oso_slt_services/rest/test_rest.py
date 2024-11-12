@@ -558,7 +558,6 @@ def test_get_shift_log_comments(mock_get_shift_comments):
     ), f"Expected status code 200, but got {response.status_code}"
 
 
-
 def test_update_shift_log_comment():
     # Existing comment data with initial metadata
     current_time = get_datetime_for_timezone("UTC")
