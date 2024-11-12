@@ -523,6 +523,74 @@ def test_create_shift_log_comment():
     mock_insert.assert_called_once()
 
 
+@patch(
+    "ska_oso_slt_services.services.shift_service.ShiftService.get_shift_logs_comments"
+)
+def test_get_shift_log_comments(mock_get_shift_comments):
+    # Prepare test data
+
+    comment_data = [
+        {
+            "log_comment": "This is a test comment",
+            "operator_name": "string",
+            "shift_id": "test-shift-id",
+            "image": {
+                "path": "string",
+                "timestamp": "2024-11-12 12:36:46.901000+00:00",
+            },
+            "eb_id": "string",
+            "created_on": "2024-11-12T18:06:53.378127+05:30",
+            "created_by": "string",
+            "last_modified_on": "2024-11-12T18:06:53.378127+05:30",
+            "last_modified_by": "string",
+        }
+    ]
+
+    mock_get_shift_comments.return_value = comment_data
+
+    # Send a POST request to create a comment
+    response = client.get(
+        f"{API_PREFIX}/shift_log_comments?shift_id=test-shift-id&eb_id=string"
+    )
+
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift_comments")
+def test_not_found_shift_log_comments(mock_get_shift_comments):
+    # Prepare test data
+
+    comment_data = [
+        {
+            "log_comment": "This is a test comment",
+            "operator_name": "string",
+            "shift_id": "test-shift-id",
+            "image": {
+                "path": "string",
+                "timestamp": "2024-11-12 12:36:46.901000+00:00",
+            },
+            "eb_id": "string",
+            "created_on": "2024-11-12T18:06:53.378127+05:30",
+            "created_by": "string",
+            "last_modified_on": "2024-11-12T18:06:53.378127+05:30",
+            "last_modified_by": "string",
+        }
+    ]
+
+    mock_get_shift_comments.return_value = comment_data
+
+    # Send a POST request to create a comment
+    response = client.get(
+        f"{API_PREFIX}/shift_log_comments?shift_id=test-shift-id&eb_id=string"
+    )
+
+    assert response.status_code == 404 and response.json() == {
+        "detail": "No shifts log comments found for the given query."
+    }
+
+
 def test_update_shift_log_comment():
     # Existing comment data with initial metadata
     current_time = get_datetime_for_timezone("UTC")
@@ -694,7 +762,7 @@ def test_create_shift_comments(mock_create_shift_comment):
     mock_create_shift_comment.return_value = comment_data
 
     # Send a POST request to create a comment
-    response = client.post(f"{API_PREFIX}/shift_comments/create", json=comment_data)
+    response = client.post(f"{API_PREFIX}/shift_comments", json=comment_data)
 
     assert (
         response.status_code == 200
@@ -810,9 +878,7 @@ def test_update_shift_comments(mock_update_shift_comment):
     mock_update_shift_comment.return_value = updated_comment_data
 
     # Send a POST request to create a comment
-    response = client.put(
-        f"{API_PREFIX}/shift_comments/update/1", json=data_to_be_updated
-    )
+    response = client.put(f"{API_PREFIX}/shift_comments/1", json=data_to_be_updated)
 
     assert (
         response.status_code == 200

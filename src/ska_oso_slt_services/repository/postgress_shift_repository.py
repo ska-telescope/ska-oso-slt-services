@@ -619,13 +619,13 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
     def create_shift_comment(self, shift_comment: ShiftComment):
         """
-        Create a new comment for a shift log and save it to the database.
+        Create a new comment for a shift and save it to the database.
 
         Args:
-            shift_comment (ShiftLogComment): The comment data to create.
+            shift_comment (ShiftComment): The comment data to create.
 
         Returns:
-            ShiftLogComment: The newly created shift log comment.
+            ShiftComment: The newly created shift comment.
         """
         shift_comment_id = self._insert_shift_to_database(
             table_details=ShiftCommentMapping(), entity=shift_comment
@@ -636,7 +636,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
     def get_shift_comments(self, shift_id=None):
         """
-        Retrieve comments from shift logs based on shift ID or EB ID.
+        Retrieve comments from shift based on shift ID.
 
         Args:
             shift_id (Optional[str]): The shift ID to filter comments by.
@@ -652,10 +652,10 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
     def get_shift_comment(self, comment_id):
         """
-        Retrieve comments from shift logs based on shift ID or EB ID.
+        Retrieve comments from shift based on comment ID.
 
         Args:
-            shift_id (Optional[str]): The shift ID to filter comments by.
+            comment_id (Optional[int]): The comment ID to filter comments by.
 
         Returns:
             List[Dict]: List of comments associated with the specified filters.
@@ -668,13 +668,13 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
     def update_shift_comments(self, shift_comment: ShiftComment):
         """
-        Update an existing shift log comment with new data.
+        Update an existing shift comment with new data.
 
         Args:
-            shift_log_comment (ShiftLogCommentUpdate): The updated comment data.
+            shift_comment (ShiftComment): The updated comment data.
 
         Returns:
-            ShiftLogCommentUpdate: The updated shift log comment.
+            ShiftComment: The updated shift comment.
         """
         existing_shift_comment = ShiftComment.model_validate(
             self.get_shift_comment(comment_id=shift_comment.id)

@@ -47,6 +47,13 @@ class Media(SLTObject):
 
 
 class ShiftLogImage(SLTObject):
+    """
+    Represents an image associated with a shift in the SLT Shift Log Tool.
+
+    :param path Optional[str]: The path to the image file.
+    :param timestamp Optional[datetime]: The timestamp of the image.
+    """
+
     path: str
     timestamp: AwareDatetime = Field(
         default_factory=lambda: get_datetime_for_timezone("UTC")
@@ -54,6 +61,20 @@ class ShiftLogImage(SLTObject):
 
 
 class ShiftLogComment(SLTObject):
+    """
+    Represents a comment associated with a shift in the SLT Shift Log Tool.
+
+    :param id Optional[int]: The unique identifier of the comment.
+    :param log_comment Optional[str]: The text of the comment.
+    :param operator_name Optional[str]: The name of the operator who made the comment.
+    :param shift_id Optional[str]: The unique identifier of the shift
+     the comment belongs to.
+    :param image Optional[ShiftLogImage]: The image associated with the comment.
+    :param eb_id Optional[str]: The unique identifier of the EB associated
+     with the comment.
+    :param metadata Optional[Metadata]: Metadata contains shift additional info
+     like shift created_on, created_bye etc...
+    """
 
     id: Optional[int] = None
     log_comment: Optional[str] = None
@@ -65,6 +86,18 @@ class ShiftLogComment(SLTObject):
 
 
 class ShiftComment(SLTObject):
+    """
+    Represents a comment associated with a shift in the SShift.
+
+    :param id Optional[int]: The unique identifier of the comment.
+    :param comment Optional[str]: The text of the comment.
+    :param operator_name Optional[str]: The name of the operator who made the comment.
+    :param shift_id Optional[str]: The unique identifier of the shift the comment
+     belongs to.
+    :param image Optional[ShiftLogImage]: The image associated with the comment.
+    :param metadata Optional[Metadata]: Metadata contains shift additional info
+    like shift created_on, created_bye etc...
+    """
 
     id: Optional[int] = None
     comment: Optional[str] = None
@@ -95,12 +128,12 @@ class ShiftBaseClass(SLTObject):
     # TODO Revisit this code later to check
     # how we make shift_id make compulsory.
     """
-    :param shift_id Optional[int]: The unique identifier of the shift.
+    :param shift_id Optional[str]: The unique identifier of the shift.
     :param shift_start Optional[datetime]: The start time of the shift.
     :param shift_end Optional[datetime]: The end time of the shift.
-    :param shift_operator Optional[Operator]: The operator of the shift.
+    :param shift_operator Optional[str]: The operator of the shift.
     :param annotations Optional[str]: Annotations for the shift.
-    :param comments Optional[str]: Comments for the shift.
+    :param comments Optional[List[ShiftComment]]: List of comments for the shift.
     """
 
     shift_id: Optional[str] = None
