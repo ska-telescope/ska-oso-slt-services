@@ -211,7 +211,9 @@ class ShiftService:
         )
         return self.postgres_repository.update_shift(shift)
 
-    def post_media(self, shift_id, shift_operator, file) -> Media:
+    def post_media(
+        self, shift_id, shift_operator, file, shift_model, table_mapping
+    ) -> Media:
         """
         Create a new comment for a shift log with metadata.
 
@@ -225,15 +227,18 @@ class ShiftService:
         if not shift:
             raise NotFoundError(f"No shift found with id: {shift_id}")
 
-        shift_comment = ShiftComment(shift_id=shift_id, operator_name=shift_operator)
+        shift_comment = shift_model(shift_id=shift_id, operator_name=shift_operator)
+
+        if shift_comment.__class__.__name__ == "ShiftLogComment":
+            shift_comment.eb_id = "null"
         shift_comment = set_new_metadata(shift_comment, shift_operator)
 
         result = self.postgres_repository.insert_shift_image(
-            file=file, shift_comment=shift_comment
+            file=file, shift_comment=shift_comment, table_mapping=table_mapping
         )
         return result
 
-    def add_media(self, comment_id, files) -> Media:
+    def add_media(self, comment_id, files, shift_model, table_mapping) -> Media:
         """
         Add a media file to a shift.
 
@@ -245,12 +250,10 @@ class ShiftService:
             Shift: The updated comment with the added media.
         """
         metadata = self.postgres_repository.get_latest_metadata(
-            entity_id=comment_id, table_details=ShiftCommentMapping()
+            entity_id=comment_id, table_details=table_mapping
         )
 
-        stored_shift = ShiftComment(id=comment_id)
-        if not stored_shift:
-            raise NotFoundError(f"No comment found with ID: {comment_id}")
+        stored_shift = shift_model(id=comment_id)
 
         stored_shift.metadata = metadata
 
@@ -258,10 +261,15 @@ class ShiftService:
             entity=stored_shift,
             metadata=metadata,
         )
-        result = self.postgres_repository.add_media(files=files, shift_comment=shift)
+        result = self.postgres_repository.add_media(
+            shift_comment=shift,
+            files=files,
+            shift_model=shift_model,
+            table_mapping=table_mapping,
+        )
         return result.image
 
-    def get_media(self, comment_id) -> list[Media]:
+    def get_media(self, comment_id, shift_model, table_mapping) -> list[Media]:
         """
         Get a media file from a shift.
 
@@ -271,7 +279,9 @@ class ShiftService:
         Returns:
             file: The requested media file.
         """
-        return self.postgres_repository.get_media(comment_id)
+        return self.postgres_repository.get_media(
+            comment_id, shift_model, table_mapping
+        )
 
     def delete_shift(self, shift_id):
         """

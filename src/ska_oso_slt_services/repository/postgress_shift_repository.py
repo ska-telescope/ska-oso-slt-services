@@ -33,7 +33,6 @@ from ska_oso_slt_services.domain.shift_models import (
     Shift,
     ShiftComment,
     ShiftLogComment,
-    ShiftLogImage,
     ShiftLogs,
 )
 from ska_oso_slt_services.repository.shift_repository import CRUDShiftRepository
@@ -256,7 +255,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         self.postgres_data_access.update(query, params)
 
-    def get_media(self, comment_id: int) -> Media:
+    def get_media(self, comment_id: int, table_model, table_mapping) -> Media:
         """
         Get a media file from a shift.
 
@@ -266,7 +265,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             file: The requested media file.
         """
-        comment = ShiftComment.model_validate(self.get_shift_comment(comment_id))
+        comment = table_model.model_validate(
+            self.get_shift_comment(comment_id, table_mapping)
+        )
 
         if not comment.image:
             raise NotFoundError(f"No media found for comment with ID: {comment_id}")
@@ -285,7 +286,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
             )
         return files
 
-    def add_media(self, files, shift_comment: ShiftComment) -> Media:
+    def add_media(
+        self, shift_comment: ShiftComment, files, shift_model, table_mapping
+    ) -> Media:
         """
         Add media files associated with a shift comment.
 
@@ -304,8 +307,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
             media.timestamp = media.timestamp
             media_list.append(media)
 
-        current_shift_comment = ShiftComment.model_validate(
-            self.get_shift_comment(comment_id=shift_comment.id)
+        current_shift_comment = shift_model.model_validate(
+            self.get_shift_comment(
+                comment_id=shift_comment.id,
+                table_mapping=table_mapping,
+            )
         )
 
         current_shift_comment.id = shift_comment.id
@@ -317,7 +323,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             current_shift_comment.image = media_list
 
         self._update_shift_in_database(
-            entity=current_shift_comment, table_details=ShiftCommentMapping()
+            entity=current_shift_comment, table_details=table_mapping
         )
 
         return current_shift_comment
@@ -415,7 +421,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             ShiftLogComment: The updated shift log comment with the image added.
         """
         file_path, _, _ = upload_file_object_to_s3(file)
-        image = ShiftLogImage(path=file_path)
+        image = Media(path=file_path)
         existing_shift_log_image = ShiftLogComment.model_validate(
             self.get_shift_logs_comment(comment_id=shift_log_comment.id)
         )
@@ -662,7 +668,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         comments = self.postgres_data_access.get(query=query, params=params)
         return comments
 
-    def get_shift_comment(self, comment_id):
+    def get_shift_comment(self, comment_id, table_mapping):
         """
         Retrieve comments from shift logs based on shift ID or EB ID.
 
@@ -673,7 +679,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             List[Dict]: List of comments associated with the specified filters.
         """
         query, params = select_comments_query(
-            table_details=ShiftCommentMapping(), id=comment_id
+            table_details=table_mapping, id=comment_id
         )
         comment = self.postgres_data_access.get(query=query, params=params)
         if comment:
@@ -692,7 +698,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
             ShiftLogCommentUpdate: The updated shift log comment.
         """
         existing_shift_comment = ShiftComment.model_validate(
-            self.get_shift_comment(comment_id=shift_comment.id)
+            self.get_shift_comment(
+                comment_id=shift_comment.id, table_mapping=ShiftCommentMapping()
+            )
         )
         existing_shift_comment.id = shift_comment.id
         if shift_comment.comment:
@@ -710,7 +718,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         return existing_shift_comment
 
-    def insert_shift_image(self, file, shift_comment: ShiftComment) -> Media:
+    def insert_shift_image(
+        self, file, shift_comment: ShiftComment, table_mapping
+    ) -> Media:
         """
         Update a shift comment with an image, uploading the image to S3.
 
@@ -730,6 +740,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
         shift_comment.image = media_list
 
         self._insert_shift_to_database(
-            table_details=ShiftCommentMapping(), entity=shift_comment
+            table_details=table_mapping, entity=shift_comment
         )
         return shift_comment

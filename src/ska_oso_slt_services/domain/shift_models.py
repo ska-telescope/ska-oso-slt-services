@@ -48,20 +48,13 @@ class Media(SLTObject):
     )
 
 
-class ShiftLogImage(SLTObject):
-    path: str
-    timestamp: AwareDatetime = Field(
-        default_factory=lambda: get_datetime_for_timezone("UTC")
-    )
-
-
 class ShiftLogComment(SLTObject):
 
     id: Optional[int] = None
     log_comment: Optional[str] = None
     operator_name: Optional[str] = None
     shift_id: Optional[str] = None
-    image: Optional[ShiftLogImage] = None
+    image: Optional[List[Media]] = None
     eb_id: Optional[str] = None
     metadata: Optional[Metadata] = None
 
