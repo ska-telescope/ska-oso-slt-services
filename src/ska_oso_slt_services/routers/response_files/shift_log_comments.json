@@ -1,0 +1,16 @@
+{
+    "log_comment": "string",
+    "operator_name": "string",
+    "shift_id": "string",
+    "image": {
+      "path": "string",
+      "timestamp": "2024-11-09T14:44:25.996Z"
+    },
+    "eb_id": "string",
+    "metadata": {
+      "created_by": "string",
+      "created_on": "2024-11-09T14:44:25.996Z",
+      "last_modified_by": "string",
+      "last_modified_on": "2024-11-09T14:44:25.996Z"
+    }
+  }

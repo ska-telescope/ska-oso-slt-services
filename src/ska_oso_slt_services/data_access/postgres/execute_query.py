@@ -173,7 +173,7 @@ class TableCreator:
     def create_slt_table(self):
         create_table_query = sql.SQL(
             """
-            CREATE TABLE public.tab_oda_slt (
+            CREATE TABLE IF NOT EXISTS public.tab_oda_slt (
                 id SERIAL PRIMARY KEY,
                 shift_id VARCHAR(50) NOT NULL,
                 shift_start TIMESTAMPTZ NOT NULL,
@@ -188,11 +188,11 @@ class TableCreator:
                 CONSTRAINT unique_shift UNIQUE (shift_id, shift_start),
                 CONSTRAINT unique_shift_id UNIQUE (shift_id)
             );
-            CREATE INDEX idx_tab_oda_slt_shift_id
+            CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_id
             ON public.tab_oda_slt (shift_id);
-            CREATE INDEX idx_tab_oda_slt_shift_start
+            CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_start
             ON public.tab_oda_slt (shift_start);
-            CREATE TABLE public.tab_oda_slt_shift_comments (
+            CREATE TABLE IF NOT EXISTS public.tab_oda_slt_shift_comments (
                 id SERIAL PRIMARY KEY,
                 shift_id VARCHAR(50) NOT NULL,
                 operator_name VARCHAR(100) NOT NULL,
@@ -205,11 +205,11 @@ class TableCreator:
                 CONSTRAINT fk_shift FOREIGN KEY (shift_id)
                 REFERENCES public.tab_oda_slt(shift_id)
             );
-            CREATE INDEX idx_tab_oda_slt_shift_comments_shift_id
+            CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_comments_shift_id
             ON public.tab_oda_slt_shift_comments (shift_id);
-            CREATE INDEX idx_tab_oda_slt_shift_comments_operator_name
+            CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_comments_operator_name
             ON public.tab_oda_slt_shift_comments (operator_name);
-            CREATE TABLE public.tab_oda_slt_shift_log_comments (
+            CREATE TABLE IF NOT EXISTS public.tab_oda_slt_shift_log_comments (
                 id SERIAL PRIMARY KEY,
                 shift_id VARCHAR(50) NOT NULL,
                 eb_id VARCHAR(60) NOT NULL,
@@ -223,11 +223,11 @@ class TableCreator:
                 CONSTRAINT fk_shift FOREIGN KEY (shift_id)
                 REFERENCES public.tab_oda_slt(shift_id)
             );
-            CREATE INDEX idx_tab_oda_slt_shift_log_comments_shift_id
+            CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_log_comments_shift_id
             ON public.tab_oda_slt_shift_log_comments (shift_id);
-            CREATE INDEX idx_tab_oda_slt_shift_log_comments_eb_id
+            CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_log_comments_eb_id
             ON public.tab_oda_slt_shift_log_comments (eb_id);
-            CREATE INDEX idx_tab_oda_slt_shift_log_comments_operator_name
+            CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_log_comments_operator_name
             ON public.tab_oda_slt_shift_log_comments (operator_name);
         """
         )

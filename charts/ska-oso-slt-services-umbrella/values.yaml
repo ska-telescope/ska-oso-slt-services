@@ -10,11 +10,14 @@ ska-oso-services:
 ska-db-oda-umbrella:
   ska-db-oda:
     enabled: true
+    secretProvider:
+      enabled: true # mark false for local dev
     rest:
       enabled: true
       ingress:
         enabled: true
       backend:
+        type: postgres
         postgres:
           host:
   postgresql:
