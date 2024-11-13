@@ -520,11 +520,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
                     )
 
                     if error_count > 0:
-                        sbi_current_status = "failed"
+                        sbi_current_status = "Failed"
                     elif ok_count == 5:  # Assuming the total number of blocks is 5
-                        sbi_current_status = "completed"
+                        sbi_current_status = "Completed"
                     else:
-                        sbi_current_status = "executing"
+                        sbi_current_status = "Executing"
 
                 info[eb["eb_id"]] = eb["info"]
                 info[eb["eb_id"]]["sbi_status"] = sbi_current_status
