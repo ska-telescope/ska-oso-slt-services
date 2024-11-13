@@ -257,6 +257,118 @@ def test_update_shift_after_end():
         )
 
 
+def test_create_shift_log_comment():
+    # Prepare test data with metadata and an image path
+    current_time = get_datetime_for_timezone("UTC")
+    comment_data = {
+        "log_comment": "This is a test comment",
+        "operator_name": "test_operator",
+        "shift_id": "test-shift-id",
+        "eb_id": "test-eb-id",
+        "image": {"path": "https://image.png"},
+        "metadata": {
+            "created_by": "test_operator",
+            "created_on": current_time.isoformat(),
+            "last_modified_by": "test_operator",
+            "last_modified_on": current_time.isoformat(),
+        },
+    }
+
+    # Create a mock for the ShiftLogComment model
+    mock_comment = MagicMock()
+    mock_comment.log_comment = comment_data["log_comment"]
+    mock_comment.operator_name = comment_data["operator_name"]
+    mock_comment.shift_id = comment_data["shift_id"]
+    mock_comment.eb_id = comment_data["eb_id"]
+    mock_comment.image = comment_data["image"]
+    mock_comment.metadata = comment_data["metadata"]
+
+    # Patch both database access and ShiftLogComment model creation
+    with (
+        patch(
+            "ska_oso_slt_services.data_access.postgres"
+            ".execute_query.PostgresDataAccess.insert"
+        ) as mock_insert,
+        patch(
+            "ska_oso_slt_services.services.shift_service.ShiftLogComment",
+            return_value=mock_comment,
+        ),
+    ):
+        # Send a POST request to create a comment
+        response = client.post(f"{API_PREFIX}/shift_log_comments", json=comment_data)
+
+    # Assertions
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_comment = response.json()[0]
+    assert created_comment["log_comment"] == comment_data["log_comment"], (
+        f"Expected log_comment to be '{comment_data['log_comment']}', but got"
+        f" '{created_comment['log_comment']}'"
+    )
+    assert created_comment["operator_name"] == comment_data["operator_name"], (
+        f"Expected operator_name to be '{comment_data['operator_name']}', but got"
+        f" '{created_comment['operator_name']}'"
+    )
+    assert created_comment["image"]["path"] == comment_data["image"]["path"], (
+        f"Expected image path to be '{comment_data['image']['path']}', but got"
+        f" '{created_comment['image']['path']}'"
+    )
+
+    # Verify metadata
+    assert "metadata" in created_comment, "Metadata is missing in the response"
+    metadata = created_comment["metadata"]
+    assert metadata["created_by"] == comment_data["metadata"]["created_by"], (
+        f"Expected created_by to be '{comment_data['metadata']['created_by']}', but got"
+        f" '{metadata['created_by']}'"
+    )
+    assert (
+        metadata["last_modified_by"] == comment_data["metadata"]["last_modified_by"]
+    ), (
+        "Expected last_modified_by to be"
+        f" '{comment_data['metadata']['last_modified_by']}', but got"
+        f" '{metadata['last_modified_by']}'"
+    )
+
+    mock_insert.assert_called_once()
+
+
+@patch(
+    "ska_oso_slt_services.services.shift_service.ShiftService.get_shift_logs_comments"
+)
+def test_get_shift_log_comments(mock_get_shift_comments):
+    # Prepare test data
+
+    comment_data = [
+        {
+            "log_comment": "This is a test comment",
+            "operator_name": "string",
+            "shift_id": "test-shift-id",
+            "image": {
+                "path": "string",
+                "timestamp": "2024-11-12 12:36:46.901000+00:00",
+            },
+            "eb_id": "string",
+            "created_on": "2024-11-12T18:06:53.378127+05:30",
+            "created_by": "string",
+            "last_modified_on": "2024-11-12T18:06:53.378127+05:30",
+            "last_modified_by": "string",
+        }
+    ]
+
+    mock_get_shift_comments.return_value = comment_data
+
+    # Send a POST request to create a comment
+    response = client.get(
+        f"{API_PREFIX}/shift_log_comments?shift_id=test-shift-id&eb_id=string"
+    )
+
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+
 def test_update_shift_log_comment():
     # Existing comment data with initial metadata
     current_time = get_datetime_for_timezone("UTC")
@@ -428,7 +540,7 @@ def test_create_shift_comments(mock_create_shift_comment):
     mock_create_shift_comment.return_value = comment_data
 
     # Send a POST request to create a comment
-    response = client.post(f"{API_PREFIX}/shift_comments/create", json=comment_data)
+    response = client.post(f"{API_PREFIX}/shift_comments", json=comment_data)
 
     assert (
         response.status_code == 200
@@ -544,9 +656,7 @@ def test_update_shift_comments(mock_update_shift_comment):
     mock_update_shift_comment.return_value = updated_comment_data
 
     # Send a POST request to create a comment
-    response = client.put(
-        f"{API_PREFIX}/shift_comments/update/1", json=data_to_be_updated
-    )
+    response = client.put(f"{API_PREFIX}/shift_comments/1", json=data_to_be_updated)
 
     assert (
         response.status_code == 200

@@ -255,7 +255,7 @@ def patch_shift_log_info(shift_id: Optional[str]):
 
 
 @router.post(
-    "/shift_comments/create",
+    "/shift_comments",
     tags=["Shift Comments"],
     summary="Create a new shift comment",
 )
@@ -264,10 +264,10 @@ def create_shift_comments(shift_comment: ShiftComment):
     Create a new shift.
 
     Args:
-        shift (ShiftCreate): The shift data to create.
+        shift_comment (ShiftComment): The shift comment to create.
 
     Returns:
-        ShiftLogComment: The created shift log comment.
+        ShiftComment: The created shift comment.
     """
     shift_comment_obj = shift_service.create_shift_comment(shift_comment)
     return shift_comment_obj, HTTPStatus.CREATED
@@ -285,27 +285,26 @@ def get_shift_comments(shift_id: Optional[str] = None):
 
     Args:
         shift_id(optional): Shift ID
-        eb_id(optional): EB ID
 
     Returns:
-        ShiftLogComment: Shift Log Comments match found
+        ShiftComment: Shift Comments match found
     """
     shift_comments = shift_service.get_shift_comments(shift_id)
     return shift_comments, HTTPStatus.OK
 
 
 @router.put(
-    "/shift_comments/update/{comment_id}",
+    "/shift_comments/{comment_id}",
     tags=["Shift Comments"],
     summary="Update an existing shift",
 )
 def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
     """
-    Update an existing shift log comment.
+    Update an existing shift comment.
 
     Args:
-        shift_id (str): The unique identifier of the shift to update.
-        shift_log_comment (ShiftLogCommentUpdate): The updated shift log comment  data.
+        comment_id (str): The unique identifier of the shift to update.
+        shift_comment (ShiftComment): The updated shift comment data.
 
     Raises:
         HTTPException: If the shift is not found.

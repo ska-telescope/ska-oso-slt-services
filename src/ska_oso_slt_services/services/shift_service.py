@@ -575,16 +575,16 @@ class ShiftService:
 
     def create_shift_comment(self, shift_comment_data: ShiftComment) -> ShiftComment:
         """
-        Create a new comment for a shift log with metadata.
+        Create a new comment for a shift with metadata.
 
         Args:
-            shift_log_comment_data: The comment data for the shift log.
+            shift_comment_data: The comment data for the shift.
 
         Returns:
-            ShiftLogComment: The created shift log comment.
+            ShiftComment: The created shift comment.
         """
         if not shift_comment_data.shift_id:
-            raise ValueError("SHift id is required")
+            raise ValueError("Shift id is required")
 
         shift = self.get_shift(shift_comment_data.shift_id)
         if not shift:
@@ -599,14 +599,13 @@ class ShiftService:
 
     def get_shift_comments(self, shift_id: str = None) -> List[ShiftComment]:
         """
-        Retrieve comments for shift logs based on shift ID or EB ID.
+        Retrieve comments for shift based on shift ID.
 
         Args:
             shift_id (str, optional): The shift ID for filtering comments.
-            eb_id (str, optional): The EB ID for filtering comments.
 
         Returns:
-            List[ShiftLogComment]: List of comments matching the specified query.
+            List[ShiftComment]: List of comments matching the specified query.
 
         Raises:
             NotFoundError: If no comments are found for the given filters.
@@ -627,14 +626,13 @@ class ShiftService:
 
     def get_shift_comment(self, comment_id: str = None) -> List[ShiftComment]:
         """
-        Retrieve comments for shift logs based on shift ID or EB ID.
+        Retrieve comments for shift based on comment ID.
 
         Args:
-            shift_id (str, optional): The shift ID for filtering comments.
-            eb_id (str, optional): The EB ID for filtering comments.
+            comment_id (int, optional): The comment ID for filtering comments.
 
         Returns:
-            List[ShiftLogComment]: List of comments matching the specified query.
+            List[ShiftComment]: List of comments matching the specified query.
 
         Raises:
             NotFoundError: If no comments are found for the given filters.
@@ -654,14 +652,14 @@ class ShiftService:
 
     def update_shift_comments(self, comment_id, shift_comment: ShiftComment):
         """
-        Update an existing shift log comment with new data.
+        Update an existing shift comment with new data.
 
         Args:
             comment_id (int): The ID of the comment to update.
-            shift_log_comment (ShiftLogCommentUpdate): The updated comment data.
+            shift_comment (ShiftComment): The updated comment data.
 
         Returns:
-            ShiftLogCommentUpdate: The updated shift log comment.
+            ShiftComment: The updated shift comment.
 
         Raises:
             NotFoundError: If no comment is found with the provided ID.
