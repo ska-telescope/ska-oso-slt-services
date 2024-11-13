@@ -33,7 +33,6 @@ class TableDetails:
     table_name: str
     identifier_field: str
     column_map: dict
-    column_map_extra_keys: dict
     text_base_search_fields: Optional[str] = None
     metadata_map: Dict[str, Callable[[Shift], SqlTypes]] = MappingProxyType(
         {
@@ -92,7 +91,6 @@ class ShiftLogMapping:
                 "annotations": lambda shift: shift.annotations,
                 "shift_logs": lambda shift: _field_json_dump(shift, "shift_logs"),
             },
-            column_map_extra_keys={"shift_logs": lambda shift: shift.shift_logs},
         )
 
     def get_columns_with_metadata(self) -> Tuple[str]:
@@ -161,9 +159,7 @@ class ShiftLogMapping:
             for media fields.
         """
         column_map_extra_keys = {
-            "shift_logs": lambda shift: json.dumps(
-                shift.shift_logs.model_dump(), default=str, indent=2
-            ),
+            "shift_logs": lambda shift: _field_json_dump(shift, "shift_logs"),
         }
         return tuple(map_fn(shift) for map_fn in column_map_extra_keys.values())
 
@@ -193,7 +189,6 @@ class ShiftLogCommentMapping:
                 "image": lambda comment: _field_json_dump(comment, "image"),
                 "eb_id": lambda comment: comment.eb_id,
             },
-            column_map_extra_keys={},
         )
 
     def get_columns_with_metadata(self) -> Tuple[str]:

@@ -1,0 +1,42 @@
+[{
+    "shift_id": "shift-1",
+    "shift_start": "2024-11-08T11:11:24.549Z",
+    "shift_end": "2024-11-08T11:11:24.549Z",
+    "shift_operator": "string",
+    "annotations": "string",
+    "shift_logs": [
+        {
+        "info": {},
+        "source": "string",
+        "log_time": "2024-11-08T11:11:24.549Z"
+        }
+    ],
+    "metadata": {
+        "created_by": "string",
+        "created_on": "2024-11-08T11:11:24.549Z",
+        "last_modified_by": "string",
+        "last_modified_on": "2024-11-08T11:11:24.549Z"
+    }
+    },
+    {
+        "shift_id": "shift-2",
+        "shift_start": "2024-11-08T11:11:24.549Z",
+        "shift_end": "2024-11-08T11:11:24.549Z",
+        "shift_operator": "string",
+        "annotations": "string",
+        "shift_logs": [
+            {
+            "info": {},
+            "source": "string",
+            "log_time": "2024-11-08T11:11:24.549Z"
+            }
+        ],
+        "metadata": {
+            "created_by": "string",
+            "created_on": "2024-11-08T11:11:24.549Z",
+            "last_modified_by": "string",
+            "last_modified_on": "2024-11-08T11:11:24.549Z"
+        }
+        }
+
+]

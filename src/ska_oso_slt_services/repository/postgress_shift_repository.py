@@ -1,10 +1,15 @@
 import logging
+import threading
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from deepdiff import DeepDiff
 
+from ska_oso_slt_services.common.constant import ODA_DATA_POLLING_TIME
+from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
 from ska_oso_slt_services.common.error_handling import NotFoundError
+from ska_oso_slt_services.common.metadata_mixin import update_metadata
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
 from ska_oso_slt_services.data_access.postgres.mapping import (
     ShiftLogCommentMapping,
@@ -35,8 +40,6 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftLogs,
 )
 from ska_oso_slt_services.repository.shift_repository import CRUDShiftRepository
-from ska_oso_slt_services.utils.date_utils import get_datetime_for_timezone
-from ska_oso_slt_services.utils.metadata_mixin import update_metadata
 from ska_oso_slt_services.utils.s3_bucket import (
     get_file_object_from_s3,
     upload_file_object_to_s3,
@@ -135,6 +138,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         shift = self._prepare_new_shift(shift)
         self._insert_shift_to_database(table_details=self.table_details, entity=shift)
+        shift_log_updater.update_shift_id(shift.shift_id)
         return shift
 
     def _prepare_new_shift(self, shift: Shift) -> Shift:
@@ -551,8 +555,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             filter_date=current_shift_data.shift_start.isoformat()
         )
 
-        if current_shift_data.shift_logs and current_shift_data.shift_logs.logs:
-            for log in current_shift_data.shift_logs.logs:
+        if current_shift_data.shift_logs and current_shift_data.shift_logs:
+            for log in current_shift_data.shift_logs:
                 log = ShiftLogs.model_validate(log)
                 shift_logs_info[log.info["eb_id"]] = log.info
         else:
@@ -588,7 +592,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
             if changed_eb_ids:
                 for updated_eb_id in changed_eb_ids:
-                    for i in range(len(current_shift_data.shift_logs.logs)):
+                    for i in range(len(current_shift_data.shift_logs)):
                         if (
                             current_shift_data.shift_logs[i].info["eb_id"]
                             == updated_eb_id
@@ -614,3 +618,41 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             LOGGER.info("No New Logs found in ODA")
             return "NO New Logs found in ODA"
+
+
+class ShiftLogUpdater:
+    def __init__(self):
+        self.current_shift_id: Optional[int] = None
+        self.lock = threading.Lock()
+        self.thread = threading.Thread(target=self._background_task, daemon=True)
+        self.thread_started = False
+        self.postgres_repository = PostgresShiftRepository()
+
+    def _background_task(self):
+        while True:
+            with self.lock:
+                if self.current_shift_id is not None:
+                    LOGGER.info(
+                        "------> Checking Updated ODA LOGS for SHIFT ID %s",
+                        self.current_shift_id,
+                    )
+                    self.postgres_repository.updated_shift_log_info(
+                        self.current_shift_id
+                    )
+            time.sleep(
+                ODA_DATA_POLLING_TIME
+            )  # Wait for 10 seconds before running again
+
+    def start(self):
+        if not self.thread_started:
+            LOGGER.info("\n\n ---> Polling Started")
+            self.thread.start()
+            self.thread_started = True
+
+    def update_shift_id(self, shift_id: int):
+        with self.lock:
+            self.current_shift_id = shift_id
+            self.start()
+
+
+shift_log_updater = ShiftLogUpdater()

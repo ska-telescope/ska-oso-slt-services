@@ -3,9 +3,10 @@ from enum import Enum
 from typing import List, Optional
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+from ska_oso_pdm.entity_status_history import SBIStatus
 
-from ska_oso_slt_services.utils.codec import SLTObject
-from ska_oso_slt_services.utils.date_utils import get_datetime_for_timezone
+from ska_oso_slt_services.common.codec import SLTObject
+from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
 
 
 class Metadata(SLTObject):
@@ -127,32 +128,14 @@ class Filter(Enum):
     CONTAINS = "contains"
 
 
-class SbiStatus(Enum):
-    # TODO revisit this class later might be need to
-    # add dependency of PDM or simle enter text.
-    """
-    Enum representing the different status values for
-    an SBI entity in the SLT Shift Log Tool.
-    :param CREATED: The SBI entity has been created.
-    :param IN_PROGRESS: The SBI entity is in progress.
-    :param COMPLETED: The SBI entity has been completed.
-    :param CANCELLED: The SBI entity has been cancelled.
-    """
-
-    CREATED = "Created"
-    IN_PROGRESS = "In Progress"
-    COMPLETED = "Completed"
-    CANCELLED = "Cancelled"
-
-
 class SbiEntityStatus(BaseModel):
     """
     Represents the status of an SBI entity in the SLT Shift Log Tool.
 
-    :param sbi_status Optional[SbiStatus]: The status of the SBI entity.
+    :param sbi_status Optional[SBDStatus]: The status of the SBI entity.
     """
 
-    sbi_status: Optional[SbiStatus] = None
+    sbi_status: Optional[SBIStatus] = None
 
 
 class MatchType(BaseModel):

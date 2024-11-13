@@ -2,7 +2,7 @@ import logging
 from threading import Lock
 
 from psycopg_pool import ConnectionPool
-from ska_db_oda.unit_of_work.postgresunitofwork import create_connection_pool
+from ska_db_oda.persistence.unitofwork.postgresunitofwork import create_connection_pool
 
 LOGGER = logging.getLogger(__name__)
 

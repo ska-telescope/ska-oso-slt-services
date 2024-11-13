@@ -129,10 +129,8 @@ For example, to retrieve slt shift between shift_start and shift_end from the st
          }
       ]
 
-The SLT API endpoints, with the accepted requests and expected responses, are documented below:   
+The SLT API endpoints, with the accepted requests and expected responses, are documented below:
 
-API Reference
-=============
 
 .. openapi:: ../../openapi/openapi.json
    :examples:
