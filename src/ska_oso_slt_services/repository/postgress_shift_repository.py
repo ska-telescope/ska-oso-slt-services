@@ -436,13 +436,16 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The updated shift log comment with the image added.
         """
-        file_path, _, _ = upload_file_object_to_s3(file)
-        image = Media(path=file_path)
+
+        file_path, file_unique_id, _ = upload_file_object_to_s3(file)
+        image = Media(path=file_path, unique_id=file_unique_id)
+        image.timestamp = image.timestamp
+
         existing_shift_log_image = ShiftLogComment.model_validate(
             self.get_shift_logs_comment(comment_id=shift_log_comment.id)
         )
         existing_shift_log_image.id = shift_log_comment.id
-        existing_shift_log_image.image = image
+        existing_shift_log_image.image = [image]
         existing_shift_log_image.metadata = shift_log_comment.metadata
 
         self._update_shift_in_database(
@@ -752,6 +755,13 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogCommentUpdate: The updated shift log comment with the image added.
         """
+        query, params = select_last_serial_id(table_details=ShiftCommentMapping())
+        last_id_response = self.postgres_data_access.get(query=query, params=params)
+        if last_id_response[0]["max"]:
+            shift_comment.id = last_id_response[0]["max"] + 1
+        else:
+            shift_comment.id = 1
+
         media_list = []
 
         file_path, file_unique_id, _ = upload_file_object_to_s3(file)

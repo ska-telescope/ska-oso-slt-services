@@ -44,6 +44,9 @@ class Media(SLTObject):
 
     path: Optional[str] = None
     unique_id: Optional[str] = None
+    timestamp: AwareDatetime = Field(
+        default_factory=lambda: get_datetime_for_timezone("UTC")
+    )
 
 
 class ShiftLogComment(SLTObject):
