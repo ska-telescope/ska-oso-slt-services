@@ -40,9 +40,9 @@ class TestPostgressShiftRepository(unittest.TestCase):
         result = repository.get_oda_data(filter_date)
 
         self._assert_result_length(result, 4)
-        self._assert_eb_status("EB001", result, "completed", "Completed")
-        self._assert_eb_status("EB002", result, "failed", "Failed")
-        self._assert_eb_status("EB003", result, "executing", "In Progress")
+        self._assert_eb_status("EB001", result, "Completed", "Completed")
+        self._assert_eb_status("EB002", result, "Failed", "Failed")
+        self._assert_eb_status("EB003", result, "Executing", "In Progress")
         self._assert_eb_status("EB004", result, "Created", "Created")
 
         repository.postgres_data_access.execute_query_or_update.assert_called_once_with(
