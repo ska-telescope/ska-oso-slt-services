@@ -2,9 +2,11 @@
 Shift Router used for routes the request to appropriate method
 """
 
+import json
 import logging
 from functools import lru_cache
 from http import HTTPStatus
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, UploadFile
@@ -24,9 +26,12 @@ from ska_oso_slt_services.domain.shift_models import (
 from ska_oso_slt_services.repository.postgress_shift_repository import (
     PostgresShiftRepository,
 )
-from ska_oso_slt_services.services.shift_service import ShiftLogUpdater, ShiftService
+from ska_oso_slt_services.services.shift_service import ShiftService
 
 LOGGER = logging.getLogger(__name__)
+
+# Get the directory of the current script
+current_dir = Path(__file__).parent
 
 
 class ShiftServiceSingleton:
@@ -48,13 +53,45 @@ def get_shift_service() -> ShiftService:
 
 
 shift_service = get_shift_service()
-shift_log_updater = ShiftLogUpdater()
+# shift_log_updater = ShiftLogUpdater()
 
 
 router = APIRouter()
 
 
-@router.get("/shift", tags=["shifts"], summary="Get a shift")
+@router.get(
+    "/shift",
+    tags=["shifts"],
+    summary="Get a shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_response.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Shift Not Found"}}
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+    },
+)
 def get_shift(shift_id: Optional[str] = None):
     """
     Retrieve a specific shift by its ID.
@@ -74,6 +111,43 @@ def get_shift(shift_id: Optional[str] = None):
     tags=["shifts"],
     summary="Retrieve shift data based on shift attributes like shift_id,"
     "match type and entity status",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir
+                                / "response_files/multiple_shift_response.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Shift Not Found"}}
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "type": "datetime_from_date_parsing",
+                        "loc": ["query", "shift_start"],
+                        "msg": "Input should be a valid datetime or date",
+                        "input": "test",
+                        "ctx": {"error": "input is too short"},
+                    }
+                }
+            },
+        },
+    },
 )
 def get_shifts(
     shift: ShiftBaseClass = Depends(),
@@ -88,7 +162,31 @@ def get_shifts(
     return shifts, HTTPStatus.OK
 
 
-@router.post("/shifts/create", tags=["shifts"], summary="Create a new shift")
+@router.post(
+    "/shifts/create",
+    tags=["shifts"],
+    summary="Create a new shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {"application/json": {"example": {"shift_operator": "test"}}},
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "type": "datetime_from_date_parsing",
+                        "loc": ["query", "shift_start"],
+                        "msg": "Input should be a valid datetime or date",
+                        "input": "test",
+                        "ctx": {"error": "input is too short"},
+                    }
+                }
+            },
+        },
+    },
+)
 def create_shift(shift: Shift):
     """
     Create a new shift.
@@ -100,13 +198,37 @@ def create_shift(shift: Shift):
         Shift: The created shift.
     """
     shifts = shift_service.create_shift(shift)
-    shift_log_updater.update_shift_id(shifts.shift_id)
+    # shift_log_updater.update_shift_id(shifts.shift_id)
 
     return shifts, HTTPStatus.CREATED
 
 
 @router.put(
-    "/shifts/update/{shift_id}", tags=["shifts"], summary="Update an existing shift"
+    "/shifts/update/{shift_id}",
+    tags=["shifts"],
+    summary="Update an existing shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_response.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Invalid Shift Id",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+    },
 )
 def update_shift(shift_id: str, shift: Shift):
     """
@@ -127,6 +249,36 @@ def update_shift(shift_id: str, shift: Shift):
     "/shift_log_comments",
     tags=["Shift Log Comments"],
     summary="Create a new shift log comment",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_log_comments.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "type": "datetime_from_date_parsing",
+                        "loc": ["query", "shift_start"],
+                        "msg": "Input should be a valid datetime or date",
+                        "input": "test",
+                        "ctx": {"error": "input is too short"},
+                    }
+                }
+            },
+        },
+    },
 )
 def create_shift_log_comments(shift_log_comment: ShiftLogComment):
     """
@@ -145,7 +297,29 @@ def create_shift_log_comments(shift_log_comment: ShiftLogComment):
 @router.get(
     "/shift_log_comments",
     tags=["Shift Log Comments"],
-    summary="Retrieve shift log comments based on shift ID and EB ID,",
+    summary="Retrieve shift log comments based on shift ID and EB ID",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_log_comments.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+    },
 )
 def get_shift_log_comments(shift_id: Optional[str] = None, eb_id: Optional[str] = None):
     """
@@ -166,7 +340,29 @@ def get_shift_log_comments(shift_id: Optional[str] = None, eb_id: Optional[str] 
 @router.put(
     "/shift_log_comments/{comment_id}",
     tags=["Shift Log Comments"],
-    summary="Update an existing shift",
+    summary="Update an existing shift log comments",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_log_comments.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Invalid Comment ID",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+    },
 )
 def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogComment):
     """
@@ -189,7 +385,29 @@ def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogCommen
 @router.put(
     "/shift_log_comments/upload_image/{comment_id}",
     tags=["Shift Log Comments"],
-    summary="Upload image for shift",
+    summary="Upload image for Shift log comment",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "file_extension": "test",
+                            "path": "test_path",
+                            "unique_id": "test_unique_id",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+    },
 )
 def update_shift_log_with_image(
     comment_id: int, operator_name: str, file: UploadFile = File(...)
@@ -212,7 +430,48 @@ def update_shift_log_with_image(
     return media, HTTPStatus.OK
 
 
-@router.get("/current_shift", tags=["shifts"], summary="Get Current Shift")
+@router.get(
+    "/current_shift",
+    tags=["shifts"],
+    summary="Get Current Shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir
+                                / "response_files/multiple_shift_response.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Shift Not Found"}}
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "type": "datetime_from_date_parsing",
+                        "loc": ["query", "shift_start"],
+                        "msg": "Input should be a valid datetime or date",
+                        "input": "test",
+                        "ctx": {"error": "input is too short"},
+                    }
+                }
+            },
+        },
+    },
+)
 def get_current_shift():
     """
     Retrieve the current active shift.
@@ -238,6 +497,28 @@ def get_current_shift():
     "/shifts/patch/update_shift_log_info/{shift_id}",
     tags=["shifts"],
     summary="Update Shift Log info",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/oda_log_info.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+    },
 )
 def patch_shift_log_info(shift_id: Optional[str]):
     """

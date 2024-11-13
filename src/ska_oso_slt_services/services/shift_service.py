@@ -1,11 +1,9 @@
 import logging
-import threading
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Type, Union
 
-from confluent_kafka import Consumer, KafkaError, Producer
-
+from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.common.error_handling import NotFoundError
+from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
 from ska_oso_slt_services.data_access.postgres.mapping import (
     ShiftCommentMapping,
     ShiftLogCommentMapping,
@@ -23,9 +21,6 @@ from ska_oso_slt_services.repository.postgress_shift_repository import (
     CRUDShiftRepository,
     PostgresShiftRepository,
 )
-from ska_oso_slt_services.services.config import KafkaConfig
-from ska_oso_slt_services.utils.custom_exceptions import ShiftEndedException
-from ska_oso_slt_services.utils.metadata_mixin import set_new_metadata, update_metadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -690,139 +685,3 @@ class ShiftService:
         return self.postgres_repository.update_shift_comments(
             shift_log_comment_with_metadata
         )
-
-
-class ShiftServiceSingleton:
-    _instance = None
-
-    @classmethod
-    def get_instance(cls):
-        if cls._instance is None:
-            cls._instance = ShiftService([PostgresShiftRepository])
-        return cls._instance
-
-
-@lru_cache()
-def get_shift_service() -> ShiftService:
-    """
-    Dependency to get the ShiftService instance
-    """
-    return ShiftServiceSingleton.get_instance()
-
-
-shift_service = get_shift_service()
-
-
-# Callback for successful delivery or error
-def delivery_report(err, msg):
-    if err is not None:
-        LOGGER.error("Message delivery failed: %s", err)
-    else:
-        LOGGER.error(
-            "Message delivered to %s [%s] at offset %s",
-            msg.topic(),
-            msg.partition(),
-            msg.offset(),
-        )
-
-
-class ShiftLogUpdater:
-    """
-    Class for updating Shift Logs
-    """
-
-    def __init__(self):
-        self.current_shift_id: Optional[int] = None
-        self.lock = threading.Lock()
-        self.thread = threading.Thread(target=self._background_task, daemon=True)
-        self.thread_started = False
-
-        consumer_conf = {
-            "bootstrap.servers": KafkaConfig.BOOTSTRAP_SERVER,
-            "group.id": KafkaConfig.GROUP_ID,
-            "auto.offset.reset": KafkaConfig.AUTO_OFFSET_RESET,
-        }
-
-        producer_conf = {
-            "bootstrap.servers": KafkaConfig.BOOTSTRAP_SERVER,
-            "client.id": KafkaConfig.CLIEND_ID,
-        }
-
-        self.consumer = Consumer(consumer_conf)
-        LOGGER.info("KAFKA CONFIGURED WITH FOLLOWING CONFIGURATION %s", consumer_conf)
-
-        self.producer = Producer(producer_conf)
-
-        self.producer_topic = KafkaConfig.PRODUCER_TOPIC
-        self.consumer_topic = KafkaConfig.CONSUMER_TOPIC
-
-    def _background_task(self):
-        """
-        Checks if new EB data is added or updated to ODA using Kafka Topic
-        Once found Updates the same into the Current Shift and sends Notification to
-        SLT UI through Topic.
-        """
-
-        try:
-            self.consumer.subscribe([self.consumer_topic])
-            metadata = self.consumer.list_topics(timeout=10.0)
-            LOGGER.debug("Subscribed to topics: %s", metadata.topics)
-            while True:
-                LOGGER.debug("Checking for new data")
-
-                message = self.consumer.poll(timeout=float(KafkaConfig.TOPIC_POLL_TIME))
-                if message is None:
-                    LOGGER.debug("No new notification from ODA")
-                    continue
-                if message.error():
-                    if (
-                        message.error().code()
-                        == KafkaError._PARTITION_EOF  # pylint: disable=W0212
-                    ):
-                        LOGGER.debug("End of partition")
-                    else:
-                        LOGGER.info("Error occurred: %s", message.error())
-                else:
-                    LOGGER.info(
-                        "Received message: %s from partition %s",
-                        message.value().decode("utf-8"),
-                        message.partition(),
-                    )
-                    shift_service.updated_shift_log_info(self.current_shift_id)
-                    message = (
-                        "Current Shift %s  Logs have been updated kindly check...",
-                        self.current_shift_id,
-                    )
-                    self.producer.produce(
-                        self.producer_topic,
-                        message[0].encode("utf-8"),
-                        callback=delivery_report,
-                    )
-                    self.producer.flush()
-
-                    LOGGER.info("Message to frontend: %s,message")
-
-        finally:
-            self.consumer.close()
-
-    def start(self):
-        """
-        Starts the background polling thread if it has not already been started.
-        This method ensures that the polling of Kafka topics begins only once.
-        """
-        if not self.thread_started:
-            LOGGER.debug("\n\nPolling Started")
-            self.thread.start()
-            self.thread_started = True
-
-    def update_shift_id(self, shift_id: int):
-        """
-        Updates the current shift ID and ensures that the background thread is started
-        for polling Kafka topics.
-
-        Args:
-            shift_id (int): The ID of the shift to be updated.
-        """
-        with self.lock:
-            self.current_shift_id = shift_id
-            self.start()

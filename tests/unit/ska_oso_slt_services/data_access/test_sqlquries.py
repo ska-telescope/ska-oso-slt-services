@@ -2,7 +2,6 @@ import json
 import unittest
 from datetime import datetime
 from enum import Enum
-from unittest.mock import Mock
 
 from psycopg import sql
 
@@ -406,22 +405,132 @@ class TestShiftQueries(unittest.TestCase):
     def test_get_shift_log_params(self):
         """Test get_shift_log_params returns correct parameter values"""
         # Create mock shift logs
-        shift_logs = ShiftLogs(
-            info={"message": "Test log"},
-            source="operator",
-            log_time=datetime(2024, 1, 1, 12, 0),
-            comments=[],
-        )
+        # shift_logs = ShiftLogs(
+        #     info={"message": "Test log"},
+        #     source="operator",
+        #     log_time=datetime(2024, 1, 1, 12, 0),
+        #     comments=[],
+        # )
 
-        # Create mock shift object
-        mock_shift = Mock()
-        mock_shift.shift_logs = shift_logs
+        shift_logs_dict = [
+            {
+                "info": {
+                    "eb_id": "eb-t0001-20241022-00002",
+                    "sbd_ref": "sbd-t0001-20240822-00008",
+                    "sbi_ref": "sbi-t0001-20240822-00009",
+                    "metadata": {
+                        "version": 1,
+                        "created_by": "DefaultUser",
+                        "created_on": "2024-10-22T11:25:36.953526Z",
+                        "pdm_version": "15.4.0",
+                        "last_modified_by": "DefaultUser",
+                        "last_modified_on": "2024-10-22T11:25:36.953526Z",
+                    },
+                    "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
+                    "telescope": "ska_mid",
+                    "sbi_status": "failed",
+                    "sbd_version": 1,
+                    "request_responses": [
+                        {
+                            "status": "OK",
+                            "request": "ska_oso_scripting."
+                            "functions.devicecontrol.assign_resource",
+                            "response": {"result": "this is a result"},
+                            "request_args": {"kwargs": {"subarray_id": "1"}},
+                            "request_sent_at": "2022-09-23T15:43:53.971548Z",
+                            "response_received_at": "2022-09-23T15:43:53.971548Z",
+                        },
+                        {
+                            "status": "OK",
+                            "request": "ska_oso_scripting."
+                            "functions.devicecontrol.configure_resource",
+                            "response": {"result": "this is a result"},
+                            "request_args": {"kwargs": {"subarray_id": "1"}},
+                            "request_sent_at": "2022-09-23T15:43:53.971548Z",
+                            "response_received_at": "2022-09-23T15:43:53.971548Z",
+                        },
+                        {
+                            "status": "OK",
+                            "request": "ska_oso_scripting.functions.devicecontrol.scan",
+                            "response": {"result": "this is a result"},
+                            "request_args": {"kwargs": {"subarray_id": "1"}},
+                            "request_sent_at": "2022-09-23T15:43:53.971548Z",
+                            "response_received_at": "2022-09-23T15:43:53.971548Z",
+                        },
+                        {
+                            "status": "OK",
+                            "request": "ska_oso_scripting."
+                            "functions.devicecontrol.release_all_resources",
+                            "response": {"result": "this is a result"},
+                            "request_args": {"kwargs": {"subarray_id": "1"}},
+                            "request_sent_at": "2022-09-23T15:43:53.971548Z",
+                            "response_received_at": "2022-09-23T15:43:53.971548Z",
+                        },
+                        {
+                            "error": {"detail": "this is an error"},
+                            "status": "ERROR",
+                            "request": "ska_oso_scripting.functions.devicecontrol.end",
+                            "request_sent_at": "2022-09-23T15:43:53.971548Z",
+                        },
+                    ],
+                },
+                "source": "ODA",
+                "log_time": "2024-10-22T11:24:14.406107Z",
+                "comments": [
+                    {
+                        "id": 1,
+                        "log_comment": "This is log comment",
+                        "operator_name": "max",
+                        "shift_id": "shift-20241112-1",
+                        "eb_id": "eb-t0001-20241022-00002",
+                        "metadata": {
+                            "created_by": "max",
+                            "created_on": "2024-11-12T14:21:47.447462+05:30",
+                            "last_modified_by": "max",
+                            "last_modified_on": "2024-11-12T14:21:47.447462+05:30",
+                        },
+                    },
+                    {
+                        "id": 2,
+                        "log_comment": "This is log comment",
+                        "operator_name": "max",
+                        "shift_id": "shift-20241112-1",
+                        "eb_id": "eb-t0001-20241022-00002",
+                        "metadata": {
+                            "created_by": "max",
+                            "created_on": "2024-11-12T14:22:07.328322+05:30",
+                            "last_modified_by": "max",
+                            "last_modified_on": "2024-11-12T14:22:07.328322+05:30",
+                        },
+                    },
+                    {
+                        "id": 3,
+                        "log_comment": "This is log comment",
+                        "operator_name": "max",
+                        "shift_id": "shift-20241112-1",
+                        "eb_id": "eb-t0001-20241022-00002",
+                        "metadata": {
+                            "created_by": "max",
+                            "created_on": "2024-11-12T20:46:26.631930+05:30",
+                            "last_modified_by": "max",
+                            "last_modified_on": "2024-11-12T20:46:26.631930+05:30",
+                        },
+                    },
+                ],
+            }
+        ]
+        shift_logs_obj = ShiftLogs.model_validate(shift_logs_dict[0])
+        shift = Shift(shift_logs=[shift_logs_obj])
+
+        # # Create mock shift object
+        # mock_shift = Mock()
+        # mock_shift.shift_logs = shift_logs
 
         # Create an instance of the class containing get_shift_log_params
         table_details = self.table_details  # or your actual class name
 
         # Call the method
-        params = table_details.get_shift_log_params(mock_shift)
+        params = table_details.get_shift_log_params(shift)
 
         # Assert it returns a tuple
         self.assertIsInstance(params, tuple)
@@ -434,7 +543,7 @@ class TestShiftQueries(unittest.TestCase):
         self.assertIsInstance(json_param, str)
 
         # Parse and verify JSON content
-        parsed_json = json.loads(json_param)
+        parsed_json = json.loads(json_param)[0]
         self.assertIsInstance(parsed_json, dict)
 
         # Verify expected fields in JSON
@@ -443,6 +552,6 @@ class TestShiftQueries(unittest.TestCase):
             self.assertIn(field, parsed_json)
 
         # Verify specific values
-        self.assertEqual(parsed_json["info"], {"message": "Test log"})
-        self.assertEqual(parsed_json["source"], "operator")
+        self.assertEqual(parsed_json["info"]["eb_id"], "eb-t0001-20241022-00002")
+        self.assertEqual(parsed_json["source"], "ODA")
         self.assertIsInstance(parsed_json["comments"], list)
