@@ -239,7 +239,7 @@ def test_update_shift_after_end():
         }
 
         with patch(
-            "ska_oso_slt_services.services.shift_service.ShiftService.update_shift",
+            "ska_oso_slt_services." "services.shift_service.ShiftService.update_shift",
             return_value={**existing_shift.__dict__, **valid_update_data},
         ):
             response = client.put(
@@ -396,7 +396,7 @@ def test_get_current_shift():
     }
     # Patch the database session to use our mock
     with patch(
-        "ska_oso_slt_services.services.shift_service.ShiftService.get_current_shift",
+        "ska_oso_slt_services.services." "shift_service.ShiftService.get_current_shift",
         return_value=mock_shift,
     ):
         # Send a GET request to the endpoint
@@ -737,7 +737,8 @@ def test_get_shift(mock_get_shift_comments):
                         "request_responses": [
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.assign_resource",
+                                "request": "ska_oso_scripting"
+                                ".functions.devicecontrol.assign_resource",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -745,7 +746,8 @@ def test_get_shift(mock_get_shift_comments):
                             },
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.configure_resource",
+                                "request": "ska_oso_scripting."
+                                "functions.devicecontrol.configure_resource",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -753,7 +755,8 @@ def test_get_shift(mock_get_shift_comments):
                             },
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.scan",
+                                "request": "ska_oso_scripting"
+                                ".functions.devicecontrol.scan",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -761,7 +764,9 @@ def test_get_shift(mock_get_shift_comments):
                             },
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
+                                "request": "ska_oso_scripting"
+                                ".functions."
+                                "devicecontrol.release_all_resources",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -770,7 +775,8 @@ def test_get_shift(mock_get_shift_comments):
                             {
                                 "error": {"detail": "this is an error"},
                                 "status": "ERROR",
-                                "request": "ska_oso_scripting.functions.devicecontrol.end",
+                                "request": "ska_oso_scripting"
+                                ".functions.devicecontrol.end",
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
                             },
                         ],
@@ -910,7 +916,8 @@ def test_get_shifts(mock_get_shift_log_comments):
                         "request_responses": [
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.assign_resource",
+                                "request": "ska_oso_scripting"
+                                ".functions.devicecontrol.assign_resource",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -918,7 +925,8 @@ def test_get_shifts(mock_get_shift_log_comments):
                             },
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.configure_resource",
+                                "request": "ska_oso_scripting."
+                                "functions.devicecontrol.configure_resource",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -926,7 +934,8 @@ def test_get_shifts(mock_get_shift_log_comments):
                             },
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.scan",
+                                "request": "ska_oso_scripting"
+                                ".functions.devicecontrol.scan",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -934,7 +943,9 @@ def test_get_shifts(mock_get_shift_log_comments):
                             },
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
+                                "request": "ska_oso_scripting"
+                                ".functions.devicecontrol"
+                                ".release_all_resources",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -943,7 +954,8 @@ def test_get_shifts(mock_get_shift_log_comments):
                             {
                                 "error": {"detail": "this is an error"},
                                 "status": "ERROR",
-                                "request": "ska_oso_scripting.functions.devicecontrol.end",
+                                "request": "ska_oso_scripting."
+                                "functions.devicecontrol.end",
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
                             },
                         ],
@@ -986,7 +998,8 @@ def test_get_shifts(mock_get_shift_log_comments):
                         "request_responses": [
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.assign_resource",
+                                "request": "ska_oso_scripting."
+                                "functions.devicecontrol.assign_resource",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -994,7 +1007,9 @@ def test_get_shifts(mock_get_shift_log_comments):
                             },
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.configure_resource",
+                                "request": "ska_oso_scripting"
+                                ".functions"
+                                ".devicecontrol.configure_resource",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -1002,7 +1017,8 @@ def test_get_shifts(mock_get_shift_log_comments):
                             },
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.scan",
+                                "request": "ska_oso_scripting."
+                                "functions.devicecontrol.scan",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -1010,7 +1026,9 @@ def test_get_shifts(mock_get_shift_log_comments):
                             },
                             {
                                 "status": "OK",
-                                "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
+                                "request": "ska_oso_scripting."
+                                "functions"
+                                ".devicecontrol.release_all_resources",
                                 "response": {"result": "this is a result"},
                                 "request_args": {"kwargs": {"subarray_id": "1"}},
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
@@ -1019,7 +1037,8 @@ def test_get_shifts(mock_get_shift_log_comments):
                             {
                                 "error": {"detail": "this is an error"},
                                 "status": "ERROR",
-                                "request": "ska_oso_scripting.functions.devicecontrol.end",
+                                "request": "ska_oso_scripting"
+                                ".functions.devicecontrol.end",
                                 "request_sent_at": "2022-09-23T15:43:53.971548Z",
                             },
                         ],
