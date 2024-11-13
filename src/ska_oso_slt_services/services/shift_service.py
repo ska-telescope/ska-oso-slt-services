@@ -633,7 +633,7 @@ class ShiftService:
             NotFoundError: If no comments are found for the given filters.
         """
         shift_comment = self.postgres_repository.get_shift_comment(
-            comment_id=comment_id
+            comment_id=comment_id, table_mapping=ShiftCommentMapping()
         )
         if not shift_comment:
             raise NotFoundError("No shift comment found for the given query.")
