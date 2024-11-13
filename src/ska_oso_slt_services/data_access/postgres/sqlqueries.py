@@ -615,7 +615,7 @@ def patch_query(
         Tuple[str, tuple]: A tuple of the query string and parameters.
     """
 
-    params = params + table_details.get_metadata_params(shift)
+    params = tuple(params) + table_details.get_metadata_params(shift)
     columns = column_names + list(table_details.get_metadata_columns())
     query = sql.SQL(
         """
