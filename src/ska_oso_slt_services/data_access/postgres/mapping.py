@@ -187,6 +187,7 @@ class ShiftLogCommentMapping:
             table_name="tab_oda_slt_shift_log_comments",
             identifier_field="id",
             column_map={
+                "id": lambda comment: comment.id,
                 "log_comment": lambda comment: comment.log_comment,
                 "operator_name": lambda comment: comment.operator_name,
                 "shift_id": lambda comment: comment.shift_id,
@@ -261,9 +262,10 @@ class ShiftCommentMapping:
             identifier field, and column mappings.
         """
         return TableDetails(
-            table_name="tab_slt_comments",
+            table_name="tab_oda_slt_shift_comments",
             identifier_field="id",
             column_map={
+                "id": lambda comment: comment.id,
                 "comment": lambda comment: comment.comment,
                 "operator_name": lambda comment: comment.operator_name,
                 "shift_id": lambda comment: comment.shift_id,

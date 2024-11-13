@@ -304,23 +304,28 @@ class TestShiftQueries(unittest.TestCase):
         # Convert query to string for assertion checks
         query_string = query.as_string()
 
-        # Check if the query contains the correct table name
-        self.assertIn(self.table_details.table_details.table_name, query_string)
-
         # Check basic SQL structure
-        self.assertIn("SELECT", query_string)
-        self.assertIn("FROM", query_string)
+        self.assertIn("SELECT shift_id", query_string)  # Only shift_id is selected
+        self.assertIn('FROM "tab_oda_slt"', query_string)
         self.assertIn("WHERE shift_end IS NULL", query_string)
         self.assertIn("ORDER BY created_on DESC", query_string)
         self.assertIn("LIMIT 1", query_string)
 
-        # Check if all required columns are present
-        expected_columns = self.table_details.get_columns_with_metadata()
-        for column in expected_columns:
-            self.assertIn(column, query_string)
-
         # Check if parameters tuple is empty as expected
         self.assertEqual(params, ())
+
+        # Expected query structure
+        expected_query_parts = [
+            "SELECT shift_id",
+            'FROM "tab_oda_slt"',
+            "WHERE shift_end IS NULL",
+            "ORDER BY created_on DESC",
+            "LIMIT 1",
+        ]
+
+        # Check each part is in the query
+        for part in expected_query_parts:
+            self.assertIn(part, query_string)
 
     def test_select_comments_query_with_shift_id(self):
         """Test select_comments_query with shift_id parameter"""

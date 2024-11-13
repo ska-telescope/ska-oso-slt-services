@@ -41,23 +41,8 @@ class Media(SLTObject):
     :param path Optional[str]: The path to the media file.
     """
 
-    file_extension: Optional[str] = None
     path: Optional[str] = None
     unique_id: Optional[str] = None
-
-
-class ShiftLogImage(SLTObject):
-    """
-    Represents an image associated with a shift in the SLT Shift Log Tool.
-
-    :param path Optional[str]: The path to the image file.
-    :param timestamp Optional[datetime]: The timestamp of the image.
-    """
-
-    path: str
-    timestamp: AwareDatetime = Field(
-        default_factory=lambda: get_datetime_for_timezone("UTC")
-    )
 
 
 class ShiftLogComment(SLTObject):
@@ -69,7 +54,7 @@ class ShiftLogComment(SLTObject):
     :param operator_name Optional[str]: The name of the operator who made the comment.
     :param shift_id Optional[str]: The unique identifier of the shift
      the comment belongs to.
-    :param image Optional[ShiftLogImage]: The image associated with the comment.
+    :param image Optional[List[Media]]: The image associated with the comment.
     :param eb_id Optional[str]: The unique identifier of the EB associated
      with the comment.
     :param metadata Optional[Metadata]: Metadata contains shift additional info
@@ -80,7 +65,7 @@ class ShiftLogComment(SLTObject):
     log_comment: Optional[str] = None
     operator_name: Optional[str] = None
     shift_id: Optional[str] = None
-    image: Optional[ShiftLogImage] = None
+    image: Optional[List[Media]] = None
     eb_id: Optional[str] = None
     metadata: Optional[Metadata] = None
 
@@ -94,7 +79,7 @@ class ShiftComment(SLTObject):
     :param operator_name Optional[str]: The name of the operator who made the comment.
     :param shift_id Optional[str]: The unique identifier of the shift the comment
      belongs to.
-    :param image Optional[ShiftLogImage]: The image associated with the comment.
+    :param image Optional[List[Media]]: The image associated with the comment.
     :param metadata Optional[Metadata]: Metadata contains shift additional info
     like shift created_on, created_bye etc...
     """
@@ -103,7 +88,7 @@ class ShiftComment(SLTObject):
     comment: Optional[str] = None
     operator_name: Optional[str] = None
     shift_id: Optional[str] = None
-    image: Optional[ShiftLogImage] = None
+    image: Optional[List[Media]] = None
     metadata: Optional[Metadata] = None
 
 

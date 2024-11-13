@@ -9,6 +9,10 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, UploadFile
 
+from ska_oso_slt_services.data_access.postgres.mapping import (
+    ShiftCommentMapping,
+    ShiftLogCommentMapping,
+)
 from ska_oso_slt_services.domain.shift_models import (
     MatchType,
     SbiEntityStatus,
@@ -119,60 +123,6 @@ def update_shift(shift_id: str, shift: Shift):
     return shifts, HTTPStatus.OK
 
 
-@router.put(
-    "/shifts/upload_image/{shift_id}", tags=["shifts"], summary="Upload image for shift"
-)
-def add_media(shift_id: Optional[str], files: list[UploadFile] = File(...)):
-    """
-    Upload one or more image files for a specific shift.
-
-    This endpoint allows uploading multiple imagefiles associated
-    with a particular shift identified by the shift_id.
-
-    Args:
-        shift_id (Optional[str]): The unique identifier of the
-            shift to which the images will be associated.
-        files (list[UploadFile]): A list of files to be uploaded.
-            Each file should be an image. This parameter uses
-            FastAPI's File(...) for handling file uploads.
-
-    Returns:
-        list: A list containing elements:
-            - image_response: The media (image) data associated with the shift.
-            - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.
-    """
-    media = shift_service.add_media(shift_id, files)
-    return media, HTTPStatus.OK
-
-
-@router.get(
-    "/shifts/download_images/{shift_id}",
-    tags=["shifts"],
-    summary="download shift image",
-)
-def get_media(shift_id: Optional[str]):
-    """
-    Retrieve media (image) associated with a specific shift.
-
-    This endpoint allows downloading images related to a particular shift
-    identified by the shift_id.
-
-    Args:
-        shift_id (Optional[str]): The unique identifier of the shift.
-            If provided, it's used to fetch the specific shift's image.
-            If None returns empty array.
-
-    Returns:
-        list: A list containing elements:
-            - image_response: The media (image) data
-                associated with the shift.
-            - HTTPStatus.OK: HTTP 200 status
-                code indicating successful retrieval.
-    """
-    image_response = shift_service.get_media(shift_id)
-    return image_response, HTTPStatus.OK
-
-
 @router.post(
     "/shift_log_comments",
     tags=["Shift Log Comments"],
@@ -237,7 +187,7 @@ def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogCommen
 
 
 @router.put(
-    "/shift_log_comments/upload_image/",
+    "/shift_log_comments/upload_image/{comment_id}",
     tags=["Shift Log Comments"],
     summary="Upload image for shift",
 )
@@ -306,7 +256,7 @@ def patch_shift_log_info(shift_id: Optional[str]):
 
 @router.post(
     "/shift_comments",
-    tags=["shift"],
+    tags=["Shift Comments"],
     summary="Create a new shift comment",
 )
 def create_shift_comments(shift_comment: ShiftComment):
@@ -325,8 +275,8 @@ def create_shift_comments(shift_comment: ShiftComment):
 
 @router.get(
     "/shift_comments",
-    tags=["shift"],
-    summary="Retrieve shift comments based on shift ID",
+    tags=["Shift Comments"],
+    summary="Retrieve shift log comments based on shift ID and EB ID,",
 )
 def get_shift_comments(shift_id: Optional[str] = None):
     """
@@ -345,7 +295,7 @@ def get_shift_comments(shift_id: Optional[str] = None):
 
 @router.put(
     "/shift_comments/{comment_id}",
-    tags=["shift"],
+    tags=["Shift Comments"],
     summary="Update an existing shift",
 )
 def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
@@ -364,3 +314,148 @@ def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
         comment_id=comment_id, shift_comment=shift_comment
     )
     return shift_comments, HTTPStatus.OK
+
+
+@router.post(
+    "/shift_log_comments/upload_image",
+    tags=["Shift Log Comments"],
+    summary="Upload image for shift",
+)
+def post_shift_log_media(
+    shift_id: str, shift_operator: str, eb_id: str, file: UploadFile = File(...)
+):
+    """
+    Upload one or more image files for a specific shift.
+
+    This endpoint allows uploading multiple image files associated
+    with a particular shift identified by the shift_id.
+
+    Args:
+        shift_id (str): The unique identifier of the shift to update.
+        shift_operator (str): The shift operator name.
+        eb_id (str): The EB ID associated with the shift.
+        files (list[UploadFile]): A list of files to be uploaded.
+            Each file should be an image. This parameter uses
+            FastAPI's File(...) for handling file uploads.
+
+    Returns:
+        list: A list containing elements:
+            - image_response: The media (image) data associated with the comment.
+            - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.
+    """
+    media = shift_service.post_media(
+        shift_id=shift_id,
+        shift_operator=shift_operator,
+        file=file,
+        shift_model=ShiftLogComment,
+        table_mapping=ShiftLogCommentMapping(),
+        eb_id=eb_id,
+    )
+    return media, HTTPStatus.OK
+
+
+@router.get(
+    "/shift_log_comments/download_images/{comment_id}",
+    tags=["Shift Log Comments"],
+    summary="download shift image",
+)
+def get_shift_log_media(comment_id: Optional[int]):
+    """Retrieve media associated with a shift comment.
+
+    Args:
+        comment_id (Optional[int]): The unique identifier of the comment.
+            If None, returns all media.
+
+    Returns:
+        tuple: A tuple containing:
+            - image_response: The media data from the shift service
+            - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval
+    """
+
+    image_response = shift_service.get_media(
+        comment_id, shift_model=ShiftLogComment, table_mapping=ShiftLogCommentMapping()
+    )
+    return image_response, HTTPStatus.OK
+
+
+@router.post(
+    "/shift_comments/upload_image",
+    tags=["Shift Comments"],
+    summary="Upload image for shift",
+)
+def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...)):
+    """
+    Create a new shift.
+
+    Args:
+        shift_id (str): The unique identifier of the shift to update.
+        shift_operator (str): The shift operator name.
+        files (list[UploadFile]): A list of files to be uploaded.
+            Each file should be an image. This parameter uses
+            FastAPI's File(...) for handling file uploads.
+
+    Returns:
+        ShiftLogComment: The created shift log comment.
+    """
+    media = shift_service.post_media(
+        shift_id=shift_id,
+        shift_operator=shift_operator,
+        file=file,
+        shift_model=ShiftComment,
+        table_mapping=ShiftCommentMapping(),
+    )
+    return media, HTTPStatus.OK
+
+
+@router.put(
+    "/shift_comments/upload_image/{comment_id}",
+    tags=["Shift Comments"],
+    summary="Upload image for shift",
+)
+def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
+    """
+    Upload one or more image files for a specific shift.
+
+    This endpoint allows uploading multiple image files associated
+    with a particular shift identified by the shift_id.
+
+    Args:
+        comment_id (Optional[int]): The unique identifier of the
+            comment to which the images will be associated.
+        files (list[UploadFile]): A list of files to be uploaded.
+            Each file should be an image. This parameter uses
+            FastAPI's File(...) for handling file uploads.
+
+    Returns:
+        list: A list containing elements:
+            - image_response: The media (image) data associated with the comment.
+            - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.
+    """
+    media = shift_service.add_media(
+        comment_id, files, shift_model=ShiftComment, table_mapping=ShiftCommentMapping()
+    )
+    return media, HTTPStatus.OK
+
+
+@router.get(
+    "/shift_comments/download_images/{comment_id}",
+    tags=["Shift Comments"],
+    summary="download shift image",
+)
+def get_media(comment_id: Optional[int]):
+    """Retrieve media associated with a shift comment.
+
+    Args:
+        comment_id (Optional[int]): The unique identifier of the comment.
+            If None, returns all media.
+
+    Returns:
+        tuple: A tuple containing:
+            - image_response: The media data from the shift service
+            - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval
+    """
+
+    image_response = shift_service.get_media(
+        comment_id, shift_model=ShiftComment, table_mapping=ShiftCommentMapping()
+    )
+    return image_response, HTTPStatus.OK
