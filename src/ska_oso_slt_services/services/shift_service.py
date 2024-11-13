@@ -212,13 +212,18 @@ class ShiftService:
         return self.postgres_repository.update_shift(shift)
 
     def post_media(
-        self, shift_id, shift_operator, file, shift_model, table_mapping
+        self, shift_id, shift_operator, file, shift_model, table_mapping, eb_id=None
     ) -> Media:
         """
         Create a new comment for a shift log with metadata.
 
         Args:
-            shift_log_comment_data: The comment data for the shift log.
+            shift_id: The unique identifier for the shift log.
+            shift_operator: The operator of the shift log.
+            file: The file to be uploaded.
+            shift_model: The model of the shift log.
+            table_mapping: The Database Model Mapping Class.
+            eb_id: The EB ID of the shift log.
 
         Returns:
             ShiftLogComment: The created shift log comment.
@@ -230,7 +235,7 @@ class ShiftService:
         shift_comment = shift_model(shift_id=shift_id, operator_name=shift_operator)
 
         if shift_comment.__class__.__name__ == "ShiftLogComment":
-            shift_comment.eb_id = "null"
+            shift_comment.eb_id = eb_id
         shift_comment = set_new_metadata(shift_comment, shift_operator)
 
         result = self.postgres_repository.insert_shift_image(
@@ -245,6 +250,8 @@ class ShiftService:
         Args:
             comment_id (int): The ID of the comment to add the media to.
             files (files): The media files to add.
+            shift_model: The model of the shift log.
+            table_mapping: The Database Model Mapping Class.
 
         Returns:
             Shift: The updated comment with the added media.
@@ -275,6 +282,8 @@ class ShiftService:
 
         Args:
             comment_id (int): The ID of the comment to get the media from.
+            shift_model: The model of the shift log.
+            table_mapping: The Database Model Mapping Class.
 
         Returns:
             file: The requested media file.

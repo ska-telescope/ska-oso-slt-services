@@ -261,6 +261,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         Args:
             comment_id (int): The ID of the comment to get the media from.
+            table_model: The model of the shift log.
+            table_mapping: The Database Model Mapping Class.
 
         Returns:
             file: The requested media file.
@@ -296,6 +298,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             files: The media files to be added. Can be single file or multiple files.
             shift_comment (ShiftComment): The shift comment object to associate
             the media with.
+            shift_model: The model of the shift log.
+            table_mapping: The Database Model Mapping Class.
 
         Returns:
             Media: The media object containing information about the added media files.

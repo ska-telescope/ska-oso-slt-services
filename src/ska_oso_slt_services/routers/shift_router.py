@@ -323,7 +323,7 @@ def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
     summary="Upload image for shift",
 )
 def post_shift_log_media(
-    shift_id: str, shift_operator: str, file: UploadFile = File(...)
+    shift_id: str, shift_operator: str, eb_id: str, file: UploadFile = File(...)
 ):
     """
     Upload one or more image files for a specific shift.
@@ -332,8 +332,9 @@ def post_shift_log_media(
     with a particular shift identified by the shift_id.
 
     Args:
-        comment_id (Optional[int]): The unique identifier of the
-            comment to which the images will be associated.
+        shift_id (str): The unique identifier of the shift to update.
+        shift_operator (str): The shift operator name.
+        eb_id (str): The EB ID associated with the shift.
         files (list[UploadFile]): A list of files to be uploaded.
             Each file should be an image. This parameter uses
             FastAPI's File(...) for handling file uploads.
@@ -349,6 +350,7 @@ def post_shift_log_media(
         file=file,
         shift_model=ShiftLogComment,
         table_mapping=ShiftLogCommentMapping(),
+        eb_id=eb_id,
     )
     return media, HTTPStatus.OK
 
@@ -387,7 +389,11 @@ def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...))
     Create a new shift.
 
     Args:
-        shift (ShiftCreate): The shift data to create.
+        shift_id (str): The unique identifier of the shift to update.
+        shift_operator (str): The shift operator name.
+        files (list[UploadFile]): A list of files to be uploaded.
+            Each file should be an image. This parameter uses
+            FastAPI's File(...) for handling file uploads.
 
     Returns:
         ShiftLogComment: The created shift log comment.

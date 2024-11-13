@@ -958,6 +958,7 @@ def test_post_shift_log_comment_image(mock_shift_comment_image):
     shift_data = {
         "operator_name": "Monica",
         "shift_id": "shift-20241111-2",
+        "eb_id": "test-id",
         "image": [
             {
                 "path": "https://skao-611985328822-shift-log-tool-storage.s3."
