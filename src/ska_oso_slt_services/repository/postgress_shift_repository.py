@@ -12,6 +12,7 @@ from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import update_metadata
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
 from ska_oso_slt_services.data_access.postgres.mapping import (
+    ShiftCommentMapping,
     ShiftLogCommentMapping,
     ShiftLogMapping,
 )
@@ -35,8 +36,8 @@ from ska_oso_slt_services.domain.shift_models import (
     Metadata,
     SbiEntityStatus,
     Shift,
+    ShiftComment,
     ShiftLogComment,
-    ShiftLogImage,
     ShiftLogs,
 )
 from ska_oso_slt_services.repository.shift_repository import CRUDShiftRepository
@@ -214,6 +215,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             existing_shift.annotations = shift.annotations
         if shift.media:
             existing_shift.media = shift.media
+        if shift.shift_operator:
+            existing_shift.shift_operator = shift.shift_operator
         existing_shift.metadata = shift.metadata
         self._update_shift_in_database(existing_shift)
         return existing_shift
@@ -258,25 +261,29 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         self.postgres_data_access.update(query, params)
 
-    def get_media(self, shift_id: int) -> Media:
+    def get_media(self, comment_id: int, table_model, table_mapping) -> Media:
         """
         Get a media file from a shift.
 
         Args:
-            shift_id (str): The ID of the shift to get the media from.
+            comment_id (int): The ID of the comment to get the media from.
+            table_model: The model of the shift log.
+            table_mapping: The Database Model Mapping Class.
 
         Returns:
             file: The requested media file.
         """
-        shift = Shift.model_validate(self.get_shift(shift_id))
-        if not shift:
-            raise NotFoundError(f"No shift found with ID: {shift_id}")
-        if not shift.media:
-            raise NotFoundError(f"No media found for shift with ID: {shift_id}")
+        comment = table_model.model_validate(
+            self.get_shift_comment(comment_id, table_mapping)
+        )
+
+        if not comment.image:
+            raise NotFoundError(f"No media found for comment with ID: {comment_id}")
         files = []
-        for media in shift.media:
+
+        for image in comment.image:
             file_key, base64_content, content_type = get_file_object_from_s3(
-                file_key=media.unique_id
+                file_key=image.unique_id
             )
             files.append(
                 {
@@ -287,30 +294,49 @@ class PostgresShiftRepository(CRUDShiftRepository):
             )
         return files
 
-    def add_media(self, files, shift: Shift) -> Media:
+    def add_media(
+        self, shift_comment: ShiftComment, files, shift_model, table_mapping
+    ) -> Media:
         """
-        Add a media file to a shift.
+        Add media files associated with a shift comment.
 
         Args:
-            shift_id (str): The ID of the shift to add the media to.
-            files (files): The media file to add.
+            files: The media files to be added. Can be single file or multiple files.
+            shift_comment (ShiftComment): The shift comment object to associate
+            the media with.
+            shift_model: The model of the shift log.
+            table_mapping: The Database Model Mapping Class.
 
         Returns:
-            Shift: The updated shift with the added media.
+            Media: The media object containing information about the added media files.
         """
         media_list = []
         for file in files:
-            file_path, file_unique_id, file_extension = upload_file_object_to_s3(file)
-            media = Media(
-                path=file_path, unique_id=file_unique_id, file_extension=file_extension
-            )
+            file_path, file_unique_id, _ = upload_file_object_to_s3(file)
+            media = Media(path=file_path, unique_id=file_unique_id)
+            media.timestamp = media.timestamp
             media_list.append(media)
-        if shift.media:
-            shift.media += media_list
+
+        current_shift_comment = shift_model.model_validate(
+            self.get_shift_comment(
+                comment_id=shift_comment.id,
+                table_mapping=table_mapping,
+            )
+        )
+
+        current_shift_comment.id = shift_comment.id
+        current_shift_comment.metadata = shift_comment.metadata
+
+        if current_shift_comment.image:
+            current_shift_comment.image += media_list
         else:
-            shift.media = media_list
-        self.update_shift(shift)
-        return shift
+            current_shift_comment.image = media_list
+
+        self._update_shift_in_database(
+            entity=current_shift_comment, table_details=table_mapping
+        )
+
+        return current_shift_comment
 
     def delete_shift(self, shift_id: str):
         pass
@@ -358,10 +384,16 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The newly created shift log comment.
         """
-        shift_log_comment_id = self._insert_shift_to_database(
+        query, params = select_last_serial_id(table_details=ShiftLogCommentMapping())
+        last_id_response = self.postgres_data_access.get(query=query, params=params)
+
+        if last_id_response[0]["max"]:
+            shift_log_comment.id = last_id_response[0]["max"] + 1
+        else:
+            shift_log_comment.id = 1
+        self._insert_shift_to_database(
             table_details=ShiftLogCommentMapping(), entity=shift_log_comment
         )
-        shift_log_comment.id = shift_log_comment_id["id"]
 
         return shift_log_comment
 
@@ -404,13 +436,16 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The updated shift log comment with the image added.
         """
-        file_path, _, _ = upload_file_object_to_s3(file)
-        image = ShiftLogImage(path=file_path)
+
+        file_path, file_unique_id, _ = upload_file_object_to_s3(file)
+        image = Media(path=file_path, unique_id=file_unique_id)
+        image.timestamp = image.timestamp
+
         existing_shift_log_image = ShiftLogComment.model_validate(
             self.get_shift_logs_comment(comment_id=shift_log_comment.id)
         )
         existing_shift_log_image.id = shift_log_comment.id
-        existing_shift_log_image.image = image
+        existing_shift_log_image.image = [image]
         existing_shift_log_image.metadata = shift_log_comment.metadata
 
         self._update_shift_in_database(
@@ -488,11 +523,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
                     )
 
                     if error_count > 0:
-                        sbi_current_status = "failed"
+                        sbi_current_status = "Failed"
                     elif ok_count == 5:  # Assuming the total number of blocks is 5
-                        sbi_current_status = "completed"
+                        sbi_current_status = "Completed"
                     else:
-                        sbi_current_status = "executing"
+                        sbi_current_status = "Executing"
 
                 info[eb["eb_id"]] = eb["info"]
                 info[eb["eb_id"]]["sbi_status"] = sbi_current_status
@@ -618,6 +653,127 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             LOGGER.info("No New Logs found in ODA")
             return "NO New Logs found in ODA"
+
+    def create_shift_comment(self, shift_comment: ShiftComment):
+        """
+        Create a new comment for a shift and save it to the database.
+
+        Args:
+            shift_comment (ShiftComment): The comment data to create.
+
+        Returns:
+            ShiftComment: The newly created shift comment.
+        """
+        query, params = select_last_serial_id(table_details=ShiftCommentMapping())
+        last_id_response = self.postgres_data_access.get(query=query, params=params)
+        if last_id_response[0]["max"]:
+            shift_comment.id = last_id_response[0]["max"] + 1
+        else:
+            shift_comment.id = 1
+        self._insert_shift_to_database(
+            table_details=ShiftCommentMapping(), entity=shift_comment
+        )
+
+        return shift_comment
+
+    def get_shift_comments(self, shift_id=None):
+        """
+        Retrieve comments from shift based on shift ID.
+
+        Args:
+            shift_id (Optional[str]): The shift ID to filter comments by.
+
+        Returns:
+            List[Dict]: List of comments associated with the specified filters.
+        """
+        query, params = select_comments_query(
+            table_details=ShiftCommentMapping(), shift_id=shift_id
+        )
+        comments = self.postgres_data_access.get(query=query, params=params)
+        return comments
+
+    def get_shift_comment(self, comment_id, table_mapping):
+        """
+        Retrieve comments from shift based on comment ID.
+
+        Args:
+            comment_id (Optional[int]): The comment ID to filter comments by.
+
+        Returns:
+            List[Dict]: List of comments associated with the specified filters.
+        """
+        query, params = select_comments_query(
+            table_details=table_mapping, id=comment_id
+        )
+        comment = self.postgres_data_access.get(query=query, params=params)
+        if comment:
+            return comment[0]
+        else:
+            raise NotFoundError(f"No comment found with ID: {comment_id}")
+
+    def update_shift_comments(self, shift_comment: ShiftComment):
+        """
+        Update an existing shift comment with new data.
+
+        Args:
+            shift_comment (ShiftComment): The updated comment data.
+
+        Returns:
+            ShiftComment: The updated shift comment.
+        """
+        existing_shift_comment = ShiftComment.model_validate(
+            self.get_shift_comment(
+                comment_id=shift_comment.id, table_mapping=ShiftCommentMapping()
+            )
+        )
+        existing_shift_comment.id = shift_comment.id
+        if shift_comment.comment:
+            existing_shift_comment.comment = shift_comment.comment
+        if shift_comment.operator_name:
+            existing_shift_comment.operator_name = shift_comment.operator_name
+        if shift_comment.shift_id:
+            existing_shift_comment.shift_id = shift_comment.shift_id
+        if shift_comment.operator_name:
+            existing_shift_comment.operator_name = shift_comment.operator_name
+        existing_shift_comment.metadata = shift_comment.metadata
+        self._update_shift_in_database(
+            entity=existing_shift_comment, table_details=ShiftCommentMapping()
+        )
+
+        return existing_shift_comment
+
+    def insert_shift_image(
+        self, file, shift_comment: ShiftComment, table_mapping
+    ) -> Media:
+        """
+        Update a shift comment with an image, uploading the image to S3.
+
+        Args:
+            shift_comment (ShiftComment): The comment data to update.
+            file: The image file to upload.
+
+        Returns:
+            ShiftLogCommentUpdate: The updated shift log comment with the image added.
+        """
+        query, params = select_last_serial_id(table_details=ShiftCommentMapping())
+        last_id_response = self.postgres_data_access.get(query=query, params=params)
+        if last_id_response[0]["max"]:
+            shift_comment.id = last_id_response[0]["max"] + 1
+        else:
+            shift_comment.id = 1
+
+        media_list = []
+
+        file_path, file_unique_id, _ = upload_file_object_to_s3(file)
+        media = Media(path=file_path, unique_id=file_unique_id)
+        media.timestamp = media.timestamp
+        media_list.append(media)
+        shift_comment.image = media_list
+
+        self._insert_shift_to_database(
+            table_details=table_mapping, entity=shift_comment
+        )
+        return shift_comment
 
 
 class ShiftLogUpdater:
