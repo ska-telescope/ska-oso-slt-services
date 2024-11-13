@@ -211,6 +211,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             existing_shift.annotations = shift.annotations
         if shift.media:
             existing_shift.media = shift.media
+        if shift.shift_operator:
+            existing_shift.shift_operator = shift.shift_operator
         existing_shift.metadata = shift.metadata
         self._update_shift_in_database(existing_shift)
         return existing_shift
@@ -378,10 +380,16 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The newly created shift log comment.
         """
-        shift_log_comment_id = self._insert_shift_to_database(
+        query, params = select_last_serial_id(table_details=ShiftLogCommentMapping())
+        last_id_response = self.postgres_data_access.get(query=query, params=params)
+
+        if last_id_response[0]["max"]:
+            shift_log_comment.id = last_id_response[0]["max"] + 1
+        else:
+            shift_log_comment.id = 1
+        self._insert_shift_to_database(
             table_details=ShiftLogCommentMapping(), entity=shift_log_comment
         )
-        shift_log_comment.id = shift_log_comment_id["id"]
 
         return shift_log_comment
 
@@ -649,10 +657,15 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The newly created shift log comment.
         """
-        shift_comment_id = self._insert_shift_to_database(
+        query, params = select_last_serial_id(table_details=ShiftCommentMapping())
+        last_id_response = self.postgres_data_access.get(query=query, params=params)
+        if last_id_response[0]["max"]:
+            shift_comment.id = last_id_response[0]["max"] + 1
+        else:
+            shift_comment.id = 1
+        self._insert_shift_to_database(
             table_details=ShiftCommentMapping(), entity=shift_comment
         )
-        shift_comment.id = shift_comment_id["id"]
 
         return shift_comment
 

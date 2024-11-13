@@ -566,29 +566,23 @@ def select_last_serial_id(table_details: TableDetails) -> QueryAndParameters:
 def select_latest_shift_query(table_details: TableDetails) -> QueryAndParameters:
     """
     Creates a query and parameters to find the latest shift in the table,
-    returning the row with the most recent timestamp created_on.
+    returning the row with the most recent timestamp `created_on`.
 
     Args:
         table_details (TableDetails): The information about the table to perform
         the query on.
 
     Returns:
-        QueryAndParameters: A tuple of the query and parameters, which psycopg
-         will safely combine.
+        QueryAndParameters: A tuple of the query and parameters.
     """
-    columns = table_details.get_columns_with_metadata()
-
     query = sql.SQL(
         """
-        SELECT {fields}
+        SELECT shift_id
         FROM {table}
         WHERE shift_end IS NULL
         ORDER BY created_on DESC LIMIT 1
-    """
-    ).format(
-        fields=sql.SQL(",").join(map(sql.Identifier, columns)),
-        table=sql.Identifier(table_details.table_details.table_name),
-    )
+        """
+    ).format(table=sql.Identifier(table_details.table_details.table_name))
 
     params = ()
     return query, params
