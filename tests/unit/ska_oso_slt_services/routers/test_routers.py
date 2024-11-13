@@ -1221,11 +1221,10 @@ def test_post_shift_log_comment_image(mock_shift_comment_image):
 
     # Send a POST request to the endpoint
     response = client.post(
-        f"{API_PREFIX}/shift_comments/upload_image?shift_id=shift-20241111-2"
-        "&shift_operator=test",
+        f"{API_PREFIX}/shift_log_comments/upload_image?shift_id=shift-20241111-2"
+        "&shift_operator=test&eb_id=test-id",
         files=test_file,
     )
-
     # Assertions
     assert (
         response.status_code == 200
@@ -1276,6 +1275,81 @@ def test_get_shift_log_comment_image(mock_shift_comment_image):
     # Send a POST request to the endpoint
     response = client.get(f"{API_PREFIX}/shift_log_comments/download_images/3")
 
+    # Assertions
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+
+@patch(
+    "ska_oso_slt_services.services.shift_service.ShiftService.updated_shift_log_info"
+)
+def test_patch_shift_log_info_success(mock_update_shift):
+    """Test successful update of shift log info."""
+    # Prepare test data
+    test_shift_id = "shift-20241112-1"
+    expected_response = {
+        "shift_id": test_shift_id,
+        "shift_type": "ODA",
+        "log_info": {
+            "status": "completed",
+            "start_time": "2024-11-12T10:00:00Z",
+            "end_time": "2024-11-12T18:00:00Z",
+            "operator_name": "John Doe",
+            "comments": "Shift completed successfully",
+        },
+        "metadata": {
+            "created_by": "John Doe",
+            "created_on": "2024-11-12T10:00:00Z",
+            "last_modified_by": "John Doe",
+            "last_modified_on": "2024-11-12T18:00:00Z",
+        },
+    }
+
+    # Configure mock to return the expected response
+    mock_update_shift.return_value = expected_response
+
+    # Create test client
+    client = TestClient(app)
+
+    # Make request to the endpoint
+    response = client.patch(
+        f"{API_PREFIX}/shifts/patch/update_shift_log_info/{test_shift_id}"
+    )
+
+    # Assertions
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()[0] == expected_response
+
+    # Verify mock was called with correct arguments
+    mock_update_shift.assert_called_once_with(current_shift_id=test_shift_id)
+
+
+@patch(
+    "ska_oso_slt_services.services.shift_service.ShiftService."
+    "update_shift_log_with_image"
+)
+def test_add_shift_log_comment_image(mock_shift_comment_image):
+    # Prepare test data with metadata
+    test_file = {"file": ("test_image.png", b"dummy image content", "image/png")}
+    shift_data = [
+        {
+            "path": "https://skao-611985328822-shift-log-tool-storage.s3."
+            "amazonaws.com/d03269ecb544276928aad4916b0a1f5c11d6ebe9e2439d"
+            "b4708369f72fcf1746.jpeg",
+            "unique_id": "d03269ecb544276928aad4916b0a1f5c11d6ebe9e2439db"
+            "4708369f72fcf1746.jpeg",
+            "timestamp": "2024-11-11T15:42:58.481265Z",
+        }
+    ]
+
+    mock_shift_comment_image.return_value = shift_data
+
+    # Send a POST request to the endpoint
+    response = client.put(
+        f"{API_PREFIX}/shift_log_comments/upload_image/2?operator_name=Ross",
+        files=test_file,
+    )
     # Assertions
     assert (
         response.status_code == 200
