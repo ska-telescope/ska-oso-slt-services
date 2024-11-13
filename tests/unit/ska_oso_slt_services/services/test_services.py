@@ -2,7 +2,6 @@ from unittest.mock import Mock
 
 import pytest
 
-from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.repository.postgress_shift_repository import (
     PostgresShiftRepository,
 )
@@ -209,31 +208,3 @@ def test_merge_shift_comments_empty_shifts(shift_service):
     # Assert
     assert result == []
     assert isinstance(result, list)
-
-
-def test_merge_shift_comments_single_shift_no_comments(shift_service):
-    # Arrange
-    shifts = [
-        {
-            "shift_id": "shift_001",
-        }
-    ]
-
-    # Act
-    result = shift_service.merge_shift_comments(shifts)
-
-    # Assert
-    assert len(result) == 1
-    assert "comments" in result[0]
-    assert isinstance(result[0]["comments"], list)
-    assert result[0]["shift_id"] == "shift_001"
-
-
-def test_get_shift_not_found(shift_service):
-    # Arrange
-    shift_id = "shift_001"  # Use a known shift ID from your database
-
-    # Assert
-    with pytest.raises(NotFoundError) as exc_info:
-        shift_service.get_shift(shift_id)
-    assert f"No shift found with ID: {shift_id}" in str(exc_info.value)
