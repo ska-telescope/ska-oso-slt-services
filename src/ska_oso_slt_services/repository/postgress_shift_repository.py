@@ -755,7 +755,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogCommentUpdate: The updated shift log comment with the image added.
         """
-        query, params = select_last_serial_id(table_details=ShiftCommentMapping())
+        query, params = select_last_serial_id(table_details=table_mapping)
         last_id_response = self.postgres_data_access.get(query=query, params=params)
         if last_id_response[0]["max"]:
             shift_comment.id = last_id_response[0]["max"] + 1
