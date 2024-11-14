@@ -540,6 +540,10 @@ def select_comments_query(
     else:
         query = base_query  # No conditions, return all comments
 
+    query += sql.SQL(" ORDER BY {order_field} DESC").format(
+        order_field=sql.Identifier("id")
+    )
+
     return query, tuple(params)
 
 
