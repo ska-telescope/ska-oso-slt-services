@@ -116,16 +116,13 @@ def upload_file_object_to_s3(file: Media) -> Tuple[str, str, str]:
         s3_client = get_aws_client()
 
         # Check if the file already exists in S3
-        try:
-            s3_client.upload_fileobj(
-                file.file,
-                AWS_SLT_BUCKET_NAME,
-                filename,
-                ExtraArgs={"ContentType": file.content_type},
-            )
-            LOGGER.info("File uploaded to S3: %s", filename)
-        except ClientError as e:
-            raise
+        s3_client.upload_fileobj(
+            file.file,
+            AWS_SLT_BUCKET_NAME,
+            filename,
+            ExtraArgs={"ContentType": file.content_type},
+        )
+        LOGGER.info("File uploaded to S3: %s", filename)
 
         # Construct the URL of the file
         file_url = f"https://{AWS_SLT_BUCKET_NAME}.{AWS_BUCKET_URL}/{filename}"

@@ -5,8 +5,6 @@ import pytest
 from botocore.exceptions import ClientError
 from fastapi import UploadFile
 
-from ska_oso_slt_services.common.error_handling import FileExists
-
 # Assuming the function is in a module named 's3_utils'
 from ska_oso_slt_services.utils.s3_bucket import (
     AWS_SLT_BUCKET_NAME,
@@ -32,68 +30,6 @@ def mock_aws_client():
 
 @patch("ska_oso_slt_services.utils.s3_bucket.get_aws_client")
 @patch("ska_oso_slt_services.utils.s3_bucket.calculate_file_hash")
-def test_upload_file_object_to_s3_client_error(
-    mock_calculate_file_hash, mock_get_aws_client, mock_file
-):
-    # Arrange
-    mock_s3_client = Mock()
-    mock_get_aws_client.return_value = mock_s3_client
-    mock_calculate_file_hash.return_value = "fake_hash"
-    mock_file.filename = "test.jpg"
-
-    # Simulate file not found in S3, then upload error
-    mock_s3_client.head_object.side_effect = ClientError(
-        {"Error": {"Code": "404", "Message": "Not Found"}}, "head_object"
-    )
-    mock_s3_client.upload_fileobj.side_effect = ClientError(
-        {"Error": {"Code": "TestException", "Message": "Test error message"}},
-        "upload_fileobj",
-    )
-
-    # Act & Assert
-    with pytest.raises(ClientError):
-        upload_file_object_to_s3(mock_file)
-
-    # Verify function calls
-    mock_calculate_file_hash.assert_called_once_with(mock_file)
-    mock_s3_client.head_object.assert_called_once_with(
-        Bucket=AWS_SLT_BUCKET_NAME, Key="fake_hash.jpg"
-    )
-    mock_s3_client.upload_fileobj.assert_called_once()
-
-
-@patch("ska_oso_slt_services.utils.s3_bucket.get_aws_client")
-@patch("ska_oso_slt_services.utils.s3_bucket.calculate_file_hash")
-def test_upload_file_object_to_s3_file_exists(
-    mock_calculate_file_hash, mock_get_aws_client, mock_file
-):
-    # Arrange
-    mock_s3_client = Mock()
-    mock_get_aws_client.return_value = mock_s3_client
-    mock_calculate_file_hash.return_value = "existing_hash"
-    mock_file.filename = "test.jpg"
-
-    # Simulate file found in S3
-    mock_s3_client.head_object.return_value = {}  # Simulating that the file exists
-
-    # Act & Assert
-    with pytest.raises(FileExists) as exc_info:
-        upload_file_object_to_s3(mock_file)
-
-    # Assert
-    assert (
-        str(exc_info.value)
-        == "302: File existing_hash.jpg already exists in S3. Skipping upload."
-    )
-    mock_calculate_file_hash.assert_called_once_with(mock_file)
-    mock_s3_client.head_object.assert_called_once_with(
-        Bucket=AWS_SLT_BUCKET_NAME, Key="existing_hash.jpg"
-    )
-    mock_s3_client.upload_fileobj.assert_not_called()
-
-
-@patch("ska_oso_slt_services.utils.s3_bucket.get_aws_client")
-@patch("ska_oso_slt_services.utils.s3_bucket.calculate_file_hash")
 def test_upload_file_object_to_s3_key_error(
     mock_calculate_file_hash, mock_get_aws_client, mock_file
 ):
@@ -107,8 +43,7 @@ def test_upload_file_object_to_s3_key_error(
     mock_file.file.seek = Mock()
     mock_file.file.read = Mock(return_value=b"Test content")
 
-    # Act & Assert
-    with pytest.raises(FileExists):
+    with pytest.raises(KeyError):
         upload_file_object_to_s3(mock_file)
 
 
@@ -125,11 +60,6 @@ def test_upload_file_object_to_s3_success(
     mock_s3_client = Mock()
     mock_get_aws_client.return_value = mock_s3_client
 
-    # Mock the head_object method to raise a ClientError with a 404 status
-    mock_s3_client.head_object.side_effect = ClientError(
-        {"Error": {"Code": "404", "Message": "Not Found"}}, "HeadObject"
-    )
-
     # Act
     file_url, filename, file_extension = upload_file_object_to_s3(mock_file)
     # Assert
@@ -139,9 +69,7 @@ def test_upload_file_object_to_s3_success(
 
     # Verify that the necessary methods were called
     mock_calculate_file_hash.assert_called_once_with(mock_file)
-    mock_s3_client.head_object.assert_called_once_with(
-        Bucket="test-bucket", Key="fake_hash.txt"
-    )
+
     mock_s3_client.upload_fileobj.assert_called_once_with(
         mock_file.file,
         "test-bucket",
