@@ -1347,7 +1347,7 @@ def test_add_shift_log_comment_image(mock_shift_comment_image):
 
     # Send a POST request to the endpoint
     response = client.put(
-        f"{API_PREFIX}/shift_log_comments/upload_image/2?operator_name=Ross",
+        f"{API_PREFIX}/shift_log_comments/upload_image/2",
         files=test_file,
     )
     # Assertions

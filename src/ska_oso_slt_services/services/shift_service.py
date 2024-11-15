@@ -495,13 +495,12 @@ class ShiftService:
             shift_log_comment_with_metadata
         )
 
-    def update_shift_log_with_image(self, comment_id, operator_name, file):
+    def update_shift_log_with_image(self, comment_id, file):
         """
         Update a shift log comment with an image.
 
         Args:
             comment_id (int): The ID of the comment to update.
-            operator_name (str): The name of the operator adding the image.
             file: The image file to add.
 
         Returns:
@@ -517,7 +516,7 @@ class ShiftService:
         if not metadata:
             raise NotFoundError(f"No Comment found with ID: {comment_id}")
 
-        shift_log_comment = ShiftLogComment(id=comment_id, operator_name=operator_name)
+        shift_log_comment = ShiftLogComment(id=comment_id)
         shift_log_comment.metadata = metadata
 
         shift_log_comment_with_metadata = update_metadata(
