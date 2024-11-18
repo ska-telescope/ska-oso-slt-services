@@ -23,7 +23,7 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftComment,
     ShiftLogComment,
 )
-from ska_oso_slt_services.repository.postgress_shift_repository import (
+from ska_oso_slt_services.repository.postgres_shift_repository import (
     PostgresShiftRepository,
 )
 from ska_oso_slt_services.services.shift_service import ShiftService
