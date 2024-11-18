@@ -1323,13 +1323,10 @@ def test_patch_shift_log_info_success(mock_update_shift):
     mock_update_shift.assert_called_once_with(current_shift_id=test_shift_id)
 
 
-@patch(
-    "ska_oso_slt_services.services.shift_service.ShiftService."
-    "update_shift_log_with_image"
-)
+@patch("ska_oso_slt_services.services.shift_service.ShiftService." "add_media")
 def test_add_shift_log_comment_image(mock_shift_comment_image):
     # Prepare test data with metadata
-    test_file = {"file": ("test_image.png", b"dummy image content", "image/png")}
+    test_file = {"files": ("test_image.png", b"dummy image content", "image/png")}
     shift_data = [
         {
             "path": "https://skao-611985328822-shift-log-tool-storage.s3."

@@ -409,19 +409,24 @@ def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogCommen
         },
     },
 )
-def update_shift_log_with_image(comment_id: int, file: UploadFile = File(...)):
+def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(...)):
     """
     Uploads FIle to s3 and updates the relevant Shift Log comment image with the URL
 
     Args:
         comment_id: Comment ID
-        File: File to be uploaded
+        file(s): File(s) to be uploaded
 
     Returns:
          shift_log_comment (ShiftLogComment): The updated shift log comment  data.
     """
 
-    media = shift_service.update_shift_log_with_image(comment_id=comment_id, file=file)
+    media = shift_service.add_media(
+        comment_id=comment_id,
+        files=files,
+        shift_model=ShiftLogComment,
+        table_mapping=ShiftLogCommentMapping(),
+    )
     return media, HTTPStatus.OK
 
 
