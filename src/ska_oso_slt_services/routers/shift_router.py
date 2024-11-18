@@ -549,7 +549,7 @@ def patch_shift_log_info(shift_id: Optional[str]):
                 }
             },
         },
-        422: {
+        404: {
             "description": "Invalid Shift Id",
             "content": {
                 "application/json": {"example": {"message": "Invalid Shift Id"}}
@@ -636,7 +636,7 @@ def get_shift_comments(shift_id: Optional[str] = None):
                 }
             },
         },
-        422: {
+        404: {
             "description": "Invalid Comment ID",
             "content": {
                 "application/json": {"example": {"message": "Invalid Comment Id"}}
