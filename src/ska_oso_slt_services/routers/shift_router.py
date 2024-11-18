@@ -386,6 +386,28 @@ def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogCommen
     "/shift_log_comments/upload_image/{comment_id}",
     tags=["Shift Log Comments"],
     summary="Upload image for Shift log comment",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "path": "test_path",
+                            "unique_id": "test_unique_id",
+                            "timestamp": "2024-11-11T15:46:13.223618Z",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+    },
 )
 def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(...)):
     """
