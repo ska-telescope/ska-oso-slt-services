@@ -15,7 +15,6 @@ from ska_oso_slt_services.common.constant import (
     AWS_SERVICE_NAME,
     AWS_SLT_BUCKET_NAME,
 )
-from ska_oso_slt_services.common.error_handling import FileExists
 from ska_oso_slt_services.domain.shift_models import Media
 
 LOGGER = logging.getLogger(__name__)
@@ -117,22 +116,13 @@ def upload_file_object_to_s3(file: Media) -> Tuple[str, str, str]:
         s3_client = get_aws_client()
 
         # Check if the file already exists in S3
-        try:
-            s3_client.head_object(Bucket=AWS_SLT_BUCKET_NAME, Key=filename)
-            raise FileExists(f"File {filename} already exists in S3. Skipping upload.")
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
-                # File doesn't exist, so upload it
-                s3_client.upload_fileobj(
-                    file.file,
-                    AWS_SLT_BUCKET_NAME,
-                    filename,
-                    ExtraArgs={"ContentType": file.content_type},
-                )
-                LOGGER.info("File uploaded to S3: %s", filename)
-            else:
-                # Some other error occurred
-                raise
+        s3_client.upload_fileobj(
+            file.file,
+            AWS_SLT_BUCKET_NAME,
+            filename,
+            ExtraArgs={"ContentType": file.content_type},
+        )
+        LOGGER.info("File uploaded to S3: %s", filename)
 
         # Construct the URL of the file
         file_url = f"https://{AWS_SLT_BUCKET_NAME}.{AWS_BUCKET_URL}/{filename}"
