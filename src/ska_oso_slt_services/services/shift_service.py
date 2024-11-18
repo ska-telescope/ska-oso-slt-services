@@ -548,10 +548,10 @@ class ShiftService:
         if not self.postgres_repository:
             raise ValueError("PostgresShiftRepository is not available")
 
-        shift_id = self.postgres_repository.get_current_shift()["shift_id"]
+        shift = self.postgres_repository.get_current_shift()
 
-        if shift_id:
-            return self.get_shift(shift_id=shift_id)
+        if shift:
+            return self.get_shift(shift_id=shift["shift_id"])
         else:
             raise NotFoundError("No shift found")
 

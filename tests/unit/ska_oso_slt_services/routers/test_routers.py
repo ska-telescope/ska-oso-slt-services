@@ -463,7 +463,7 @@ def test_create_shift_comments(mock_create_shift_comment):
     mock_create_shift_comment.return_value = comment_data
 
     # Send a POST request to create a comment
-    response = client.post(f"{API_PREFIX}/shift_comments", json=comment_data)
+    response = client.post(f"{API_PREFIX}/shift_comment", json=comment_data)
 
     assert (
         response.status_code == 200
@@ -529,7 +529,7 @@ def test_get_shift_comments(mock_get_shift_comments):
     mock_get_shift_comments.return_value = comment_data
 
     # Send a POST request to create a comment
-    response = client.get(f"{API_PREFIX}/shift_comments?shift_id=test-shift-id")
+    response = client.get(f"{API_PREFIX}/shift_comment?shift_id=test-shift-id")
 
     assert (
         response.status_code == 200
@@ -579,7 +579,7 @@ def test_update_shift_comments(mock_update_shift_comment):
     mock_update_shift_comment.return_value = updated_comment_data
 
     # Send a POST request to create a comment
-    response = client.put(f"{API_PREFIX}/shift_comments/1", json=data_to_be_updated)
+    response = client.put(f"{API_PREFIX}/shift_comment/1", json=data_to_be_updated)
 
     assert (
         response.status_code == 200
@@ -621,7 +621,7 @@ def test_create_shift_comment_image(mock_shift_comment_image):
 
     # Send a POST request to the endpoint
     response = client.post(
-        f"{API_PREFIX}/shift_comments/upload_image?shift_id=shift-20241111-2"
+        f"{API_PREFIX}/shift_comment/upload_image?shift_id=shift-20241111-2"
         "&shift_operator=test",
         files=test_file,
     )
@@ -660,9 +660,7 @@ def test_add_shift_comment_image(mock_shift_comment_image):
     mock_shift_comment_image.return_value = shift_data
 
     # Send a POST request to the endpoint
-    response = client.put(
-        f"{API_PREFIX}/shift_comments/upload_image/2", files=test_file
-    )
+    response = client.put(f"{API_PREFIX}/shift_comment/upload_image/2", files=test_file)
 
     # Assertions
     assert (
@@ -702,7 +700,7 @@ def test_get_shift_comment_image(mock_shift_comment_image):
     mock_shift_comment_image.return_value = shift_data
 
     # Send a POST request to the endpoint
-    response = client.get(f"{API_PREFIX}/shift_comments/download_images/3")
+    response = client.get(f"{API_PREFIX}/shift_comment/download_images/3")
 
     # Assertions
     assert (
