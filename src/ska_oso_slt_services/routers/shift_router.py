@@ -574,7 +574,7 @@ def create_shift_comments(shift_comment: ShiftComment):
 @router.get(
     "/shift_comment",
     tags=["Shift Comments"],
-    summary="Retrieve shift log comments based on shift ID and EB ID,",
+    summary="Retrieve shift comments based on shift ID and EB ID,",
     responses={
         200: {
             "description": "Successful Response",
