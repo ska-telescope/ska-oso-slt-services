@@ -6,7 +6,8 @@
   "image": [
     {
       "path": "string",
-      "unique_id": "string"
+      "unique_id": "string",
+      "timestamp": "string"
     }
   ],
   "metadata": {
