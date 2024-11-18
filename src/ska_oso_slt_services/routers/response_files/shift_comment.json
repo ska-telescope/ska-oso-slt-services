@@ -1,0 +1,18 @@
+{
+  "id": 0,
+  "comment": "string",
+  "operator_name": "string",
+  "shift_id": "string",
+  "image": [
+    {
+      "path": "string",
+      "unique_id": "string"
+    }
+  ],
+  "metadata": {
+    "created_by": "string",
+    "created_on": "2024-11-15T10:01:58.822Z",
+    "last_modified_by": "string",
+    "last_modified_on": "2024-11-15T10:01:58.822Z"
+  }
+}
