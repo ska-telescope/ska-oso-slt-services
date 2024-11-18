@@ -23,7 +23,7 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftComment,
     ShiftLogComment,
 )
-from ska_oso_slt_services.repository.postgress_shift_repository import (
+from ska_oso_slt_services.repository.postgres_shift_repository import (
     PostgresShiftRepository,
 )
 from ska_oso_slt_services.services.shift_service import ShiftService
@@ -514,9 +514,31 @@ def patch_shift_log_info(shift_id: Optional[str]):
 
 
 @router.post(
-    "/shift_comments",
+    "/shift_comment",
     tags=["Shift Comments"],
     summary="Create a new shift comment",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_comment.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        404: {
+            "description": "Invalid Shift Id",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+    },
 )
 def create_shift_comments(shift_comment: ShiftComment):
     """
@@ -533,9 +555,35 @@ def create_shift_comments(shift_comment: ShiftComment):
 
 
 @router.get(
-    "/shift_comments",
+    "/shift_comment",
     tags=["Shift Comments"],
-    summary="Retrieve shift log comments based on shift ID and EB ID,",
+    summary="Retrieve shift comments based on shift ID and EB ID,",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_comment.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        404: {
+            "description": "Invalid Shift Id",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "No shifts log comments found for the given query."
+                    }
+                }
+            },
+        },
+    },
 )
 def get_shift_comments(shift_id: Optional[str] = None):
     """
@@ -553,9 +601,31 @@ def get_shift_comments(shift_id: Optional[str] = None):
 
 
 @router.put(
-    "/shift_comments/{comment_id}",
+    "/shift_comment/{comment_id}",
     tags=["Shift Comments"],
     summary="Update an existing shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_comment.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        404: {
+            "description": "Invalid Comment ID",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+    },
 )
 def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
     """
@@ -579,6 +649,28 @@ def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
     "/shift_log_comments/upload_image",
     tags=["Shift Log Comments"],
     summary="Upload image for shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "path": "test_path",
+                            "unique_id": "test_unique_id",
+                            "timestamp": "2024-11-11T15:46:13.223618Z",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+    },
 )
 def post_shift_log_media(
     shift_id: str, shift_operator: str, eb_id: str, file: UploadFile = File(...)
@@ -617,6 +709,28 @@ def post_shift_log_media(
     "/shift_log_comments/download_images/{comment_id}",
     tags=["Shift Log Comments"],
     summary="download shift image",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "file_key": "test.jpeg",
+                            "media_content": "test_media_content",
+                            "content_type": "image/jpeg",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+    },
 )
 def get_shift_log_media(comment_id: Optional[int]):
     """Retrieve media associated with a shift comment.
@@ -638,9 +752,31 @@ def get_shift_log_media(comment_id: Optional[int]):
 
 
 @router.post(
-    "/shift_comments/upload_image",
+    "/shift_comment/upload_image",
     tags=["Shift Comments"],
     summary="Upload image for shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "path": "test_path",
+                            "unique_id": "test_unique_id",
+                            "timestamp": "2024-11-11T15:46:13.223618Z",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+    },
 )
 def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...)):
     """
@@ -667,9 +803,31 @@ def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...))
 
 
 @router.put(
-    "/shift_comments/upload_image/{comment_id}",
+    "/shift_comment/upload_image/{comment_id}",
     tags=["Shift Comments"],
     summary="Upload image for shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "path": "test_path",
+                            "unique_id": "test_unique_id",
+                            "timestamp": "2024-11-11T15:46:13.223618Z",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+    },
 )
 def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
     """
@@ -697,9 +855,31 @@ def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
 
 
 @router.get(
-    "/shift_comments/download_images/{comment_id}",
+    "/shift_comment/download_images/{comment_id}",
     tags=["Shift Comments"],
     summary="download shift image",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "file_key": "test.jpeg",
+                            "media_content": "test_media_content",
+                            "content_type": "image/jpeg",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+    },
 )
 def get_media(comment_id: Optional[int]):
     """Retrieve media associated with a shift comment.
