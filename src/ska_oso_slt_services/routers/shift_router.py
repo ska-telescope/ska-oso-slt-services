@@ -393,9 +393,9 @@ def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogCommen
                 "application/json": {
                     "example": [
                         {
-                            "file_extension": "test",
                             "path": "test_path",
                             "unique_id": "test_unique_id",
+                            "timestamp": "2024-11-11T15:46:13.223618Z",
                         }
                     ]
                 }
@@ -596,6 +596,28 @@ def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
     "/shift_log_comments/upload_image",
     tags=["Shift Log Comments"],
     summary="Upload image for shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "path": "test_path",
+                            "unique_id": "test_unique_id",
+                            "timestamp": "2024-11-11T15:46:13.223618Z",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+    },
 )
 def post_shift_log_media(
     shift_id: str, shift_operator: str, eb_id: str, file: UploadFile = File(...)
@@ -634,6 +656,28 @@ def post_shift_log_media(
     "/shift_log_comments/download_images/{comment_id}",
     tags=["Shift Log Comments"],
     summary="download shift image",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "file_key": "test.jpeg",
+                            "media_content": "test_media_content",
+                            "content_type": "image/jpeg",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+    },
 )
 def get_shift_log_media(comment_id: Optional[int]):
     """Retrieve media associated with a shift comment.
@@ -658,6 +702,28 @@ def get_shift_log_media(comment_id: Optional[int]):
     "/shift_comments/upload_image",
     tags=["Shift Comments"],
     summary="Upload image for shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "path": "test_path",
+                            "unique_id": "test_unique_id",
+                            "timestamp": "2024-11-11T15:46:13.223618Z",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+    },
 )
 def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...)):
     """
@@ -687,6 +753,28 @@ def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...))
     "/shift_comments/upload_image/{comment_id}",
     tags=["Shift Comments"],
     summary="Upload image for shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "path": "test_path",
+                            "unique_id": "test_unique_id",
+                            "timestamp": "2024-11-11T15:46:13.223618Z",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+    },
 )
 def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
     """
@@ -717,6 +805,28 @@ def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
     "/shift_comments/download_images/{comment_id}",
     tags=["Shift Comments"],
     summary="download shift image",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "file_key": "test.jpeg",
+                            "media_content": "test_media_content",
+                            "content_type": "image/jpeg",
+                        }
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+    },
 )
 def get_media(comment_id: Optional[int]):
     """Retrieve media associated with a shift comment.
