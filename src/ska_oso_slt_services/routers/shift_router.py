@@ -169,7 +169,17 @@ def get_shifts(
     responses={
         200: {
             "description": "Successful Response",
-            "content": {"application/json": {"example": {"shift_operator": "test"}}},
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_response.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
         },
         422: {
             "description": "Unprocessable Content",
