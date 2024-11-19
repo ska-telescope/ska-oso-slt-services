@@ -16,7 +16,6 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 * Released first version of SLT.
 
 0.0.0
-
 -----
 
 - Created new repository for Shift Log Tool Services
