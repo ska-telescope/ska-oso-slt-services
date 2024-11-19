@@ -1214,75 +1214,6 @@
         }
       }
     },
-    "/ska-oso-slt-services/slt/api/v0/shift_log_comments/upload_image": {
-      "post": {
-        "tags": [
-          "Shift Log Comments"
-        ],
-        "summary": "Upload image for shift",
-        "description": "Upload one or more image files for a specific shift.\n\nThis endpoint allows uploading multiple image files associated\nwith a particular shift identified by the shift_id.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    eb_id (str): The EB ID associated with the shift.\n    files (list[UploadFile]): A list of files to be uploaded.\n        Each file should be an image. This parameter uses\n        FastAPI's File(...) for handling file uploads.\n\nReturns:\n    list: A list containing elements:\n        - image_response: The media (image) data associated with the comment.\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.",
-        "operationId": "post_shift_log_media_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image_post",
-        "parameters": [
-          {
-            "name": "shift_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Shift Id"
-            }
-          },
-          {
-            "name": "shift_operator",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Shift Operator"
-            }
-          },
-          {
-            "name": "eb_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Eb Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_post_shift_log_media_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image_post"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/ska-oso-slt-services/slt/api/v0/shift_log_comments/download_images/{comment_id}": {
       "get": {
         "tags": [
@@ -1337,7 +1268,7 @@
           "Shift Comments"
         ],
         "summary": "Upload image for shift",
-        "description": "Create a new shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    files (list[UploadFile]): A list of files to be uploaded.\n        Each file should be an image. This parameter uses\n        FastAPI's File(...) for handling file uploads.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
+        "description": "Create a new shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    file (list[UploadFile]): A list of files to be uploaded.\n        \nReturns:\n    ShiftLogComment: The created shift log comment.",
         "operationId": "post_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post",
         "parameters": [
           {
@@ -1374,16 +1305,23 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {},
+                "example": [
+                  {
+                    "file_extension": "test",
+                    "path": "test_path",
+                    "unique_id": "test_unique_id"
+                  }
+                ]
               }
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                "example": {
+                  "message": "Invalid Comment Id"
                 }
               }
             }
@@ -1530,20 +1468,6 @@
           "file"
         ],
         "title": "Body_post_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post"
-      },
-      "Body_post_shift_log_media_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image_post": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "format": "binary",
-            "title": "File"
-          }
-        },
-        "type": "object",
-        "required": [
-          "file"
-        ],
-        "title": "Body_post_shift_log_media_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image_post"
       },
       "Body_update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__comment_id__put": {
         "properties": {
