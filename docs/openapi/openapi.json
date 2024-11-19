@@ -177,22 +177,6 @@
             }
           },
           {
-            "name": "comments",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Comments"
-            }
-          },
-          {
             "name": "match_type",
             "in": "query",
             "required": false,
@@ -215,7 +199,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/SbiStatus"
+                  "$ref": "#/components/schemas/SBIStatus"
                 },
                 {
                   "type": "null"
@@ -225,6 +209,26 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ShiftComment"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Comments"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -334,9 +338,28 @@
             "content": {
               "application/json": {
                 "schema": {},
-                "example": {
-                  "shift_operator": "test"
-                }
+                "example": [
+                  {
+                    "shift_id": "string",
+                    "shift_start": "2024-11-08T11:11:24.549Z",
+                    "shift_end": "2024-11-08T11:11:24.549Z",
+                    "shift_operator": "string",
+                    "annotations": "string",
+                    "shift_logs": [
+                      {
+                        "info": {},
+                        "source": "string",
+                        "log_time": "2024-11-08T11:11:24.549Z"
+                      }
+                    ],
+                    "metadata": {
+                      "created_by": "string",
+                      "created_on": "2024-11-08T11:11:24.549Z",
+                      "last_modified_by": "string",
+                      "last_modified_on": "2024-11-08T11:11:24.549Z"
+                    }
+                  }
+                ]
               }
             }
           },
@@ -428,112 +451,6 @@
               "application/json": {
                 "example": {
                   "message": "Invalid Shift Id"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/ska-oso-slt-services/slt/api/v0/shifts/upload_image/{shift_id}": {
-      "put": {
-        "tags": [
-          "shifts"
-        ],
-        "summary": "Upload image for shift",
-        "description": "Upload one or more image files for a specific shift.\n\nThis endpoint allows uploading multiple imagefiles associated\nwith a particular shift identified by the shift_id.\n\nArgs:\n    shift_id (Optional[str]): The unique identifier of the\n        shift to which the images will be associated.\n    files (list[UploadFile]): A list of files to be uploaded.\n        Each file should be an image. This parameter uses\n        FastAPI's File(...) for handling file uploads.\n\nReturns:\n    list: A list containing elements:\n        - image_response: The media (image) data associated with the shift.\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.",
-        "operationId": "add_media_ska_oso_slt_services_slt_api_v0_shifts_upload_image__shift_id__put",
-        "parameters": [
-          {
-            "name": "shift_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Shift Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_add_media_ska_oso_slt_services_slt_api_v0_shifts_upload_image__shift_id__put"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/ska-oso-slt-services/slt/api/v0/shifts/download_images/{shift_id}": {
-      "get": {
-        "tags": [
-          "shifts"
-        ],
-        "summary": "download shift image",
-        "description": "Retrieve media (image) associated with a specific shift.\n\nThis endpoint allows downloading images related to a particular shift\nidentified by the shift_id.\n\nArgs:\n    shift_id (Optional[str]): The unique identifier of the shift.\n        If provided, it's used to fetch the specific shift's image.\n        If None returns empty array.\n\nReturns:\n    list: A list containing elements:\n        - image_response: The media (image) data\n            associated with the shift.\n        - HTTPStatus.OK: HTTP 200 status\n            code indicating successful retrieval.",
-        "operationId": "get_media_ska_oso_slt_services_slt_api_v0_shifts_download_images__shift_id__get",
-        "parameters": [
-          {
-            "name": "shift_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Shift Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -757,31 +674,22 @@
         }
       }
     },
-    "/ska-oso-slt-services/slt/api/v0/shift_log_comments/upload_image/": {
+    "/ska-oso-slt-services/slt/api/v0/shift_log_comments/upload_image/{comment_id}": {
       "put": {
         "tags": [
           "Shift Log Comments"
         ],
         "summary": "Upload image for Shift log comment",
-        "description": "Uploads FIle to s3 and updates the relevant Shift Log comment image with the URL\n\nArgs:\n    comment_id: Comment ID\n    Operator_name: Operator Name\n    File: File to be uploaded\n\nReturns:\n     shift_log_comment (ShiftLogComment): The updated shift log comment  data.",
-        "operationId": "update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__put",
+        "description": "Uploads FIle to s3 and updates the relevant Shift Log comment image with the URL\n\nArgs:\n    comment_id: Comment ID\n    File: File to be uploaded\n\nReturns:\n     shift_log_comment (ShiftLogComment): The updated shift log comment  data.",
+        "operationId": "update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__comment_id__put",
         "parameters": [
           {
             "name": "comment_id",
-            "in": "query",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
               "title": "Comment Id"
-            }
-          },
-          {
-            "name": "operator_name",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Operator Name"
             }
           }
         ],
@@ -790,7 +698,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__put"
+                "$ref": "#/components/schemas/Body_update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__comment_id__put"
               }
             }
           }
@@ -950,96 +858,115 @@
               "application/json": {
                 "schema": {},
                 "example": [
-                  [
-                    {
-                      "info": {
-                        "eb_id": "eb-t0001-20240813-00010",
-                        "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
-                        "metadata": {
-                          "created_by": "DefaultUser",
-                          "created_on": "2024-08-13T06:59:22.909729Z",
-                          "last_modified_by": "DefaultUser",
-                          "last_modified_on": "2024-08-13T06:59:22.909729Z",
-                          "version": 1
-                        },
-                        "request_responses": [
+                  {
+                    "shift_id": "string",
+                    "shift_start": "2024-11-08T11:11:24.549Z",
+                    "shift_end": "2024-11-08T11:11:24.549Z",
+                    "shift_operator": "string",
+                    "annotations": "string",
+                    "shift_logs": [
+                      {
+                        "info": [
                           {
-                            "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
-                            "request_args": {
-                              "kwargs": {
-                                "subarray_id": "1"
-                              }
+                            "info": {
+                              "eb_id": "eb-t0001-20240813-00010",
+                              "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
+                              "metadata": {
+                                "created_by": "DefaultUser",
+                                "created_on": "2024-08-13T06:59:22.909729Z",
+                                "last_modified_by": "DefaultUser",
+                                "last_modified_on": "2024-08-13T06:59:22.909729Z",
+                                "version": 1
+                              },
+                              "request_responses": [
+                                {
+                                  "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
+                                  "request_args": {
+                                    "kwargs": {
+                                      "subarray_id": "1"
+                                    }
+                                  },
+                                  "request_sent_at": "2022-09-23T15:43:53.971548Z",
+                                  "response": {
+                                    "result": "this is a result"
+                                  },
+                                  "response_received_at": "2022-09-23T15:43:53.971548Z",
+                                  "status": "OK"
+                                },
+                                {
+                                  "error": {
+                                    "detail": "this is an error"
+                                  },
+                                  "request": "ska_oso_scripting.functions.devicecontrol.scan",
+                                  "request_sent_at": "2022-09-23T15:43:53.971548Z",
+                                  "status": "ERROR"
+                                }
+                              ],
+                              "sbd_ref": "sbd-t0001-20240812-00001",
+                              "sbd_version": 1,
+                              "sbi_ref": "sbi-t0001-20240812-00002",
+                              "sbi_status": "Created",
+                              "telescope": "ska_mid"
                             },
-                            "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                            "response": {
-                              "result": "this is a result"
-                            },
-                            "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            "status": "OK"
+                            "log_time": "2024-08-13T12:29:24.155159Z",
+                            "source": "ODA"
                           },
                           {
-                            "error": {
-                              "detail": "this is an error"
+                            "info": {
+                              "eb_id": "eb-t0001-20240813-00009",
+                              "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
+                              "metadata": {
+                                "created_by": "DefaultUser",
+                                "created_on": "2024-08-13T06:58:45.693863Z",
+                                "last_modified_by": "DefaultUser",
+                                "last_modified_on": "2024-08-13T06:58:45.693863Z",
+                                "version": 1
+                              },
+                              "request_responses": [
+                                {
+                                  "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
+                                  "request_args": {
+                                    "kwargs": {
+                                      "subarray_id": "1"
+                                    }
+                                  },
+                                  "request_sent_at": "2022-09-23T15:43:53.971548Z",
+                                  "response": {
+                                    "result": "this is a result"
+                                  },
+                                  "response_received_at": "2022-09-23T15:43:53.971548Z",
+                                  "status": "OK"
+                                },
+                                {
+                                  "error": {
+                                    "detail": "this is an error"
+                                  },
+                                  "request": "ska_oso_scripting.functions.devicecontrol.scan",
+                                  "request_sent_at": "2022-09-23T15:43:53.971548Z",
+                                  "status": "ERROR"
+                                }
+                              ],
+                              "sbd_ref": "sbd-t0001-20240812-00001",
+                              "sbd_version": 1,
+                              "sbi_ref": "sbi-t0001-20240812-00002",
+                              "sbi_status": "Created",
+                              "telescope": "ska_mid"
                             },
-                            "request": "ska_oso_scripting.functions.devicecontrol.scan",
-                            "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                            "status": "ERROR"
+                            "log_time": "2024-08-13T12:28:49.104331Z",
+                            "source": "ODA"
                           }
                         ],
-                        "sbd_ref": "sbd-t0001-20240812-00001",
-                        "sbd_version": 1,
-                        "sbi_ref": "sbi-t0001-20240812-00002",
-                        "sbi_status": "Created",
-                        "telescope": "ska_mid"
-                      },
-                      "log_time": "2024-08-13T12:29:24.155159Z",
-                      "source": "ODA"
-                    },
-                    {
-                      "info": {
-                        "eb_id": "eb-t0001-20240813-00009",
-                        "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
-                        "metadata": {
-                          "created_by": "DefaultUser",
-                          "created_on": "2024-08-13T06:58:45.693863Z",
-                          "last_modified_by": "DefaultUser",
-                          "last_modified_on": "2024-08-13T06:58:45.693863Z",
-                          "version": 1
-                        },
-                        "request_responses": [
-                          {
-                            "request": "ska_oso_scripting.functions.devicecontrol.release_all_resources",
-                            "request_args": {
-                              "kwargs": {
-                                "subarray_id": "1"
-                              }
-                            },
-                            "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                            "response": {
-                              "result": "this is a result"
-                            },
-                            "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            "status": "OK"
-                          },
-                          {
-                            "error": {
-                              "detail": "this is an error"
-                            },
-                            "request": "ska_oso_scripting.functions.devicecontrol.scan",
-                            "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                            "status": "ERROR"
-                          }
-                        ],
-                        "sbd_ref": "sbd-t0001-20240812-00001",
-                        "sbd_version": 1,
-                        "sbi_ref": "sbi-t0001-20240812-00002",
-                        "sbi_status": "Created",
-                        "telescope": "ska_mid"
-                      },
-                      "log_time": "2024-08-13T12:28:49.104331Z",
-                      "source": "ODA"
+                        "source": "string",
+                        "log_time": "2024-11-08T11:11:24.549Z"
+                      }
+                    ],
+                    "metadata": {
+                      "created_by": "string",
+                      "created_on": "2024-11-08T11:11:24.549Z",
+                      "last_modified_by": "string",
+                      "last_modified_on": "2024-11-08T11:11:24.549Z"
                     }
-                  ]
+                  }
                 ]
               }
             }
@@ -1056,11 +983,462 @@
           }
         }
       }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shift_comment": {
+      "post": {
+        "tags": [
+          "Shift Comments"
+        ],
+        "summary": "Create a new shift comment",
+        "description": "Create a new shift.\n\nArgs:\n    shift_comment (ShiftComment): The shift comment to create.\n\nReturns:\n    ShiftComment: The created shift comment.",
+        "operationId": "create_shift_comments_ska_oso_slt_services_slt_api_v0_shift_comment_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftComment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": [
+                  {
+                    "id": 0,
+                    "comment": "string",
+                    "operator_name": "string",
+                    "shift_id": "string",
+                    "image": [
+                      {
+                        "path": "string",
+                        "unique_id": "string",
+                        "timestamp": "2024-11-15T10:01:58.822Z"
+                      }
+                    ],
+                    "metadata": {
+                      "created_by": "string",
+                      "created_on": "2024-11-15T10:01:58.822Z",
+                      "last_modified_by": "string",
+                      "last_modified_on": "2024-11-15T10:01:58.822Z"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid Shift Id",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Shift Comments"
+        ],
+        "summary": "Retrieve shift comments based on shift ID and EB ID,",
+        "description": "Retrieve all shifts.\nThis endpoint returns a list of all shifts in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n\nReturns:\n    ShiftComment: Shift Comments match found",
+        "operationId": "get_shift_comments_ska_oso_slt_services_slt_api_v0_shift_comment_get",
+        "parameters": [
+          {
+            "name": "shift_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Shift Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": [
+                  {
+                    "id": 0,
+                    "comment": "string",
+                    "operator_name": "string",
+                    "shift_id": "string",
+                    "image": [
+                      {
+                        "path": "string",
+                        "unique_id": "string",
+                        "timestamp": "2024-11-15T10:01:58.822Z"
+                      }
+                    ],
+                    "metadata": {
+                      "created_by": "string",
+                      "created_on": "2024-11-15T10:01:58.822Z",
+                      "last_modified_by": "string",
+                      "last_modified_on": "2024-11-15T10:01:58.822Z"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid Shift Id",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "No shifts log comments found for the given query."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shift_comment/{comment_id}": {
+      "put": {
+        "tags": [
+          "Shift Comments"
+        ],
+        "summary": "Update an existing shift",
+        "description": "Update an existing shift comment.\n\nArgs:\n    comment_id (str): The unique identifier of the shift to update.\n    shift_comment (ShiftComment): The updated shift comment data.\n\nRaises:\n    HTTPException: If the shift is not found.",
+        "operationId": "update_shift_comments_ska_oso_slt_services_slt_api_v0_shift_comment__comment_id__put",
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Comment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftComment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": [
+                  {
+                    "id": 0,
+                    "comment": "string",
+                    "operator_name": "string",
+                    "shift_id": "string",
+                    "image": [
+                      {
+                        "path": "string",
+                        "unique_id": "string",
+                        "timestamp": "2024-11-15T10:01:58.822Z"
+                      }
+                    ],
+                    "metadata": {
+                      "created_by": "string",
+                      "created_on": "2024-11-15T10:01:58.822Z",
+                      "last_modified_by": "string",
+                      "last_modified_on": "2024-11-15T10:01:58.822Z"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid Comment ID",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Comment Id"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shift_log_comments/download_images/{comment_id}": {
+      "get": {
+        "tags": [
+          "Shift Log Comments"
+        ],
+        "summary": "download shift image",
+        "description": "Retrieve media associated with a shift comment.\n\nArgs:\n    comment_id (Optional[int]): The unique identifier of the comment.\n        If None, returns all media.\n\nReturns:\n    tuple: A tuple containing:\n        - image_response: The media data from the shift service\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval",
+        "operationId": "get_shift_log_media_ska_oso_slt_services_slt_api_v0_shift_log_comments_download_images__comment_id__get",
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Comment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shift_comment/upload_image": {
+      "post": {
+        "tags": [
+          "Shift Comments"
+        ],
+        "summary": "Upload image for shift",
+        "description": "Create a new shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    file (list[UploadFile]): A list of files to be uploaded.\n        \nReturns:\n    ShiftLogComment: The created shift log comment.",
+        "operationId": "post_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post",
+        "parameters": [
+          {
+            "name": "shift_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shift Id"
+            }
+          },
+          {
+            "name": "shift_operator",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shift Operator"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_post_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": [
+                  {
+                    "file_extension": "test",
+                    "path": "test_path",
+                    "unique_id": "test_unique_id"
+                  }
+                ]
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Comment Id"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shift_comment/upload_image/{comment_id}": {
+      "put": {
+        "tags": [
+          "Shift Comments"
+        ],
+        "summary": "Upload image for shift",
+        "description": "Upload one or more image files for a specific shift.\n\nThis endpoint allows uploading multiple image files associated\nwith a particular shift identified by the shift_id.\n\nArgs:\n    comment_id (Optional[int]): The unique identifier of the\n        comment to which the images will be associated.\n    files (list[UploadFile]): A list of files to be uploaded.\n        Each file should be an image. This parameter uses\n        FastAPI's File(...) for handling file uploads.\n\nReturns:\n    list: A list containing elements:\n        - image_response: The media (image) data associated with the comment.\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.",
+        "operationId": "add_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put",
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Comment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_add_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shift_comment/download_images/{comment_id}": {
+      "get": {
+        "tags": [
+          "Shift Comments"
+        ],
+        "summary": "download shift image",
+        "description": "Retrieve media associated with a shift comment.\n\nArgs:\n    comment_id (Optional[int]): The unique identifier of the comment.\n        If None, returns all media.\n\nReturns:\n    tuple: A tuple containing:\n        - image_response: The media data from the shift service\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval",
+        "operationId": "get_media_ska_oso_slt_services_slt_api_v0_shift_comment_download_images__comment_id__get",
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Comment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
-      "Body_add_media_ska_oso_slt_services_slt_api_v0_shifts_upload_image__shift_id__put": {
+      "Body_add_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put": {
         "properties": {
           "files": {
             "items": {
@@ -1075,9 +1453,9 @@
         "required": [
           "files"
         ],
-        "title": "Body_add_media_ska_oso_slt_services_slt_api_v0_shifts_upload_image__shift_id__put"
+        "title": "Body_add_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put"
       },
-      "Body_update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__put": {
+      "Body_post_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post": {
         "properties": {
           "file": {
             "type": "string",
@@ -1089,7 +1467,21 @@
         "required": [
           "file"
         ],
-        "title": "Body_update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__put"
+        "title": "Body_post_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post"
+      },
+      "Body_update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__comment_id__put": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__comment_id__put"
       },
       "Filter": {
         "type": "string",
@@ -1116,17 +1508,6 @@
       },
       "Media": {
         "properties": {
-          "file_extension": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "File Extension"
-          },
           "path": {
             "anyOf": [
               {
@@ -1148,6 +1529,11 @@
               }
             ],
             "title": "Unique Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
           }
         },
         "type": "object",
@@ -1193,16 +1579,15 @@
         "title": "Metadata",
         "description": "Represents metadata about other entities."
       },
-      "SbiStatus": {
+      "SBIStatus": {
         "type": "string",
         "enum": [
           "Created",
-          "In Progress",
-          "Completed",
-          "Cancelled"
+          "Executing",
+          "Observed",
+          "Failed"
         ],
-        "title": "SbiStatus",
-        "description": "Enum representing the different status values for\nan SBI entity in the SLT Shift Log Tool.\n:param CREATED: The SBI entity has been created.\n:param IN_PROGRESS: The SBI entity is in progress.\n:param COMPLETED: The SBI entity has been completed.\n:param CANCELLED: The SBI entity has been cancelled."
+        "title": "SBIStatus"
       },
       "Shift": {
         "properties": {
@@ -1266,7 +1651,10 @@
           "comments": {
             "anyOf": [
               {
-                "type": "string"
+                "items": {
+                  "$ref": "#/components/schemas/ShiftComment"
+                },
+                "type": "array"
               },
               {
                 "type": "null"
@@ -1317,6 +1705,81 @@
         "title": "Shift",
         "description": "Represents a shift in the SLT Shift Log Tool.\n\n\n:param shift_logs Optional[List[ShiftLogs]]: The logs associated with the shift.\n:param media Optional[List[Media]]: The media associated with the shift.\n:param metadata Optional[Metadat]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
       },
+      "ShiftComment": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "operator_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator Name"
+          },
+          "shift_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shift Id"
+          },
+          "image": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Media"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Metadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ShiftComment",
+        "description": "Represents a comment associated with a shift in the SShift.\n\n:param id Optional[int]: The unique identifier of the comment.\n:param comment Optional[str]: The text of the comment.\n:param operator_name Optional[str]: The name of the operator who made the comment.\n:param shift_id Optional[str]: The unique identifier of the shift the comment\n belongs to.\n:param image Optional[List[Media]]: The image associated with the comment.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
+      },
       "ShiftLogComment": {
         "properties": {
           "id": {
@@ -1366,12 +1829,16 @@
           "image": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/ShiftLogImage"
+                "items": {
+                  "$ref": "#/components/schemas/Media"
+                },
+                "type": "array"
               },
               {
                 "type": "null"
               }
-            ]
+            ],
+            "title": "Image"
           },
           "eb_id": {
             "anyOf": [
@@ -1396,25 +1863,8 @@
           }
         },
         "type": "object",
-        "title": "ShiftLogComment"
-      },
-      "ShiftLogImage": {
-        "properties": {
-          "path": {
-            "type": "string",
-            "title": "Path"
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Timestamp"
-          }
-        },
-        "type": "object",
-        "required": [
-          "path"
-        ],
-        "title": "ShiftLogImage"
+        "title": "ShiftLogComment",
+        "description": "Represents a comment associated with a shift in the SLT Shift Log Tool.\n\n:param id Optional[int]: The unique identifier of the comment.\n:param log_comment Optional[str]: The text of the comment.\n:param operator_name Optional[str]: The name of the operator who made the comment.\n:param shift_id Optional[str]: The unique identifier of the shift\n the comment belongs to.\n:param image Optional[List[Media]]: The image associated with the comment.\n:param eb_id Optional[str]: The unique identifier of the EB associated\n with the comment.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\n like shift created_on, created_bye etc..."
       },
       "ShiftLogs": {
         "properties": {

@@ -169,7 +169,17 @@ def get_shifts(
     responses={
         200: {
             "description": "Successful Response",
-            "content": {"application/json": {"example": {"shift_operator": "test"}}},
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_response.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
         },
         422: {
             "description": "Unprocessable Content",
@@ -708,8 +718,6 @@ def post_shift_log_media(
         shift_operator (str): The shift operator name.
         eb_id (str): The EB ID associated with the shift.
         files (list[UploadFile]): A list of files to be uploaded.
-            Each file should be an image. This parameter uses
-            FastAPI's File(...) for handling file uploads.
 
     Returns:
         list: A list containing elements:
@@ -807,9 +815,7 @@ def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...))
     Args:
         shift_id (str): The unique identifier of the shift to update.
         shift_operator (str): The shift operator name.
-        files (list[UploadFile]): A list of files to be uploaded.
-            Each file should be an image. This parameter uses
-            FastAPI's File(...) for handling file uploads.
+        file (list[UploadFile]): A list of files to be uploaded.
 
     Returns:
         ShiftLogComment: The created shift log comment.
