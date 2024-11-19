@@ -17,7 +17,7 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftComment,
     ShiftLogComment,
 )
-from ska_oso_slt_services.repository.postgress_shift_repository import (
+from ska_oso_slt_services.repository.postgres_shift_repository import (
     CRUDShiftRepository,
     PostgresShiftRepository,
 )
@@ -493,40 +493,6 @@ class ShiftService:
 
         return self.postgres_repository.update_shift_logs_comments(
             shift_log_comment_with_metadata
-        )
-
-    def update_shift_log_with_image(self, comment_id, file):
-        """
-        Update a shift log comment with an image.
-
-        Args:
-            comment_id (int): The ID of the comment to update.
-            file: The image file to add.
-
-        Returns:
-            ShiftLogComment: The updated shift log comment with the image added.
-
-        Raises:
-            NotFoundError: If no comment is found with the provided ID.
-        """
-        metadata = self.postgres_repository.get_latest_metadata(
-            entity_id=comment_id, table_details=ShiftLogCommentMapping()
-        )
-
-        if not metadata:
-            raise NotFoundError(f"No Comment found with ID: {comment_id}")
-
-        shift_log_comment = ShiftLogComment(id=comment_id)
-        shift_log_comment.metadata = metadata
-
-        shift_log_comment_with_metadata = update_metadata(
-            entity=shift_log_comment,
-            metadata=metadata,
-            last_modified_by=shift_log_comment.operator_name,
-        )
-
-        return self.postgres_repository.update_shift_log_with_image(
-            shift_log_comment=shift_log_comment_with_metadata, file=file
         )
 
     def get_current_shift(self):

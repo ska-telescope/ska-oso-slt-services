@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock
 
-from ska_oso_slt_services.repository.postgress_shift_repository import (
+from ska_oso_slt_services.repository.postgres_shift_repository import (
     PostgresShiftRepository,
 )
 

@@ -425,35 +425,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         return existing_shift_log_comment
 
-    def update_shift_log_with_image(self, shift_log_comment: ShiftLogComment, file):
-        """
-        Update a shift log comment with an image, uploading the image to S3.
-
-        Args:
-            shift_log_comment (ShiftLogComment): The comment data to update.
-            file: The image file to upload.
-
-        Returns:
-            ShiftLogComment: The updated shift log comment with the image added.
-        """
-
-        file_path, file_unique_id, _ = upload_file_object_to_s3(file)
-        image = Media(path=file_path, unique_id=file_unique_id)
-        image.timestamp = image.timestamp
-
-        existing_shift_log_image = ShiftLogComment.model_validate(
-            self.get_shift_logs_comment(comment_id=shift_log_comment.id)
-        )
-        existing_shift_log_image.id = shift_log_comment.id
-        existing_shift_log_image.image = [image]
-        existing_shift_log_image.metadata = shift_log_comment.metadata
-
-        self._update_shift_in_database(
-            entity=existing_shift_log_image, table_details=ShiftLogCommentMapping()
-        )
-
-        return existing_shift_log_image
-
     def get_current_shift(self):
         """
         Retrieve the most recent shift from the database.
