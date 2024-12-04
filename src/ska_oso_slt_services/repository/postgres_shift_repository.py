@@ -1,4 +1,5 @@
 import logging
+from os import getenv
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -40,6 +41,8 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftLogComment,
     ShiftLogs,
 )
+
+from ska_ser_skuid.client import SkuidClient
 from ska_oso_slt_services.repository.shift_repository import CRUDShiftRepository
 from ska_oso_slt_services.utils.s3_bucket import (
     get_file_object_from_s3,
@@ -47,6 +50,10 @@ from ska_oso_slt_services.utils.s3_bucket import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+SKUID_URL = getenv("SKUID_URL", "http://ska-ser-skuid-test-svc:9870")
+
+skuid = SkuidClient(SKUID_URL)
 
 
 class PostgresShiftRepository(CRUDShiftRepository):
@@ -159,7 +166,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             serial_id = 1
         shift.shift_start = get_datetime_for_timezone("UTC")
-        shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}-{serial_id}"
+        shift.shift_id = skuid.fetch_skuid("shift")
+        # shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}-{serial_id}"
         return shift
 
     def _insert_shift_to_database(self, table_details, entity) -> None:
