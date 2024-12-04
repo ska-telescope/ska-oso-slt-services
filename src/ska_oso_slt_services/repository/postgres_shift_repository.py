@@ -22,7 +22,6 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     select_by_shift_params,
     select_by_text_query,
     select_comments_query,
-    select_last_serial_id,
     select_latest_query,
     select_latest_shift_query,
     select_logs_by_status,
@@ -152,14 +151,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             Shift: The prepared shift object.
         """
-        query, params = select_last_serial_id(self.table_details)
-        last_serial_id = self.postgres_data_access.get_one(query, params)
-        if last_serial_id and "max" in last_serial_id and last_serial_id["max"]:
-            serial_id = last_serial_id.get("max") + 1
-        else:
-            serial_id = 1
         shift.shift_start = get_datetime_for_timezone("UTC")
-        shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}-{serial_id}"
+        shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}"
         return shift
 
     def _insert_shift_to_database(self, table_details, entity) -> None:
@@ -191,7 +184,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         return insert_query(table_details=table_details, entity=entity)
 
-    def update_shift(self, shift: Shift) -> Shift:
+    def update_shift(self, shift_id:str, shift: Shift) -> Shift:
         """
         Update an existing shift.
 
@@ -218,7 +211,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         if shift.shift_operator:
             existing_shift.shift_operator = shift.shift_operator
         existing_shift.metadata = shift.metadata
-        self._update_shift_in_database(existing_shift)
+        self._update_shift_in_database(entity_id=shift_id, entity=existing_shift)
         return existing_shift
 
     def get_latest_metadata(
@@ -248,7 +241,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         return Metadata.model_validate(meta_data)
 
     def _update_shift_in_database(
-        self, entity, table_details=ShiftLogMapping()
+        self, entity_id, entity, table_details=ShiftLogMapping()
     ) -> None:
         """
         Update an existing entity in the database.
@@ -257,7 +250,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             entity: The object to be updated in the database.
             table_details: The mapping details for the entity table.
         """
-        query, params = update_query(table_details=table_details, entity=entity)
+        query, params = update_query(entity_id=entity_id, table_details=table_details, entity=entity)
 
         self.postgres_data_access.update(query, params)
 
@@ -295,7 +288,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         return files
 
     def add_media(
-        self, shift_comment: ShiftComment, files, shift_model, table_mapping
+        self, comment_id, shift_comment: ShiftComment, files, shift_model, table_mapping
     ) -> Media:
         """
         Add media files associated with a shift comment.
@@ -319,12 +312,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         current_shift_comment = shift_model.model_validate(
             self.get_shift_comment(
-                comment_id=shift_comment.id,
+                comment_id=comment_id,
                 table_mapping=table_mapping,
             )
         )
 
-        current_shift_comment.id = shift_comment.id
         current_shift_comment.metadata = shift_comment.metadata
 
         if current_shift_comment.image:
@@ -333,7 +325,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             current_shift_comment.image = media_list
 
         self._update_shift_in_database(
-            entity=current_shift_comment, table_details=table_mapping
+            entity_id=comment_id, entity=current_shift_comment, table_details=table_mapping
         )
 
         return current_shift_comment
@@ -384,20 +376,13 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The newly created shift log comment.
         """
-        query, params = select_last_serial_id(table_details=ShiftLogCommentMapping())
-        last_id_response = self.postgres_data_access.get(query=query, params=params)
-
-        if last_id_response[0]["max"]:
-            shift_log_comment.id = last_id_response[0]["max"] + 1
-        else:
-            shift_log_comment.id = 1
         self._insert_shift_to_database(
             table_details=ShiftLogCommentMapping(), entity=shift_log_comment
         )
 
         return shift_log_comment
 
-    def update_shift_logs_comments(self, shift_log_comment: ShiftLogComment):
+    def update_shift_logs_comments(self, comment_id:int, shift_log_comment: ShiftLogComment):
         """
         Update an existing shift log comment with new data.
 
@@ -408,9 +393,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             ShiftLogComment: The updated shift log comment.
         """
         existing_shift_log_comment = ShiftLogComment.model_validate(
-            self.get_shift_logs_comment(comment_id=shift_log_comment.id)
+            self.get_shift_logs_comment(comment_id=comment_id)
         )
-        existing_shift_log_comment.id = shift_log_comment.id
         if shift_log_comment.log_comment:
             existing_shift_log_comment.log_comment = shift_log_comment.log_comment
         if shift_log_comment.eb_id:
@@ -420,7 +404,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         existing_shift_log_comment.metadata = shift_log_comment.metadata
         self._update_shift_in_database(
-            entity=existing_shift_log_comment, table_details=ShiftLogCommentMapping()
+            entity_id=comment_id, entity=existing_shift_log_comment, table_details=ShiftLogCommentMapping()
         )
 
         return existing_shift_log_comment
@@ -635,12 +619,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftComment: The newly created shift comment.
         """
-        query, params = select_last_serial_id(table_details=ShiftCommentMapping())
-        last_id_response = self.postgres_data_access.get(query=query, params=params)
-        if last_id_response[0]["max"]:
-            shift_comment.id = last_id_response[0]["max"] + 1
-        else:
-            shift_comment.id = 1
         self._insert_shift_to_database(
             table_details=ShiftCommentMapping(), entity=shift_comment
         )
@@ -682,7 +660,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             raise NotFoundError(f"No comment found with ID: {comment_id}")
 
-    def update_shift_comments(self, shift_comment: ShiftComment):
+    def update_shift_comments(self, comment_id:int, shift_comment: ShiftComment):
         """
         Update an existing shift comment with new data.
 
@@ -708,7 +686,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             existing_shift_comment.operator_name = shift_comment.operator_name
         existing_shift_comment.metadata = shift_comment.metadata
         self._update_shift_in_database(
-            entity=existing_shift_comment, table_details=ShiftCommentMapping()
+            entity_id=comment_id, entity=existing_shift_comment, table_details=ShiftCommentMapping()
         )
 
         return existing_shift_comment
@@ -726,15 +704,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogCommentUpdate: The updated shift log comment with the image added.
         """
-        query, params = select_last_serial_id(table_details=table_mapping)
-        last_id_response = self.postgres_data_access.get(query=query, params=params)
-        if last_id_response[0]["max"]:
-            shift_comment.id = last_id_response[0]["max"] + 1
-        else:
-            shift_comment.id = 1
-
         media_list = []
-
         file_path, file_unique_id, _ = upload_file_object_to_s3(file)
         media = Media(path=file_path, unique_id=file_unique_id)
         media.timestamp = media.timestamp

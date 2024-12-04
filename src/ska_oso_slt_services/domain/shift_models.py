@@ -65,7 +65,6 @@ class ShiftLogComment(SLTObject):
      like shift created_on, created_bye etc...
     """
 
-    id: Optional[int] = None
     log_comment: Optional[str] = None
     operator_name: Optional[str] = None
     shift_id: Optional[str] = None
@@ -88,7 +87,6 @@ class ShiftComment(SLTObject):
     like shift created_on, created_bye etc...
     """
 
-    id: Optional[int] = None
     comment: Optional[str] = None
     operator_name: Optional[str] = None
     shift_id: Optional[str] = None

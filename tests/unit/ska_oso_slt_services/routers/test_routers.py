@@ -321,7 +321,6 @@ def test_update_shift_log_comment():
 
     # Mock for the updated ShiftLogComment model instance
     mock_comment = MagicMock()
-    mock_comment.id = initial_comment_data["id"]
     mock_comment.log_comment = updated_comment_data["log_comment"]
     mock_comment.operator_name = updated_comment_data["operator_name"]
     mock_comment.shift_id = initial_comment_data["shift_id"]

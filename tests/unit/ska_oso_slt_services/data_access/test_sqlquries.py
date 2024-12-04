@@ -307,7 +307,7 @@ class TestShiftQueries(unittest.TestCase):
         self.assertIn("SELECT shift_id", query_string)  # Only shift_id is selected
         self.assertIn('FROM "tab_oda_slt"', query_string)
         self.assertIn("WHERE shift_end IS NULL", query_string)
-        self.assertIn("ORDER BY created_on DESC", query_string)
+        self.assertIn("ORDER BY id DESC", query_string)
         self.assertIn("LIMIT 1", query_string)
 
         # Check if parameters tuple is empty as expected
@@ -318,7 +318,7 @@ class TestShiftQueries(unittest.TestCase):
             "SELECT shift_id",
             'FROM "tab_oda_slt"',
             "WHERE shift_end IS NULL",
-            "ORDER BY created_on DESC",
+            "ORDER BY id DESC",
             "LIMIT 1",
         ]
 

@@ -259,7 +259,7 @@ class ShiftService:
         shift = update_metadata(
             shift_data, metadata=metadata, last_modified_by=shift_data.shift_operator
         )
-        return self.postgres_repository.update_shift(shift)
+        return self.postgres_repository.update_shift(shift_id, shift)
 
     def post_media(
         self, shift_id, shift_operator, file, shift_model, table_mapping, eb_id=None
@@ -319,6 +319,7 @@ class ShiftService:
             metadata=metadata,
         )
         result = self.postgres_repository.add_media(
+            comment_id=comment_id,
             shift_comment=shift,
             files=files,
             shift_model=shift_model,
@@ -478,12 +479,11 @@ class ShiftService:
         Raises:
             NotFoundError: If no comment is found with the provided ID.
         """
-        shift_log_comment.id = comment_id
         metadata = self.postgres_repository.get_latest_metadata(
-            entity_id=shift_log_comment.id, table_details=ShiftLogCommentMapping()
+            entity_id=comment_id, table_details=ShiftLogCommentMapping()
         )
         if not metadata:
-            raise NotFoundError(f"No Comment found with ID: {shift_log_comment.id}")
+            raise NotFoundError(f"No Comment found with ID: {comment_id}")
 
         shift_log_comment_with_metadata = update_metadata(
             entity=shift_log_comment,
@@ -492,7 +492,7 @@ class ShiftService:
         )
 
         return self.postgres_repository.update_shift_logs_comments(
-            shift_log_comment_with_metadata
+            comment_id, shift_log_comment_with_metadata
         )
 
     def get_current_shift(self):
@@ -648,5 +648,5 @@ class ShiftService:
         )
 
         return self.postgres_repository.update_shift_comments(
-            shift_log_comment_with_metadata
+            comment_id, shift_log_comment_with_metadata
         )

@@ -57,7 +57,7 @@ def insert_query(
     return query, params
 
 
-def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
+def update_query(entity_id:str|int, table_details: TableDetails, entity) -> QueryAndParameters:
     """
     Creates a query and parameters to update the given entity in the table,
     overwriting values in the existing row and returning the row ID.
@@ -78,8 +78,6 @@ def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
     params = table_details.get_params_with_metadata(entity)
 
     # Add the identifier value (e.g., shift_id or comment_id) to the end of params
-    identifier_value = getattr(entity, table_details.table_details.identifier_field)
-
     query = sql.SQL(
         """
         UPDATE {table} SET ({fields}) = ({values})
@@ -92,7 +90,7 @@ def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
         fields=sql.SQL(",").join(map(sql.Identifier, columns)),
         values=sql.SQL(",").join(sql.Placeholder() * len(params)),
     )
-    return query, params + (identifier_value,)
+    return query, params + (entity_id,)
 
 
 def select_latest_query(
@@ -112,7 +110,7 @@ def select_latest_query(
         which psycopg will safely combine.
     """
     columns = table_details.get_columns_with_metadata()
-    where_clause = sql.SQL("WHERE {identifier_field} = %s ORDER BY id").format(
+    where_clause = sql.SQL("WHERE {identifier_field} = %s ORDER BY id DESC").format(
         identifier_field=sql.Identifier(table_details.table_details.identifier_field),
     )
     params = (shift_id,)
@@ -218,6 +216,7 @@ def select_by_shift_params(
             ),
         )
         + where_clause
+        + sql.SQL(" ORDER BY id DESC")
     )
 
     return query, tuple(params)
@@ -275,6 +274,7 @@ def select_by_date_query(
             ),
         )
         + where_clause
+        + sql.SQL(" ORDER BY id DESC")
     )
 
     return query, params
@@ -424,7 +424,7 @@ def build_like_query(
         """
         SELECT {fields}
         FROM {table}
-        WHERE {search_column} ILIKE %s
+        WHERE {search_column} ILIKE %s"
     """
     ).format(
         fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
@@ -547,26 +547,6 @@ def select_comments_query(
     return query, tuple(params)
 
 
-def select_last_serial_id(table_details: TableDetails) -> QueryAndParameters:
-    """
-    Creates a query to select the last serial ID from the table.
-
-    Args:
-        table_details (TableDetails): The information about the table to query.
-
-    Returns:
-        QueryAndParameters: A tuple of the query and parameters.
-    """
-    query = sql.SQL(
-        """
-        SELECT MAX(id) FROM {table}
-        """
-    ).format(
-        table=sql.Identifier(table_details.table_details.table_name),
-    )
-    return query, ()
-
-
 def select_latest_shift_query(table_details: TableDetails) -> QueryAndParameters:
     """
     Creates a query and parameters to find the latest shift in the table,
@@ -584,7 +564,7 @@ def select_latest_shift_query(table_details: TableDetails) -> QueryAndParameters
         SELECT shift_id
         FROM {table}
         WHERE shift_end IS NULL
-        ORDER BY created_on DESC LIMIT 1
+        ORDER BY id DESC LIMIT 1
         """
     ).format(table=sql.Identifier(table_details.table_details.table_name))
 
