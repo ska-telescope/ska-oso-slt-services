@@ -31,6 +31,7 @@ def test_create_shift():
     }
     # Create a mock for the shift model
     mock_shift = MagicMock()
+    mock_shift.shift_id = "sl-t0001-20241204-00004"
     mock_shift.shift_operator = shift_data["shift_operator"]
     mock_shift.created_by = shift_data["metadata"]["created_by"]
     mock_shift.created_on = current_time

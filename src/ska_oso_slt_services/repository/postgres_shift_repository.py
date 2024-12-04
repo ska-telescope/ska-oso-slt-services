@@ -54,6 +54,7 @@ LOGGER = logging.getLogger(__name__)
 SKUID_URL = getenv("SKUID_URL", "http://ska-ser-skuid-test-svc:9870")
 
 skuid = SkuidClient(SKUID_URL)
+SKUID_ENTITY_TYPE = "sl"
 
 
 class PostgresShiftRepository(CRUDShiftRepository):
@@ -166,8 +167,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             serial_id = 1
         shift.shift_start = get_datetime_for_timezone("UTC")
-        shift.shift_id = skuid.fetch_skuid("shift")
-        # shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}-{serial_id}"
+        shift.shift_id = skuid.fetch_skuid(SKUID_ENTITY_TYPE)
         return shift
 
     def _insert_shift_to_database(self, table_details, entity) -> None:
