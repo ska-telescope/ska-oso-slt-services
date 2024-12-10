@@ -57,7 +57,9 @@ def insert_query(
     return query, params
 
 
-def update_query(entity_id:str|int, table_details: TableDetails, entity) -> QueryAndParameters:
+def update_query(
+    entity_id: str | int, table_details: TableDetails, entity
+) -> QueryAndParameters:
     """
     Creates a query and parameters to update the given entity in the table,
     overwriting values in the existing row and returning the row ID.

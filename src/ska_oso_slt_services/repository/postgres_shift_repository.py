@@ -3,6 +3,7 @@ import threading
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple, Union
+import random
 
 from deepdiff import DeepDiff
 
@@ -151,8 +152,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             Shift: The prepared shift object.
         """
+        random_number = random.randint(1,9)
         shift.shift_start = get_datetime_for_timezone("UTC")
-        shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}"
+        shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}-{random_number}"
         return shift
 
     def _insert_shift_to_database(self, table_details, entity) -> None:
@@ -184,7 +186,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         return insert_query(table_details=table_details, entity=entity)
 
-    def update_shift(self, shift_id:str, shift: Shift) -> Shift:
+    def update_shift(self, shift_id: str, shift: Shift) -> Shift:
         """
         Update an existing shift.
 
@@ -250,9 +252,12 @@ class PostgresShiftRepository(CRUDShiftRepository):
             entity: The object to be updated in the database.
             table_details: The mapping details for the entity table.
         """
-        query, params = update_query(entity_id=entity_id, table_details=table_details, entity=entity)
+        query, params = update_query(
+            entity_id=entity_id, table_details=table_details, entity=entity
+        )
 
         self.postgres_data_access.update(query, params)
+
 
     def get_media(self, comment_id: int, table_model, table_mapping) -> Media:
         """
@@ -325,7 +330,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
             current_shift_comment.image = media_list
 
         self._update_shift_in_database(
-            entity_id=comment_id, entity=current_shift_comment, table_details=table_mapping
+            entity_id=comment_id,
+            entity=current_shift_comment,
+            table_details=table_mapping,
         )
 
         return current_shift_comment
@@ -382,7 +389,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         return shift_log_comment
 
-    def update_shift_logs_comments(self, comment_id:int, shift_log_comment: ShiftLogComment):
+    def update_shift_logs_comments(
+        self, comment_id: int, shift_log_comment: ShiftLogComment
+    ):
         """
         Update an existing shift log comment with new data.
 
@@ -404,7 +413,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         existing_shift_log_comment.metadata = shift_log_comment.metadata
         self._update_shift_in_database(
-            entity_id=comment_id, entity=existing_shift_log_comment, table_details=ShiftLogCommentMapping()
+            entity_id=comment_id,
+            entity=existing_shift_log_comment,
+            table_details=ShiftLogCommentMapping(),
         )
 
         return existing_shift_log_comment
@@ -660,7 +671,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             raise NotFoundError(f"No comment found with ID: {comment_id}")
 
-    def update_shift_comments(self, comment_id:int, shift_comment: ShiftComment):
+    def update_shift_comments(self, comment_id: int, shift_comment: ShiftComment):
         """
         Update an existing shift comment with new data.
 
@@ -672,10 +683,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         existing_shift_comment = ShiftComment.model_validate(
             self.get_shift_comment(
-                comment_id=shift_comment.id, table_mapping=ShiftCommentMapping()
+                comment_id=comment_id, table_mapping=ShiftCommentMapping()
             )
         )
-        existing_shift_comment.id = shift_comment.id
         if shift_comment.comment:
             existing_shift_comment.comment = shift_comment.comment
         if shift_comment.operator_name:
@@ -686,7 +696,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
             existing_shift_comment.operator_name = shift_comment.operator_name
         existing_shift_comment.metadata = shift_comment.metadata
         self._update_shift_in_database(
-            entity_id=comment_id, entity=existing_shift_comment, table_details=ShiftCommentMapping()
+            entity_id=comment_id,
+            entity=existing_shift_comment,
+            table_details=ShiftCommentMapping(),
         )
 
         return existing_shift_comment
