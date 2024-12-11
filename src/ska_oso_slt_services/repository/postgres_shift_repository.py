@@ -2,13 +2,16 @@ import logging
 import threading
 import time
 from datetime import datetime, timedelta, timezone
-from os import getenv
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from deepdiff import DeepDiff
 from ska_ser_skuid.client import SkuidClient
 
-from ska_oso_slt_services.common.constant import ODA_DATA_POLLING_TIME
+from ska_oso_slt_services.common.constant import (
+    ODA_DATA_POLLING_TIME,
+    SKUID_ENTITY_TYPE,
+    SKUID_URL,
+)
 from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import update_metadata
@@ -50,10 +53,7 @@ from ska_oso_slt_services.utils.s3_bucket import (
 
 LOGGER = logging.getLogger(__name__)
 
-SKUID_URL = getenv("SKUID_URL", "http://ska-ser-skuid-test-svc:9870")
-
 skuid = SkuidClient(SKUID_URL)
-SKUID_ENTITY_TYPE = "sl"
 
 
 class PostgresShiftRepository(CRUDShiftRepository):
