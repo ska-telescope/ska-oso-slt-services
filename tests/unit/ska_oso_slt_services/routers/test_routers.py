@@ -94,6 +94,74 @@ def test_create_shift():
     mock_insert.assert_called_once()
 
 
+def test_create_end_shift():
+    # Prepare test data with metadata
+    current_time = get_datetime_for_timezone("UTC")
+    shift_data = {
+        "shift_end": current_time.isoformat(),
+        "metadata": {
+            "created_by": "test",
+            "created_on": current_time.isoformat(),
+            "last_modified_by": "test",
+            "last_modified_on": current_time.isoformat(),
+        },
+    }
+    # Create a mock for the shift model
+    mock_shift = MagicMock()
+    mock_shift.shift_id = "sl-t0001-20241204-00004"
+    mock_shift.created_by = shift_data["metadata"]["created_by"]
+    mock_shift.created_on = current_time
+    mock_shift.last_modified_by = shift_data["metadata"]["last_modified_by"]
+    mock_shift.last_modified_on = current_time
+
+    # Create a mock for the database session
+    mock_db_session = MagicMock()
+
+    # Set up the mock to return the existing shift when queried
+    mock_db_session.get.return_value = {"max": 1}
+
+    # Patch both database access and Shift model creation
+    with (
+        patch(
+            "ska_oso_slt_services.data_access.postgres"
+            ".execute_query.PostgresDataAccess.update"
+        ) as mock_insert,
+        patch(
+            "ska_oso_slt_services.services.shift_service.Shift", return_value=mock_shift
+        ),
+    ):
+        with patch(
+            "ska_oso_slt_services.data_access.postgres"
+            ".execute_query.PostgresDataAccess.get_one",
+            return_value={"max": 5},
+        ):
+
+            # Send a POST request to the endpoint
+            response = client.put(
+                f"{API_PREFIX}/shifts/end/sl-t0001-20241204-00004", json=shift_data
+            )
+    # Assertions
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_shift = response.json()
+    # Verify metadata
+    assert "metadata" in created_shift[0], "Metadata is missing in the response"
+    metadata = created_shift[0]["metadata"]
+    assert metadata["created_by"] == shift_data["metadata"]["created_by"], (
+        f"Expected created_by to be '{shift_data['metadata']['created_by']}', but got"
+        f" '{metadata['created_by']}'"
+    )
+    assert metadata["last_modified_by"] == shift_data["metadata"]["last_modified_by"], (
+        "Expected last_modified_by to be"
+        f" '{shift_data['metadata']['last_modified_by']}', but got"
+        f" '{metadata['last_modified_by']}'"
+    )
+
+    mock_insert.assert_called_once()
+
+
 def test_update_shift():
     # Existing shift data structure
     existing_shift = {

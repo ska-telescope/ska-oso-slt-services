@@ -192,6 +192,22 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         return insert_query(table_details=table_details, entity=entity)
 
+    def update_shift_end_time(self, shift: Shift) -> Shift:
+        """
+        Update the end time of a shift.
+
+        Args:
+            shift_id (str): The ID of the shift to update.
+
+        Returns:
+            Shift: The updated shift object.
+        """
+        existing_shift = Shift.model_validate(self.get_shift(shift.shift_id))
+        existing_shift.shift_end = get_datetime_for_timezone("UTC")
+        existing_shift.metadata = shift.metadata
+        self._update_shift_in_database(existing_shift)
+        return existing_shift
+
     def update_shift(self, shift: Shift) -> Shift:
         """
         Update an existing shift.
@@ -208,10 +224,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
         existing_shift = Shift.model_validate(self.get_shift(shift.shift_id))
         if not existing_shift:
             raise NotFoundError(f"No shift found with ID: {existing_shift.shift_id}")
-        if shift.shift_end:
-            existing_shift.shift_end = (
-                shift.shift_end
-            )  # get_datetime_for_timezone("UTC")
         if shift.comments:
             existing_shift.comments = shift.comments
         if shift.annotations:

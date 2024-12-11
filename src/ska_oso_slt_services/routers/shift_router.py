@@ -255,6 +255,48 @@ def update_shift(shift_id: str, shift: Shift):
     return shifts, HTTPStatus.OK
 
 
+@router.put(
+    "/shifts/end/{shift_id}",
+    tags=["shifts"],
+    summary="Update an existing shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_response.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        422: {
+            "description": "Invalid Shift Id",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+    },
+)
+def update_shift_end_time(shift_id: str, shift: Shift):
+    """
+    Update an existing shift end time.
+
+    Args:
+        shift_id (str): The unique identifier of the shift to update.
+        shift (ShiftUpdate): The updated shift data.
+
+    Raises:
+        HTTPException: If the shift is not found.
+    """
+    shifts = shift_service.update_shift_end_time(shift_id, shift)
+    return shifts, HTTPStatus.OK
+
+
 @router.post(
     "/shift_log_comments",
     tags=["Shift Log Comments"],
