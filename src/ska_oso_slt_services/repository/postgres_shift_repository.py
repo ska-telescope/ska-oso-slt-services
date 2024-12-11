@@ -1,11 +1,12 @@
 import logging
-from os import getenv
 import threading
 import time
 from datetime import datetime, timedelta, timezone
+from os import getenv
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from deepdiff import DeepDiff
+from ska_ser_skuid.client import SkuidClient
 
 from ska_oso_slt_services.common.constant import ODA_DATA_POLLING_TIME
 from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
@@ -41,8 +42,6 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftLogComment,
     ShiftLogs,
 )
-
-from ska_ser_skuid.client import SkuidClient
 from ska_oso_slt_services.repository.shift_repository import CRUDShiftRepository
 from ska_oso_slt_services.utils.s3_bucket import (
     get_file_object_from_s3,
@@ -160,12 +159,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             Shift: The prepared shift object.
         """
-        query, params = select_last_serial_id(self.table_details)
-        last_serial_id = self.postgres_data_access.get_one(query, params)
-        if last_serial_id and "max" in last_serial_id and last_serial_id["max"]:
-            serial_id = last_serial_id.get("max") + 1
-        else:
-            serial_id = 1
         shift.shift_start = get_datetime_for_timezone("UTC")
         shift.shift_id = skuid.fetch_skuid(SKUID_ENTITY_TYPE)
         return shift
@@ -216,7 +209,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         if not existing_shift:
             raise NotFoundError(f"No shift found with ID: {existing_shift.shift_id}")
         if shift.shift_end:
-            existing_shift.shift_end = shift.shift_end
+            existing_shift.shift_end = (
+                shift.shift_end
+            )  # get_datetime_for_timezone("UTC")
         if shift.comments:
             existing_shift.comments = shift.comments
         if shift.annotations:
