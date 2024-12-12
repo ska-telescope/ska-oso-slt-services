@@ -256,7 +256,7 @@ def update_shift(shift_id: str, shift: Shift):
 
 
 @router.put(
-    "/shifts/end/{shift_id}",
+    "/shift/end/{shift_id}",
     tags=["shifts"],
     summary="Update an existing shift",
     responses={

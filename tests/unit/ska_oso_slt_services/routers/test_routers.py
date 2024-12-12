@@ -138,7 +138,7 @@ def test_create_end_shift():
 
             # Send a POST request to the endpoint
             response = client.put(
-                f"{API_PREFIX}/shifts/end/sl-t0001-20241204-00004", json=shift_data
+                f"{API_PREFIX}/shift/end/sl-t0001-20241204-00004", json=shift_data
             )
     # Assertions
     assert (
