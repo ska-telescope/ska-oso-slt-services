@@ -1,3 +1,5 @@
+import json
+import os
 from datetime import datetime
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
@@ -15,6 +17,17 @@ app = create_app()
 
 # Create the TestClient with the app instance
 client = TestClient(app)
+
+
+def load_string_from_file(filename):
+    """
+    Return a file from the current directory as a string
+    """
+    cwd, _ = os.path.split(__file__)
+    path = os.path.join(cwd, filename)
+    with open(path, "r", encoding="utf-8") as json_file:
+        json_data = json.load(json_file)
+        return json_data
 
 
 def test_create_shift():
@@ -90,65 +103,14 @@ def test_create_shift():
 
 def test_update_shift():
     # Existing shift data structure
-    existing_shift = {
-        "shift_id": "test-id-1",
-        "shift_start": get_datetime_for_timezone("UTC"),
-        "shift_end": None,
-        "shift_operator": "old-operator",
-        "shift_logs": [
-            {
-                "info": {},
-                "source": "test",
-                "log_time": get_datetime_for_timezone("UTC"),
-                "comments": [],
-            }
-        ],
-        "media": [],
-        "annotations": "old-annotation",
-        "comments": [
-            {
-                "id": 1,
-                "comment": "test-comment-1",
-                "shift_id": "test-id-1",
-                "image": {
-                    "path": "file_path",
-                    "timestamp": get_datetime_for_timezone("UTC"),
-                },
-                "metadata": {},
-            }
-        ],
-        "created_by": "test-user-1",
-        "created_on": get_datetime_for_timezone("UTC"),
-        "last_modified_by": "test-user-1",
-        "last_modified_on": get_datetime_for_timezone("UTC"),
-    }
+    existing_shift = load_string_from_file(
+        "test_data_files/testfile_existing_shift_data.json"
+    )
 
     # Updated shift data for the test
-    update_data = {
-        "shift_id": "test-id-1",
-        "shift_start": "2024-09-14T16:49:54.889Z",
-        "shift_operator": "old-operator",
-        "shift_logs": [],
-        "media": [],
-        "annotations": "updated-annotation",
-        "comments": [
-            {
-                "id": 2,
-                "comment": "test-comment-1",
-                "shift_id": "test-id-1",
-                "image": [
-                    {"path": "file_path", "timestamp": "2024-09-14T16:49:54.889Z"}
-                ],
-                "metadata": {},
-            }
-        ],
-        "metadata": {
-            "created_by": "test-user-1",
-            "created_on": "2024-09-14T16:49:54.889Z",
-            "last_modified_by": "test-user-1",
-            "last_modified_on": "2024-09-14T16:49:54.889Z",
-        },
-    }
+    update_data = load_string_from_file(
+        "test_data_files/testfile_update_shift_data.json"
+    )
 
     # Expected shift data after the update
     expected_updated_shift = {**existing_shift, **update_data}
@@ -263,22 +225,9 @@ def test_update_shift_after_end():
 def test_get_shift_log_comments(mock_get_shift_comments):
     # Prepare test data
 
-    comment_data = [
-        {
-            "log_comment": "This is a test comment",
-            "operator_name": "string",
-            "shift_id": "test-shift-id",
-            "image": {
-                "path": "string",
-                "timestamp": "2024-11-12 12:36:46.901000+00:00",
-            },
-            "eb_id": "string",
-            "created_on": "2024-11-12T18:06:53.378127+05:30",
-            "created_by": "string",
-            "last_modified_on": "2024-11-12T18:06:53.378127+05:30",
-            "last_modified_by": "string",
-        }
-    ]
+    comment_data = load_string_from_file(
+        "test_data_files/testfile_shift_log_comments_data.json"
+    )
 
     mock_get_shift_comments.return_value = comment_data
 
@@ -295,19 +244,9 @@ def test_get_shift_log_comments(mock_get_shift_comments):
 def test_update_shift_log_comment():
     # Existing comment data with initial metadata
     current_time = get_datetime_for_timezone("UTC")
-    initial_comment_data = {
-        "id": 1,
-        "log_comment": "This is the original comment",
-        "operator_name": "original_operator",
-        "shift_id": "test-shift-id",
-        "eb_id": "test-eb-id",
-        "metadata": {
-            "created_by": "original_operator",
-            "created_on": current_time.isoformat(),
-            "last_modified_by": "original_operator",
-            "last_modified_on": current_time.isoformat(),
-        },
-    }
+    initial_comment_data = load_string_from_file(
+        "test_data_files/testfile_initial_log_comment_data.json"
+    )
 
     # Updated comment data
     updated_comment_data = {
@@ -410,25 +349,9 @@ def test_update_shift_log_comment():
 
 def test_get_current_shift():
     # Mock shift data
-    mock_shift = {
-        "shift_id": "test-id",
-        "shift_start": get_datetime_for_timezone("UTC"),
-        "shift_operator": "test",
-        "shift_logs": [
-            {
-                "info": {},
-                "source": "test",
-                "log_time": get_datetime_for_timezone("UTC"),
-            }
-        ],
-        "media": [{"type": "test", "path": "test"}],
-        "annotations": "test",
-        "comments": "test",
-        "created_by": "test",
-        "created_on": get_datetime_for_timezone("UTC"),
-        "last_modified_by": "test",
-        "last_modified_on": get_datetime_for_timezone("UTC"),
-    }
+    mock_shift = load_string_from_file(
+        "test_data_files/testfile_current_shift_data.json"
+    )
     # Patch the database session to use our mock
     with patch(
         "ska_oso_slt_services.services." "shift_service.ShiftService.get_current_shift",
@@ -447,19 +370,9 @@ def test_get_current_shift():
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.create_shift_comment")
 def test_create_shift_comments(mock_create_shift_comment):
     # Prepare test data
-    current_time = get_datetime_for_timezone("UTC")
-    comment_data = {
-        "comment": "This is a test comment",
-        "shift_id": "test-shift-id",
-        "image": [{"path": "https://example.com/image.png"}],
-        "metadata": {
-            "created_by": "test_user",
-            "created_on": current_time.isoformat(),
-            "last_modified_by": "test_user",
-            "last_modified_on": current_time.isoformat(),
-        },
-    }
-
+    comment_data = load_string_from_file(
+        "test_data_files/testfile_shift_comment_data.json"
+    )[0]
     mock_create_shift_comment.return_value = comment_data
 
     # Send a POST request to create a comment
@@ -499,32 +412,9 @@ def test_create_shift_comments(mock_create_shift_comment):
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift_comments")
 def test_get_shift_comments(mock_get_shift_comments):
     # Prepare test data
-    current_time = get_datetime_for_timezone("UTC")
-
-    comment_data = [
-        {
-            "comment": "This is a test comment",
-            "shift_id": "test-shift-id",
-            "image": {"path": "https://example.com/image.png"},
-            "metadata": {
-                "created_by": "test_user",
-                "created_on": current_time.isoformat(),
-                "last_modified_by": "test_user",
-                "last_modified_on": current_time.isoformat(),
-            },
-        },
-        {
-            "comment": "This is a test comment",
-            "shift_id": "test-shift-id",
-            "image": {"path": "https://example.com/image.png"},
-            "metadata": {
-                "created_by": "test_user",
-                "created_on": current_time.isoformat(),
-                "last_modified_by": "test_user",
-                "last_modified_on": current_time.isoformat(),
-            },
-        },
-    ]
+    comment_data = load_string_from_file(
+        "test_data_files/testfile_shift_comment_data.json"
+    )
 
     mock_get_shift_comments.return_value = comment_data
 
@@ -560,21 +450,11 @@ def test_get_shift_comments(mock_get_shift_comments):
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.update_shift_comments")
 def test_update_shift_comments(mock_update_shift_comment):
     # Prepare test data
-    current_time = get_datetime_for_timezone("UTC")
+    data_to_be_updated = {"comment": "This is a test comment"}
 
-    data_to_be_updated = {"comment": "This is a updated test comment"}
-
-    updated_comment_data = {
-        "comment": "This is a updated test comment",
-        "shift_id": "test-shift-id",
-        "image": {"path": "https://example.com/image.png"},
-        "metadata": {
-            "created_by": "test_user",
-            "created_on": current_time.isoformat(),
-            "last_modified_by": "test_user",
-            "last_modified_on": current_time.isoformat(),
-        },
-    }
+    updated_comment_data = load_string_from_file(
+        "test_data_files/testfile_shift_comment_data.json"
+    )[0]
 
     mock_update_shift_comment.return_value = updated_comment_data
 
@@ -711,121 +591,17 @@ def test_get_shift_comment_image(mock_shift_comment_image):
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
 def test_get_shift(mock_get_shift_comments):
     # Prepare test data
-    current_time = get_datetime_for_timezone("UTC")
-    shift_comments = [
-        {
-            "id": 1,
-            "comment": "This is updated comment",
-            "operator_name": "johnny",
-            "shift_id": "shift-20241112-1",
-            "metadata": {
-                "created_by": "john",
-                "created_on": current_time,
-                "last_modified_by": "john",
-                "last_modified_on": current_time,
-            },
-        }
-    ]
-    shift_log_comments = [
-        {
-            "id": 1,
-            "log_comment": "This is log comment",
-            "operator_name": "max",
-            "shift_id": "shift-20241112-1",
-            "eb_id": "eb-t0001-20241022-00002",
-            "metadata": {
-                "created_by": "max",
-                "created_on": "2024-11-12T14:21:47.447462+05:30",
-                "last_modified_by": "max",
-                "last_modified_on": "2024-11-12T14:21:47.447462+05:30",
-            },
-        }
-    ]
-    shift_data = [
-        {
-            "shift_id": "shift-20241112-1",
-            "shift_start": "2024-11-12T13:04:55.874585+05:30",
-            "shift_operator": "john",
-            "comments": shift_comments,
-            "shift_logs": [
-                {
-                    "info": {
-                        "eb_id": "eb-t0001-20241022-00002",
-                        "sbd_ref": "sbd-t0001-20240822-00008",
-                        "sbi_ref": "sbi-t0001-20240822-00009",
-                        "metadata": {
-                            "version": 1,
-                            "created_by": "DefaultUser",
-                            "created_on": "2024-10-22T11:25:36.953526Z",
-                            "pdm_version": "15.4.0",
-                            "last_modified_by": "DefaultUser",
-                            "last_modified_on": "2024-10-22T11:25:36.953526Z",
-                        },
-                        "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
-                        "telescope": "ska_mid",
-                        "sbi_status": "failed",
-                        "sbd_version": 1,
-                        "request_responses": [
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.assign_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting."
-                                "functions.devicecontrol.configure_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.scan",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions."
-                                "devicecontrol.release_all_resources",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "error": {"detail": "this is an error"},
-                                "status": "ERROR",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.end",
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                        ],
-                    },
-                    "source": "ODA",
-                    "log_time": "2024-10-22T11:24:14.406107Z",
-                    "comments": shift_log_comments,
-                }
-            ],
-            "metadata": {
-                "created_by": "john",
-                "created_on": "2024-11-12T13:04:55.860503+05:30",
-                "last_modified_by": "max1",
-                "last_modified_on": "2024-11-12T20:52:10.208101+05:30",
-            },
-        },
-        200,
-    ]
+    shift_comments = load_string_from_file(
+        "test_data_files/testfile_sample_shift_data.json"
+    )[0]["comments"]
+
+    shift_log_comments = load_string_from_file(
+        "test_data_files/testfile_sample_shift_data.json"
+    )[0]["shift_logs"][0]["comments"]
+
+    shift_data = load_string_from_file(
+        "test_data_files/testfile_sample_shift_data.json"
+    )
 
     mock_get_shift_comments.return_value = shift_data
 
@@ -862,232 +638,17 @@ def test_get_shift(mock_get_shift_comments):
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shifts")
 def test_get_shifts(mock_get_shift_log_comments):
     # Prepare test data
-    current_time = get_datetime_for_timezone("UTC")
+    shift_comments = load_string_from_file(
+        "test_data_files/testfile_sample_shift_history_data.json"
+    )[0]["comments"]
 
-    current_time = get_datetime_for_timezone("UTC")
-    shift_comments = [
-        {
-            "id": 1,
-            "comment": "This is updated comment",
-            "operator_name": "johnny",
-            "shift_id": "shift-20241112-1",
-            "metadata": {
-                "created_by": "john",
-                "created_on": current_time,
-                "last_modified_by": "john",
-                "last_modified_on": current_time,
-            },
-        },
-        {
-            "id": 2,
-            "comment": "This is updated comment",
-            "operator_name": "johnny",
-            "shift_id": "shift-20241112-2",
-            "metadata": {
-                "created_by": "john",
-                "created_on": current_time,
-                "last_modified_by": "john",
-                "last_modified_on": current_time,
-            },
-        },
-    ]
-    shift_log_comments = [
-        {
-            "id": 1,
-            "log_comment": "This is log comment",
-            "operator_name": "max",
-            "shift_id": "shift-20241112-1",
-            "eb_id": "eb-t0001-20241022-00002",
-            "metadata": {
-                "created_by": "max",
-                "created_on": "2024-11-12T14:21:47.447462+05:30",
-                "last_modified_by": "max",
-                "last_modified_on": "2024-11-12T14:21:47.447462+05:30",
-            },
-        },
-        {
-            "id": 2,
-            "log_comment": "This is log comment",
-            "operator_name": "max",
-            "shift_id": "shift-20241112-2",
-            "eb_id": "eb-t0001-20241022-00002",
-            "metadata": {
-                "created_by": "max",
-                "created_on": "2024-11-12T14:21:47.447462+05:30",
-                "last_modified_by": "max",
-                "last_modified_on": "2024-11-12T14:21:47.447462+05:30",
-            },
-        },
-    ]
+    shift_log_comments = load_string_from_file(
+        "test_data_files/testfile_sample_shift_history_data.json"
+    )[0]["shift_logs"][0]["comments"]
 
-    shift_data = [
-        {
-            "shift_id": "shift-20241112-1",
-            "shift_start": "2024-11-12T13:04:55.874585+05:30",
-            "shift_operator": "john",
-            "comments": shift_comments,
-            "shift_logs": [
-                {
-                    "info": {
-                        "eb_id": "eb-t0001-20241022-00002",
-                        "sbd_ref": "sbd-t0001-20240822-00008",
-                        "sbi_ref": "sbi-t0001-20240822-00009",
-                        "metadata": {
-                            "version": 1,
-                            "created_by": "DefaultUser",
-                            "created_on": "2024-10-22T11:25:36.953526Z",
-                            "pdm_version": "15.4.0",
-                            "last_modified_by": "DefaultUser",
-                            "last_modified_on": "2024-10-22T11:25:36.953526Z",
-                        },
-                        "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
-                        "telescope": "ska_mid",
-                        "sbi_status": "failed",
-                        "sbd_version": 1,
-                        "request_responses": [
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.assign_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting."
-                                "functions.devicecontrol.configure_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.scan",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol"
-                                ".release_all_resources",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "error": {"detail": "this is an error"},
-                                "status": "ERROR",
-                                "request": "ska_oso_scripting."
-                                "functions.devicecontrol.end",
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                        ],
-                    },
-                    "source": "ODA",
-                    "log_time": "2024-10-22T11:24:14.406107Z",
-                    "comments": shift_log_comments,
-                }
-            ],
-            "metadata": {
-                "created_by": "john",
-                "created_on": "2024-11-12T13:04:55.860503+05:30",
-                "last_modified_by": "max1",
-                "last_modified_on": "2024-11-12T20:52:10.208101+05:30",
-            },
-        },
-        {
-            "shift_id": "shift-20241112-2",
-            "shift_start": "2024-11-12T13:04:55.874585+05:30",
-            "shift_operator": "john",
-            "comments": shift_comments,
-            "shift_logs": [
-                {
-                    "info": {
-                        "eb_id": "eb-t0001-20241022-00002",
-                        "sbd_ref": "sbd-t0001-20240822-00008",
-                        "sbi_ref": "sbi-t0001-20240822-00009",
-                        "metadata": {
-                            "version": 1,
-                            "created_by": "DefaultUser",
-                            "created_on": "2024-10-22T11:25:36.953526Z",
-                            "pdm_version": "15.4.0",
-                            "last_modified_by": "DefaultUser",
-                            "last_modified_on": "2024-10-22T11:25:36.953526Z",
-                        },
-                        "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
-                        "telescope": "ska_mid",
-                        "sbi_status": "failed",
-                        "sbd_version": 1,
-                        "request_responses": [
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting."
-                                "functions.devicecontrol.assign_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions"
-                                ".devicecontrol.configure_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting."
-                                "functions.devicecontrol.scan",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting."
-                                "functions"
-                                ".devicecontrol.release_all_resources",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "error": {"detail": "this is an error"},
-                                "status": "ERROR",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.end",
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                        ],
-                    },
-                    "source": "ODA",
-                    "log_time": "2024-10-22T11:24:14.406107Z",
-                    "comments": shift_log_comments,
-                }
-            ],
-            "metadata": {
-                "created_by": "john",
-                "created_on": "2024-11-12T13:04:55.860503+05:30",
-                "last_modified_by": "max1",
-                "last_modified_on": "2024-11-12T20:52:10.208101+05:30",
-            },
-        },
-        200,
-    ]
+    shift_data = load_string_from_file(
+        "test_data_files/testfile_sample_shift_history_data.json"
+    )
 
     mock_get_shift_log_comments.return_value = shift_data
 

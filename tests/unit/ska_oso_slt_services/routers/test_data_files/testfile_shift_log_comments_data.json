@@ -1,0 +1,16 @@
+[
+    {
+        "log_comment": "This is a test comment",
+        "operator_name": "string",
+        "shift_id": "test-shift-id",
+        "image": {
+            "path": "string",
+            "timestamp": "2024-11-12 12:36:46.901000+00:00"
+        },
+        "eb_id": "string",
+        "created_on": "2024-11-12T18:06:53.378127+05:30",
+        "created_by": "string",
+        "last_modified_on": "2024-11-12T18:06:53.378127+05:30",
+        "last_modified_by": "string"
+    }
+]

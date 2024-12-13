@@ -1,0 +1,19 @@
+{
+    "shift_id": "test-id",
+    "shift_start": "2024-09-14T16:49:54.889Z",
+    "shift_operator": "test",
+    "shift_logs": [
+        {
+            "info": {},
+            "source": "test",
+            "log_time": "2024-09-14T16:49:54.889Z"
+        }
+    ],
+    "media": [{"type": "test", "path": "test"}],
+    "annotations": "test",
+    "comments": "test",
+    "created_by": "test",
+    "created_on": "2024-09-14T16:49:54.889Z",
+    "last_modified_by": "test",
+    "last_modified_on": "2024-09-14T16:49:54.889Z"
+}
