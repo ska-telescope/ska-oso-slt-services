@@ -1,6 +1,6 @@
 from datetime import datetime
 from http import HTTPStatus
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,6 +9,7 @@ from ska_oso_slt_services import create_app  # Import your create_app function
 from ska_oso_slt_services.app import API_PREFIX
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
+from ska_oso_slt_services.domain.shift_models import Shift
 
 # Create the FastAPI app instance
 app = create_app()
@@ -591,8 +592,9 @@ def test_update_shift_comments(mock_update_shift_comment):
     )
 
 
-@patch("ska_oso_slt_services.services.shift_service.ShiftService.post_media")
-def test_create_shift_comment_image(mock_shift_comment_image):
+@patch("ska_oso_slt_services.services.media_service.MediaService.post_media")
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
+def test_create_shift_comment_image(mock_get_shift, mock_shift_comment_image):
     # Prepare test data with metadata
     test_file = {"file": ("test_image.png", b"dummy image content", "image/png")}
     shift_data = {
@@ -616,6 +618,10 @@ def test_create_shift_comment_image(mock_shift_comment_image):
         },
     }
 
+    mock_shift_data = Mock(spec=Shift)
+    mock_shift_data.shift_id = "shift-123"
+    mock_shift_data.shift_operator = "John Doe"
+    mock_get_shift.return_value = mock_shift_data
     mock_shift_comment_image.return_value = shift_data
 
     # Send a POST request to the endpoint
@@ -667,7 +673,10 @@ def test_add_shift_comment_image(mock_shift_comment_image):
     ), f"Expected status code 200, but got {response.status_code}"
 
 
-@patch("ska_oso_slt_services.services.shift_service.ShiftService.get_media")
+@patch(
+    "ska_oso_slt_services.repository.postgres_shift_repository."
+    "PostgresShiftRepository.get_media"
+)
 def test_get_shift_comment_image(mock_shift_comment_image):
 
     shift_data = [
@@ -1188,8 +1197,9 @@ def test_create_shift_log_comment(mock_create_shift_comment):
     )
 
 
-@patch("ska_oso_slt_services.services.shift_service.ShiftService.post_media")
-def test_post_shift_log_comment_image(mock_shift_comment_image):
+@patch("ska_oso_slt_services.services.media_service.MediaService.post_media")
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
+def test_post_shift_log_comment_image(mock_get_shift, mock_shift_comment_image):
     # Prepare test data with metadata
     test_file = {"file": ("test_image.png", b"dummy image content", "image/png")}
     shift_data = {
@@ -1214,6 +1224,10 @@ def test_post_shift_log_comment_image(mock_shift_comment_image):
         },
     }
 
+    mock_shift_data = Mock(spec=Shift)
+    mock_shift_data.shift_id = "shift-123"
+    mock_shift_data.shift_operator = "John Doe"
+    mock_get_shift.return_value = mock_shift_data
     mock_shift_comment_image.return_value = shift_data
 
     # Send a POST request to the endpoint
@@ -1238,7 +1252,10 @@ def test_post_shift_log_comment_image(mock_shift_comment_image):
     )
 
 
-@patch("ska_oso_slt_services.services.shift_service.ShiftService.get_media")
+@patch(
+    "ska_oso_slt_services.repository."
+    "postgres_shift_repository.PostgresShiftRepository.get_media"
+)
 def test_get_shift_log_comment_image(mock_shift_comment_image):
 
     shift_data = [

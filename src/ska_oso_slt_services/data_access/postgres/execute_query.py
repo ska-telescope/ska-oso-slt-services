@@ -175,7 +175,8 @@ class TableCreator:
             """
             CREATE SEQUENCE IF NOT EXISTS tab_oda_slt_id_seq;
             CREATE TABLE IF NOT EXISTS public.tab_oda_slt (
-                id integer PRIMARY KEY NOT NULL DEFAULT nextval('tab_oda_slt_id_seq'),
+                id integer
+                PRIMARY KEY NOT NULL DEFAULT nextval('tab_oda_slt_id_seq'),
                 shift_id VARCHAR(50) NOT NULL,
                 shift_start TIMESTAMPTZ NOT NULL,
                 shift_end TIMESTAMPTZ,
@@ -195,7 +196,9 @@ class TableCreator:
             CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_start
             ON public.tab_oda_slt (shift_start);
             CREATE TABLE IF NOT EXISTS public.tab_oda_slt_shift_comments (
-                id integer PRIMARY KEY NOT NULL DEFAULT nextval('tab_oda_slt_shift_comments_id_seq'),
+                id integer
+                PRIMARY KEY NOT NULL
+                DEFAULT nextval('tab_oda_slt_shift_comments_id_seq'),
                 shift_id VARCHAR(50) NOT NULL,
                 operator_name VARCHAR(100) NOT NULL,
                 comment TEXT,
@@ -213,7 +216,9 @@ class TableCreator:
             CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_comments_operator_name
             ON public.tab_oda_slt_shift_comments (operator_name);
             CREATE TABLE IF NOT EXISTS public.tab_oda_slt_shift_log_comments (
-                id integer PRIMARY KEY NOT NULL DEFAULT nextval('tab_oda_slt_shift_log_comments_id_seq'),
+                id integer
+                PRIMARY KEY NOT NULL
+                DEFAULT nextval('tab_oda_slt_shift_log_comments_id_seq'),
                 shift_id VARCHAR(50) NOT NULL,
                 eb_id VARCHAR(60) NOT NULL,
                 operator_name VARCHAR(100) NOT NULL,

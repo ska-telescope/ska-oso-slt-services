@@ -1,24 +1,18 @@
-
-
 import logging
 from typing import List
 
-from ska_oso_slt_services.services.media_service import MediaService
-from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
-from ska_oso_slt_services.domain.shift_models import (
-    Shift,
-    ShiftLogComment,
-)
-
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
-from ska_oso_slt_services.data_access.postgres.mapping import (
-    ShiftLogCommentMapping,
-)
+from ska_oso_slt_services.data_access.postgres.mapping import ShiftLogCommentMapping
+from ska_oso_slt_services.domain.shift_models import Shift, ShiftLogComment
+from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
+from ska_oso_slt_services.services.media_service import MediaService
+
 LOGGER = logging.getLogger(__name__)
 
+
 class ShiftLogsComment(MediaService, BaseRepositoryService):
-    
+
     def create_shift_log(
         self, shift_id: int, shift_log: ShiftLogComment
     ) -> ShiftLogComment:
@@ -40,11 +34,11 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
             raise NotFoundError("Shift not found")
         shift_log.shift_id = shift_id
         shift_log_dict = shift_log.dict()
-        shift_log_dict["metadata"] = set_new_metadata()
+        shift_log_dict["metadata"] = set_new_metadata(shift_log)
         shift_log = ShiftLogComment(**shift_log_dict)
         self.postgres_repository.create_shift_log(shift_log)
         return shift_log
-    
+
     def create_shift_logs_comment(self, shift_log_comment_data) -> ShiftLogComment:
         """
         Create a new comment for a shift log with metadata.
@@ -136,7 +130,7 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         return self.postgres_repository.update_shift_logs_comments(
             comment_id, shift_log_comment_with_metadata
         )
-    
+
     def create_shift_log_media(
         self, shift_id, shift_operator, file, eb_id, shift_model
     ):
@@ -145,7 +139,7 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
             raise NotFoundError(f"No shift found with id: {shift_id}")
 
         shift_comment = shift_model(shift_id=shift_id, operator_name=shift_operator)
-        
+
         shift_comment.eb_id = eb_id
         shift_comment = set_new_metadata(shift_comment, shift_operator)
 
@@ -156,7 +150,11 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         )
 
     def get_shift_log_media(self, comment_id):
-        return self.postgres_repository.get_media(comment_id, table_model=ShiftLogComment, table_mapping=ShiftLogCommentMapping())
+        return self.postgres_repository.get_media(
+            comment_id,
+            table_model=ShiftLogComment,
+            table_mapping=ShiftLogCommentMapping(),
+        )
 
     def update_shift_log_with_image(self, comment_id, files, shift_model):
         return self.add_media(

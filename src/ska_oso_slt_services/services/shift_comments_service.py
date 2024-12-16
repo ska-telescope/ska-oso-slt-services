@@ -1,26 +1,18 @@
-
-from typing import List
 import logging
+from typing import List
 
-from ska_oso_slt_services.services.media_service import MediaService
-from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
-
-from ska_oso_slt_services.data_access.postgres.mapping import (
-    ShiftCommentMapping,
-)
-from ska_oso_slt_services.domain.shift_models import (
-    Media,
-    ShiftComment,
-)
+from ska_oso_slt_services.data_access.postgres.mapping import ShiftCommentMapping
+from ska_oso_slt_services.domain.shift_models import Media, ShiftComment
+from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
+from ska_oso_slt_services.services.media_service import MediaService
 
 LOGGER = logging.getLogger(__name__)
 
 
 class ShiftComments(MediaService, BaseRepositoryService):
 
-    
     def create_shift_comment(self, shift_comment_data: ShiftComment) -> ShiftComment:
         """
         Create a new comment for a shift with metadata.
@@ -137,7 +129,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
         return self.postgres_repository.update_shift_comments(
             comment_id, shift_log_comment_with_metadata
         )
-    
+
     def add_media_to_comment(self, comment_id, files, shift_model):
         """
         Add a media file to a shift.
@@ -186,4 +178,3 @@ class ShiftComments(MediaService, BaseRepositoryService):
             shift_comment=shift_comment,
             table_mapping=ShiftCommentMapping(),
         )
-    

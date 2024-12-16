@@ -720,9 +720,7 @@ def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(
     """
 
     media = shift_service.update_shift_log_with_image(
-        comment_id=comment_id,
-        files=files,
-        shift_model=ShiftLogComment
+        comment_id=comment_id, files=files, shift_model=ShiftLogComment
     )
     return media, HTTPStatus.OK
 
@@ -767,9 +765,7 @@ def get_shift_log_media(comment_id: Optional[int]):
             - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval
     """
 
-    image_response = shift_service.get_shift_log_media(
-        comment_id
-    )
+    image_response = shift_service.get_shift_log_media(comment_id)
     return image_response, HTTPStatus.OK
 
 

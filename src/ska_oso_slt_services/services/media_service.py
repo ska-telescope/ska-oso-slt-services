@@ -1,14 +1,11 @@
-
-from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
-from ska_oso_slt_services.domain.shift_models import (
-    Media,
-    Shift
-)
-from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
 from ska_oso_slt_services.common.error_handling import NotFoundError
+from ska_oso_slt_services.common.metadata_mixin import update_metadata
+from ska_oso_slt_services.domain.shift_models import Media, Shift
+from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
+
 
 class MediaService(BaseRepositoryService):
-        
+
     def add_media(self, comment_id, files, shift_model, table_mapping) -> Media:
         """
         Add a media file to a shift.
@@ -26,15 +23,17 @@ class MediaService(BaseRepositoryService):
             entity_id=comment_id, table_details=table_mapping
         )
 
-        stored_shift = shift_model(id=comment_id)
+        if isinstance(shift_model, dict):
+            shift_model = Shift.model_validate(shift_model)
 
+        stored_shift = shift_model
         stored_shift.metadata = metadata
 
         shift = update_metadata(
             entity=stored_shift,
             metadata=metadata,
         )
-        result = self.postgres_repository.add_media(
+        result = self.postgres_repository.insert_shift_images(
             comment_id=comment_id,
             shift_comment=shift,
             files=files,
@@ -43,34 +42,7 @@ class MediaService(BaseRepositoryService):
         )
         return result.image
 
-    def get_media(self, shift_id: int) -> Media:
-        """
-        Retrieve media information for a given shift.
-
-        Args:
-            shift_id (int): The ID of the shift for which media information is requested.
-
-        Returns:
-            Media: The media information for the specified shift.
-
-        Raises:
-            NotFoundError: If the shift is not found.
-        """
-        shift = self.postgres_repository.get_shifts(Shift(shift_id=shift_id))
-        if not shift:
-            raise NotFoundError("Shift not found")
-        media = Media(
-            shift_id=shift_id,
-            shift_log_id=shift.shift_log_id,
-            shift_log_url=shift.shift_log_url,
-            shift_log_status=shift.shift_log_status,
-            sbi_status=shift.sbi_status,
-        )
-        return media
-    
-    def post_media(
-        self, file, shift_comment, table_mapping
-    ) -> Media:
+    def post_media(self, file, shift_comment, table_mapping) -> Media:
         """
         Create a new comment for a shift log with metadata.
 
@@ -85,7 +57,10 @@ class MediaService(BaseRepositoryService):
         Returns:
             ShiftLogComment: The created shift log comment.
         """
-        
+
+        if isinstance(shift_comment, dict):
+            shift_comment = Media.model_validate(shift_comment)
+
         result = self.postgres_repository.insert_shift_image(
             file=file, shift_comment=shift_comment, table_mapping=table_mapping
         )
@@ -101,8 +76,14 @@ class MediaService(BaseRepositoryService):
             table_mapping: The Database Model Mapping Class.
 
         Returns:
-            file: The requested media file.
+            list[Media]: List of media files associated with the comment.
         """
-        return self.postgres_repository.get_media(
+        if isinstance(shift_model, dict):
+            shift_model = Shift.model_validate(shift_model)
+
+        media_list = self.postgres_repository.get_images(
             comment_id, shift_model, table_mapping
         )
+        if not media_list:
+            raise NotFoundError("No media found for the given comment ID")
+        return media_list

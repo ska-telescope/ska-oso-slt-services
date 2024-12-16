@@ -25,6 +25,7 @@ class TestShiftQueries(unittest.TestCase):
     def setUp(self):
         # Create a mock TableDetails object
         self.table_details = ShiftLogMapping()
+        self.entity_id = "test"
 
         # Create a mock Shift object
         self.shift = Shift(
@@ -60,7 +61,7 @@ class TestShiftQueries(unittest.TestCase):
         self.assertIn(self.shift.shift_end, params)
 
     def test_update_query(self):
-        query, params = update_query(self.table_details, self.shift)
+        query, params = update_query(self.entity_id, self.table_details, self.shift)
 
         # Check if the query is of the correct type
         self.assertIsInstance(query, sql.Composed)

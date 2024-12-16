@@ -1,9 +1,9 @@
 import logging
+import random
 import threading
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple, Union
-import random
 
 from deepdiff import DeepDiff
 
@@ -152,7 +152,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             Shift: The prepared shift object.
         """
-        random_number = random.randint(1,9)
+        random_number = random.randint(1, 9)
         shift.shift_start = get_datetime_for_timezone("UTC")
         shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}-{random_number}"
         return shift
@@ -257,7 +257,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
         )
 
         self.postgres_data_access.update(query, params)
-
 
     def get_media(self, comment_id: int, table_model, table_mapping) -> Media:
         """
