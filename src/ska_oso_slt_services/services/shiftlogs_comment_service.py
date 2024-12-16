@@ -134,6 +134,19 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
     def create_shift_log_media(
         self, shift_id, shift_operator, file, eb_id, shift_model
     ):
+        """
+        Create a media file for a shift.
+
+        Args:
+            shift_id (int): The ID of the shift to add the media to.
+            shift_operator (str): The operator of the shift.
+            file (files): The media file to add.
+            eb_id (str): The EB ID of the shift.
+            shift_model: The model of the shift log.
+
+        Returns:
+            Shift: The updated shift with the added media.
+        """
         shift = self.get_shift(shift_id)
         if not shift:
             raise NotFoundError(f"No shift found with id: {shift_id}")
@@ -150,6 +163,15 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         )
 
     def get_shift_log_media(self, comment_id):
+        """
+        Get a media file from a shift.
+
+        Args:
+            comment_id (int): The ID of the comment to get the media from.
+
+        Returns:
+            file: The requested media file.
+        """
         return self.postgres_repository.get_media(
             comment_id,
             table_model=ShiftLogComment,
@@ -157,6 +179,17 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         )
 
     def update_shift_log_with_image(self, comment_id, files, shift_model):
+        """
+        Add a media file to a shift.
+
+        Args:
+            comment_id (int): The ID of the comment to add the media to.
+            files (files): The media files to add.
+            shift_model: The model of the shift log.
+
+        Returns:
+            Shift: The updated comment with the added media.
+        """
         return self.add_media(
             comment_id=comment_id,
             files=files,

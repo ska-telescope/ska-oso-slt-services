@@ -42,6 +42,15 @@ class ShiftService(ShiftComments, ShiftLogsComment):
         return shifts
 
     def merge_shift_comments(self, shifts):
+        """
+        Merge shift comments into the provided list of shifts.
+
+        Args:
+            shifts (List[dict]): List of shift data dictionaries.
+
+        Returns:
+            List[dict]: List of shift data with merged shift comments.
+        """
         for shift in shifts:
             shift_comment_dict = self.postgres_repository.get_shift_comments(
                 shift_id=shift["shift_id"]
@@ -238,6 +247,15 @@ class ShiftService(ShiftComments, ShiftLogsComment):
     def _prepare_shift_comment_with_metadata(
         self, shift_comment: Dict[Any, Any]
     ) -> ShiftComment:
+        """
+        Prepare a shift comment object with metadata.
+
+        Args:
+            shift_comment (Dict[Any, Any]): Raw shift comment data from the database.
+
+        Returns:
+            ShiftComment: A ShiftComment object with metadata included.
+        """
         shift_comment_load = ShiftComment.model_validate(shift_comment)
         shift_comment_load = set_new_metadata(shift_comment_load)
         return shift_comment_load
@@ -245,11 +263,20 @@ class ShiftService(ShiftComments, ShiftLogsComment):
     def _prepare_shift_log_comment_with_metadata(
         self, shift_log_comment: Dict[Any, Any]
     ) -> ShiftLogComment:
+        """
+        Prepare a shift log comment object with metadata.
+
+        Args:
+            shift_log_comment (Dict[Any, Any]): Raw shift
+            log comment data from the database.
+
+        Returns:
+            ShiftLogComment: A ShiftLogComment object with metadata included.
+        """
         shift_log_comment_load = ShiftLogComment.model_validate(shift_log_comment)
         shift_log_comment_load = set_new_metadata(shift_log_comment_load)
         return shift_log_comment_load
 
-    # @handle_no_shift_found
     def get_current_shift(self):
         """
         Retrieve the current shift.

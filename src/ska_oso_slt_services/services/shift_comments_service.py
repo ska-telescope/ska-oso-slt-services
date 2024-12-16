@@ -165,6 +165,18 @@ class ShiftComments(MediaService, BaseRepositoryService):
         )
 
     def create_media_for_comment(self, shift_id, shift_operator, file, shift_model):
+        """
+        Create a media file for a shift.
+
+        Args:
+            shift_id (int): The ID of the shift to add the media to.
+            shift_operator (str): The operator of the shift.
+            file (files): The media file to add.
+            shift_model: The model of the shift log.
+
+        Returns:
+            Shift: The updated shift with the added media.
+        """
         shift = self.get_shift(shift_id)
         if not shift:
             raise NotFoundError(f"No shift found with id: {shift_id}")
