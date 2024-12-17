@@ -16,6 +16,7 @@ from ska_oso_slt_services.data_access.postgres.mapping import (
     ShiftCommentMapping,
     ShiftLogCommentMapping,
     ShiftLogMapping,
+    TableDetails,
 )
 from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     insert_query,
@@ -109,7 +110,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         shifts = self.postgres_data_access.get(query, params)
         return shifts
 
-    def get_shift(self, shift_id) -> Shift:
+    def get_shift(self, shift_id: str) -> Shift:
         """
         Retrieve a specific shift by its ID.
 
@@ -157,7 +158,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}-{random_number}"
         return shift
 
-    def _insert_shift_to_database(self, table_details, entity) -> None:
+    def _insert_shift_to_database(
+        self, table_details: TableDetails, entity: Any
+    ) -> None:
         """
         Insert the shift into the database.
 
@@ -174,19 +177,22 @@ class PostgresShiftRepository(CRUDShiftRepository):
         id_created = self.postgres_data_access.insert(query, params)
         return id_created
 
-    def _build_insert_query(self, table_details, entity) -> Tuple[str, Any]:
+    def _build_insert_query(
+        self, table_details: TableDetails, entity: Any
+    ) -> Tuple[str, Any]:
         """
         Build the insert query and parameters for the given shift.
 
         Args:
-            shift (Shift): The shift object to build the query for.
+            entity (Shift): The shift object to build the query for.
+            table_details: The mapping details for the shift table.
 
         Returns:
             Tuple[str, Any]: A tuple containing the query string and its parameters.
         """
         return insert_query(table_details=table_details, entity=entity)
 
-    def update_shift(self, shift_id: str, shift: Shift) -> Shift:
+    def update_shift(self, shift: Shift) -> Shift:
         """
         Update an existing shift.
 
@@ -213,7 +219,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         if shift.shift_operator:
             existing_shift.shift_operator = shift.shift_operator
         existing_shift.metadata = shift.metadata
-        self._update_shift_in_database(entity_id=shift_id, entity=existing_shift)
+        self._update_shift_in_database(entity_id=shift.shift_id, entity=existing_shift)
         return existing_shift
 
     def get_latest_metadata(
@@ -243,13 +249,14 @@ class PostgresShiftRepository(CRUDShiftRepository):
         return Metadata.model_validate(meta_data)
 
     def _update_shift_in_database(
-        self, entity_id, entity, table_details=ShiftLogMapping()
+        self, entity_id: str, entity: Any, table_details=ShiftLogMapping()
     ) -> None:
         """
         Update an existing entity in the database.
 
         Args:
-            entity: The object to be updated in the database.
+            entity_id: The id of entity which might be comment or shift
+            entity(Shift|Comment): The object to be updated in the database.
             table_details: The mapping details for the entity table.
         """
         query, params = update_query(
@@ -258,7 +265,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         self.postgres_data_access.update(query, params)
 
-    def get_media(self, comment_id: int, table_model, table_mapping) -> Media:
+    def get_media(self, comment_id: int, table_model: Any, table_mapping: Any) -> Media:
         """
         Get a media file from a shift.
 
@@ -292,12 +299,18 @@ class PostgresShiftRepository(CRUDShiftRepository):
         return files
 
     def add_media(
-        self, comment_id, shift_comment: ShiftComment, files, shift_model, table_mapping
+        self,
+        comment_id: int,
+        shift_comment: ShiftComment,
+        files: Any,
+        shift_model: Any,
+        table_mapping: Any,
     ) -> Media:
         """
         Add media files associated with a shift comment.
 
         Args:
+            comment_id: id of comment or shift log comment
             files: The media files to be added. Can be single file or multiple files.
             shift_comment (ShiftComment): The shift comment object to associate
             the media with.
@@ -352,7 +365,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         pass  # pylint: disable=W0107
 
-    def get_shift_logs_comments(self, shift_id=None, eb_id=None):
+    def get_shift_logs_comments(
+        self, shift_id: str = None, eb_id: str = None
+    ) -> ShiftLogComment:
         """
         Retrieve comments from shift logs based on shift ID or EB ID.
 
@@ -369,7 +384,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         comments = self.postgres_data_access.get(query=query, params=params)
         return comments
 
-    def get_shift_logs_comment(self, comment_id):
+    def get_shift_logs_comment(self, comment_id: int) -> ShiftLogComment:
         """
         Retrieve a single comment from shift logs by comment ID.
 
@@ -385,7 +400,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         comments = self.postgres_data_access.get(query=query, params=params)[0]
         return comments
 
-    def create_shift_logs_comment(self, shift_log_comment: ShiftLogComment):
+    def create_shift_logs_comment(self, shift_log_comment: ShiftLogComment) -> dict:
         """
         Create a new comment for a shift log and save it to the database.
 
@@ -403,11 +418,12 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
     def update_shift_logs_comments(
         self, comment_id: int, shift_log_comment: ShiftLogComment
-    ):
+    ) -> ShiftLogComment:
         """
         Update an existing shift log comment with new data.
 
         Args:
+            comment_id (int): The ID of the comment to update.
             shift_log_comment (ShiftLogComment): The updated comment data.
 
         Returns:
@@ -432,7 +448,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         return existing_shift_log_comment
 
-    def get_current_shift(self):
+    def get_current_shift(self) -> Shift:
         """
         Retrieve the most recent shift from the database.
 
@@ -664,7 +680,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         comments = self.postgres_data_access.get(query=query, params=params)
         return comments
 
-    def get_shift_comment(self, comment_id, table_mapping):
+    def get_shift_comment(self, comment_id: int, table_mapping: Any):
         """
         Retrieve comments from shift based on comment ID.
 
@@ -688,6 +704,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Update an existing shift comment with new data.
 
         Args:
+            comment_id: Id of comment which needs to update.
             shift_comment (ShiftComment): The updated comment data.
 
         Returns:
@@ -716,7 +733,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         return existing_shift_comment
 
     def insert_shift_image(
-        self, file, shift_comment: ShiftComment, table_mapping
+        self, file: Any, shift_comment: ShiftComment, table_mapping: Any
     ) -> Media:
         """
         Update a shift comment with an image, uploading the image to S3.

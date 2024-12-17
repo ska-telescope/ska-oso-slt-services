@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import Any, List
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
@@ -66,7 +66,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
 
         return shift_comments_obj_with_metadata
 
-    def get_shift_comment(self, comment_id: str = None) -> List[ShiftComment]:
+    def get_shift_comment(self, comment_id: int = None) -> List[ShiftComment]:
         """
         Retrieve comments for shift based on comment ID.
 
@@ -92,7 +92,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
 
         return shift_comment_with_metadata
 
-    def update_shift_comments(self, comment_id, shift_comment: ShiftComment):
+    def update_shift_comments(self, comment_id: int, shift_comment: ShiftComment):
         """
         Update an existing shift comment with new data.
 
@@ -132,7 +132,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
             comment_id, shift_log_comment_with_metadata
         )
 
-    def add_media_to_comment(self, comment_id, files, shift_model):
+    def add_media_to_comment(self, comment_id: id, files: Any, shift_model: Any):
         """
         Add a media file to a shift.
 
@@ -151,7 +151,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
             table_mapping=ShiftCommentMapping(),
         )
 
-    def get_media_for_comment(self, comment_id, shift_model) -> list[Media]:
+    def get_media_for_comment(self, comment_id: int, shift_model: Any) -> list[Media]:
         """
         Get a media file from a shift.
 
@@ -166,7 +166,9 @@ class ShiftComments(MediaService, BaseRepositoryService):
             comment_id, shift_model, table_mapping=ShiftCommentMapping()
         )
 
-    def create_media_for_comment(self, shift_id, shift_operator, file, shift_model):
+    def create_media_for_comment(
+        self, shift_id: int, shift_operator: str, file: Any, shift_model: Any
+    ):
         """
         Create a media file for a shift.
 

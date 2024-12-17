@@ -19,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 
 class ShiftService(ShiftComments, ShiftLogsComment):
 
-    def merge_comments(self, shifts: List[dict]):
+    def merge_comments(self, shifts: List[dict]) -> Shift:
         """
         Merge comments into shift logs for the provided list of shifts.
 
@@ -43,7 +43,7 @@ class ShiftService(ShiftComments, ShiftLogsComment):
                             shift_log["comments"].append(comment)
         return shifts
 
-    def merge_shift_comments(self, shifts):
+    def merge_shift_comments(self, shifts: Shift) -> Shift:
         """
         Merge shift comments into the provided list of shifts.
 
@@ -174,7 +174,7 @@ class ShiftService(ShiftComments, ShiftLogsComment):
             prepared_shifts.append(shift_with_metadata)
         return prepared_shifts
 
-    def create_shift(self, shift_data) -> Shift:
+    def create_shift(self, shift_data: Shift) -> Shift:
         """
         Create a new shift.
 
@@ -187,7 +187,7 @@ class ShiftService(ShiftComments, ShiftLogsComment):
         shift = set_new_metadata(shift_data, created_by=shift_data.shift_operator)
         return self.crud_shift_repository.create_shift(shift)
 
-    def update_shift(self, shift_id, shift_data):
+    def update_shift(self, shift_id: str, shift_data: Shift) -> Shift:
         """
         Update an existing shift.
 
@@ -220,7 +220,7 @@ class ShiftService(ShiftComments, ShiftLogsComment):
         shift = update_metadata(
             shift_data, metadata=metadata, last_modified_by=shift_data.shift_operator
         )
-        return self.crud_shift_repository.update_shift(shift_id, shift)
+        return self.crud_shift_repository.update_shift(shift)
 
     def delete_shift(self, shift_id):
         """

@@ -1,3 +1,5 @@
+from typing import Any
+
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import update_metadata
 from ska_oso_slt_services.domain.shift_models import Media, Shift
@@ -6,7 +8,9 @@ from ska_oso_slt_services.services.base_repository_service import BaseRepository
 
 class MediaService(BaseRepositoryService):
 
-    def add_media(self, comment_id, files, shift_model, table_mapping) -> Media:
+    def add_media(
+        self, comment_id: int, files: Any, shift_model: Any, table_mapping: Any
+    ) -> Media:
         """
         Add a media file to a shift.
 
@@ -33,7 +37,7 @@ class MediaService(BaseRepositoryService):
             entity=stored_shift,
             metadata=metadata,
         )
-        result = self.crud_shift_repository.insert_shift_images(
+        result = self.crud_shift_repository.add_media(
             comment_id=comment_id,
             shift_comment=shift,
             files=files,
@@ -42,7 +46,7 @@ class MediaService(BaseRepositoryService):
         )
         return result.image
 
-    def post_media(self, file, shift_comment, table_mapping) -> Media:
+    def post_media(self, file: Any, shift_comment: Any, table_mapping: Any) -> Media:
         """
         Create a new comment for a shift log with metadata.
 
@@ -66,7 +70,9 @@ class MediaService(BaseRepositoryService):
         )
         return result
 
-    def get_media(self, comment_id, shift_model, table_mapping) -> list[Media]:
+    def get_media(
+        self, comment_id: int, shift_model: Any, table_mapping: Any
+    ) -> list[Media]:
         """
         Get a media file from a shift.
 
@@ -81,7 +87,7 @@ class MediaService(BaseRepositoryService):
         if isinstance(shift_model, dict):
             shift_model = Shift.model_validate(shift_model)
 
-        media_list = self.crud_shift_repository.get_images(
+        media_list = self.crud_shift_repository.get_media(
             comment_id, shift_model, table_mapping
         )
         if not media_list:

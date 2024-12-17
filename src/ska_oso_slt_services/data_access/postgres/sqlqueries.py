@@ -58,7 +58,7 @@ def insert_query(
 
 
 def update_query(
-    entity_id: str | int, table_details: TableDetails, entity
+    entity_id: str | int, table_details: TableDetails, entity: Any
 ) -> QueryAndParameters:
     """
     Creates a query and parameters to update the given entity in the table,
@@ -68,6 +68,7 @@ def update_query(
     then no update is performed.
 
     Args:
+        entity_id: The entity_id contais id of shift or comment
         table_details (TableDetails): The information about the table
         to perform the update on.
         entity: The entity which will be persisted.
@@ -143,6 +144,7 @@ def select_metadata_query(
     Creates a query to select all columns for all shifts.
 
     Args:
+        entity_id: id of shift of comment.
         table_details (TableDetails): The information about the table to query.
 
     Returns:
@@ -426,7 +428,7 @@ def build_like_query(
         """
         SELECT {fields}
         FROM {table}
-        WHERE {search_column} ILIKE %s"
+        WHERE {search_column} ILIKE %s
     """
     ).format(
         fields=sql.SQL(", ").join(map(sql.Identifier, columns)),

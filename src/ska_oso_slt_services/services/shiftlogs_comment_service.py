@@ -87,15 +87,14 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         shift_log_comments = self.crud_shift_repository.get_shift_logs_comments(
             shift_id=shift_id, eb_id=eb_id
         )
-
         if not shift_log_comments:
             raise NotFoundError("No shifts log comments found for the given query.")
         LOGGER.info("Shift log comments : %s", shift_log_comments)
 
         shift_log_comments_obj_with_metadata = []
         for shift_log_comment in shift_log_comments:
-            shift_log_comment_with_metadata = self._prepare_shift_comment_with_metadata(
-                shift_log_comment
+            shift_log_comment_with_metadata = (
+                self._prepare_shift_log_comment_with_metadata(shift_log_comment)
             )
             shift_log_comments_obj_with_metadata.append(shift_log_comment_with_metadata)
 

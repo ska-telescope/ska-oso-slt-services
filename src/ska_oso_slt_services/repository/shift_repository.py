@@ -68,7 +68,7 @@ class CRUDShiftRepository(ShiftRepository):
         """
         raise NotImplementedError
 
-    def update_shift(self, shift_id, shift: Shift) -> Shift:
+    def update_shift(self, shift: Shift) -> Shift:
         """
         Update an existing shift.
 
