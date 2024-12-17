@@ -153,12 +153,13 @@ def get_shifts(
     shift: ShiftBaseClass = Depends(),
     match_type: MatchType = Depends(),
     status: SbiEntityStatus = Depends(),
+    eb_id: Optional[str] = None,
 ):
     """
     Retrieve all shifts.
     This endpoint returns a list of all shifts in the system.
     """
-    shifts = shift_service.get_shifts(shift, match_type, status)
+    shifts = shift_service.get_shifts(shift, match_type, status, eb_id)
     return shifts, HTTPStatus.OK
 
 
@@ -780,7 +781,7 @@ def post_shift_log_media(
 @router.get(
     "/shift_log_comments/download_images/{comment_id}",
     tags=["Shift Log Comments"],
-    summary="download shift image",
+    summary="Download shift image",
     responses={
         200: {
             "description": "Successful Response",
@@ -927,7 +928,7 @@ def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
 @router.get(
     "/shift_comment/download_images/{comment_id}",
     tags=["Shift Comments"],
-    summary="download shift image",
+    summary="Download shift image",
     responses={
         200: {
             "description": "Successful Response",

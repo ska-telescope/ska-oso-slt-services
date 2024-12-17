@@ -78,6 +78,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         shift: Optional[Shift] = None,
         match_type: Optional[MatchType] = None,
         entity_status: Optional[SbiEntityStatus] = None,
+        eb_id: Optional[str] = None
     ) -> List[Shift]:
         """
         Retrieve a list of shifts based on the provided query parameters.
@@ -87,6 +88,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             match_type (Optional[MatchType]): The match type for text-based queries.
             entity_status (Optional[SbiEntityStatus]): Search shift data based on
             SBI status present in shift logs.
+            eb_id (Optional[str]): Search shift data based on EB ID present in shift
 
         Returns:
             List[Shift]: A list of shifts matching the query or raises shift
@@ -108,6 +110,10 @@ class PostgresShiftRepository(CRUDShiftRepository):
         elif (shift.shift_id or shift.shift_operator) and match_type.dict()[
             "match_type"
         ]:
+            query, params = select_by_shift_params(
+                self.table_details, shift, match_type
+            )
+        elif eb_id and match_type.dict()["match_type"]:
             query, params = select_by_shift_params(
                 self.table_details, shift, match_type
             )
@@ -160,7 +166,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             Shift: The prepared shift object.
         """
         shift.shift_start = get_datetime_for_timezone("UTC")
-        shift.shift_id = skuid.fetch_skuid(SKUID_ENTITY_TYPE)
+        # shift.shift_id = skuid.fetch_skuid(SKUID_ENTITY_TYPE)
+        shift.shift_id = skuid.get_local_transaction_id() 
         return shift
 
     def _insert_shift_to_database(self, table_details, entity) -> None:

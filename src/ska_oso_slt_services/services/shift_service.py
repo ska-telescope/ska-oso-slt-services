@@ -154,6 +154,7 @@ class ShiftService:
         shift: Optional[Shift] = None,
         match_type: Optional[MatchType] = None,
         status: Optional[SbiEntityStatus] = None,
+        eb_id: Optional[str] = None
     ) -> list[Shift]:
         """
         Retrieve shifts based on the provided query parameters.
@@ -163,6 +164,7 @@ class ShiftService:
             match_type (Optional[MatchType]): The match type for the query.
             status (Optional[SbiEntityStatus]): The SBI status present
             in shift_logs data.
+            eb_id (Optional[str]): The EB Id present in shift_logs data.
 
         Returns:
             list[Shift]: A list of shift matching the query,
@@ -171,7 +173,7 @@ class ShiftService:
         Raises:
             NotFoundError: If no shifts are found for the given query.
         """
-        shifts = self.postgres_repository.get_shifts(shift, match_type, status)
+        shifts = self.postgres_repository.get_shifts(shift, match_type, status, eb_id)
         if not shifts:
             raise NotFoundError("No shifts found for the given query.")
         LOGGER.info("Shifts: %s", shifts)
