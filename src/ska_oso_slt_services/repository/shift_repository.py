@@ -56,7 +56,6 @@ class CRUDShiftRepository(ShiftRepository):
     abstract methods.
     """
 
-    @abstractmethod
     def create_shift(self, shift: Shift) -> Shift:
         """
         Create a new shift.
@@ -69,7 +68,6 @@ class CRUDShiftRepository(ShiftRepository):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def update_shift(self, shift_id, shift: Shift) -> Shift:
         """
         Update an existing shift.
@@ -82,7 +80,6 @@ class CRUDShiftRepository(ShiftRepository):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def delete_shift(self, shift_id: str) -> bool:
         """
         Delete a shift by its SID.

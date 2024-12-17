@@ -19,9 +19,6 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftComment,
     ShiftLogComment,
 )
-from ska_oso_slt_services.repository.postgres_shift_repository import (
-    PostgresShiftRepository,
-)
 from ska_oso_slt_services.services.shift_service import ShiftService
 
 LOGGER = logging.getLogger(__name__)
@@ -36,7 +33,7 @@ class ShiftServiceSingleton:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            cls._instance = ShiftService([PostgresShiftRepository])
+            cls._instance = ShiftService()
         return cls._instance
 
 

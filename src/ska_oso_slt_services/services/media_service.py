@@ -19,7 +19,7 @@ class MediaService(BaseRepositoryService):
         Returns:
             Shift: The updated comment with the added media.
         """
-        metadata = self.postgres_repository.get_latest_metadata(
+        metadata = self.crud_shift_repository.get_latest_metadata(
             entity_id=comment_id, table_details=table_mapping
         )
 
@@ -33,7 +33,7 @@ class MediaService(BaseRepositoryService):
             entity=stored_shift,
             metadata=metadata,
         )
-        result = self.postgres_repository.insert_shift_images(
+        result = self.crud_shift_repository.insert_shift_images(
             comment_id=comment_id,
             shift_comment=shift,
             files=files,
@@ -61,7 +61,7 @@ class MediaService(BaseRepositoryService):
         if isinstance(shift_comment, dict):
             shift_comment = Media.model_validate(shift_comment)
 
-        result = self.postgres_repository.insert_shift_image(
+        result = self.crud_shift_repository.insert_shift_image(
             file=file, shift_comment=shift_comment, table_mapping=table_mapping
         )
         return result
@@ -81,7 +81,7 @@ class MediaService(BaseRepositoryService):
         if isinstance(shift_model, dict):
             shift_model = Shift.model_validate(shift_model)
 
-        media_list = self.postgres_repository.get_images(
+        media_list = self.crud_shift_repository.get_images(
             comment_id, shift_model, table_mapping
         )
         if not media_list:

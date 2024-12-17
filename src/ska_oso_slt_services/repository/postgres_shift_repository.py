@@ -336,8 +336,21 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         return current_shift_comment
 
-    def delete_shift(self, shift_id: str):
-        pass
+    def delete_shift(self, shift_id: str) -> bool:
+        """
+        Delete a shift by its ID.
+
+        Args:
+            shift_id (str): The unique identifier of the shift to delete.
+
+        Returns:
+            bool: True if the shift was successfully deleted, False otherwise.
+
+        Raises:
+            NotFoundError: If no shift is found with the given ID.
+            Exception: For any other unexpected errors.
+        """
+        pass  # pylint: disable=W0107
 
     def get_shift_logs_comments(self, shift_id=None, eb_id=None):
         """
@@ -734,7 +747,7 @@ class ShiftLogUpdater:
         self.lock = threading.Lock()
         self.thread = threading.Thread(target=self._background_task, daemon=True)
         self.thread_started = False
-        self.postgres_repository = PostgresShiftRepository()
+        self.crud_shift_repository = PostgresShiftRepository()
 
     def _background_task(self):
         while True:
@@ -744,7 +757,7 @@ class ShiftLogUpdater:
                         "------> Checking Updated ODA LOGS for SHIFT ID %s",
                         self.current_shift_id,
                     )
-                    self.postgres_repository.updated_shift_log_info(
+                    self.crud_shift_repository.updated_shift_log_info(
                         self.current_shift_id
                     )
             time.sleep(

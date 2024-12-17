@@ -29,14 +29,14 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         Raises:
             NotFoundError: If the shift is not found.
         """
-        shift = self.postgres_repository.get_shifts(Shift(shift_id=shift_id))
+        shift = self.crud_shift_repository.get_shifts(Shift(shift_id=shift_id))
         if not shift:
             raise NotFoundError("Shift not found")
         shift_log.shift_id = shift_id
         shift_log_dict = shift_log.dict()
         shift_log_dict["metadata"] = set_new_metadata(shift_log)
         shift_log = ShiftLogComment(**shift_log_dict)
-        self.postgres_repository.create_shift_log(shift_log)
+        self.crud_shift_repository.create_shift_log(shift_log)
         return shift_log
 
     def create_shift_logs_comment(self, shift_log_comment_data) -> ShiftLogComment:
@@ -64,7 +64,7 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         shift_log_comment = set_new_metadata(
             shift_log_comment_data, shift_log_comment_data.operator_name
         )
-        return self.postgres_repository.create_shift_logs_comment(
+        return self.crud_shift_repository.create_shift_logs_comment(
             shift_log_comment=shift_log_comment
         )
 
@@ -84,7 +84,7 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         Raises:
             NotFoundError: If no comments are found for the given filters.
         """
-        shift_log_comments = self.postgres_repository.get_shift_logs_comments(
+        shift_log_comments = self.crud_shift_repository.get_shift_logs_comments(
             shift_id=shift_id, eb_id=eb_id
         )
 
@@ -115,7 +115,7 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         Raises:
             NotFoundError: If no comment is found with the provided ID.
         """
-        metadata = self.postgres_repository.get_latest_metadata(
+        metadata = self.crud_shift_repository.get_latest_metadata(
             entity_id=comment_id, table_details=ShiftLogCommentMapping()
         )
         if not metadata:
@@ -127,7 +127,7 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
             last_modified_by=shift_log_comment.operator_name,
         )
 
-        return self.postgres_repository.update_shift_logs_comments(
+        return self.crud_shift_repository.update_shift_logs_comments(
             comment_id, shift_log_comment_with_metadata
         )
 
@@ -172,7 +172,7 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         Returns:
             file: The requested media file.
         """
-        return self.postgres_repository.get_media(
+        return self.crud_shift_repository.get_media(
             comment_id,
             table_model=ShiftLogComment,
             table_mapping=ShiftLogCommentMapping(),

@@ -30,8 +30,10 @@ class ShiftService(ShiftComments, ShiftLogsComment):
             List[dict]: List of shift data with merged comments in shift logs.
         """
         for shift in shifts:
-            shift_log_comments_dict = self.postgres_repository.get_shift_logs_comments(
-                shift_id=shift["shift_id"]
+            shift_log_comments_dict = (
+                self.crud_shift_repository.get_shift_logs_comments(
+                    shift_id=shift["shift_id"]
+                )
             )
             if shift.get("shift_logs"):
                 for shift_log in shift["shift_logs"]:
@@ -52,7 +54,7 @@ class ShiftService(ShiftComments, ShiftLogsComment):
             List[dict]: List of shift data with merged shift comments.
         """
         for shift in shifts:
-            shift_comment_dict = self.postgres_repository.get_shift_comments(
+            shift_comment_dict = self.crud_shift_repository.get_shift_comments(
                 shift_id=shift["shift_id"]
             )
             shift["comments"] = shift_comment_dict
@@ -69,7 +71,7 @@ class ShiftService(ShiftComments, ShiftLogsComment):
         Returns:
             Shift: The shift data if found, None otherwise.
         """
-        shift = self.postgres_repository.get_shift(shift_id)
+        shift = self.crud_shift_repository.get_shift(shift_id)
 
         if shift:
             shifts_with_log_comments = self.merge_comments([shift])[0]
@@ -130,7 +132,7 @@ class ShiftService(ShiftComments, ShiftLogsComment):
         Raises:
             NotFoundError: If no shifts are found for the given query.
         """
-        shifts = self.postgres_repository.get_shifts(shift, match_type, status)
+        shifts = self.crud_shift_repository.get_shifts(shift, match_type, status)
         if not shifts:
             raise NotFoundError("No shifts found for the given query.")
         LOGGER.info("Shifts: %s", shifts)
@@ -183,7 +185,7 @@ class ShiftService(ShiftComments, ShiftLogsComment):
             Shift: The created shift data.
         """
         shift = set_new_metadata(shift_data, created_by=shift_data.shift_operator)
-        return self.postgres_repository.create_shift(shift)
+        return self.crud_shift_repository.create_shift(shift)
 
     def update_shift(self, shift_id, shift_data):
         """
@@ -212,13 +214,13 @@ class ShiftService(ShiftComments, ShiftLogsComment):
             }:
                 raise ShiftEndedException()
 
-        metadata = self.postgres_repository.get_latest_metadata(shift_data.shift_id)
+        metadata = self.crud_shift_repository.get_latest_metadata(shift_data.shift_id)
         if not metadata:
             raise NotFoundError(f"No shift found with ID: {shift_data.shift_id}")
         shift = update_metadata(
             shift_data, metadata=metadata, last_modified_by=shift_data.shift_operator
         )
-        return self.postgres_repository.update_shift(shift_id, shift)
+        return self.crud_shift_repository.update_shift(shift_id, shift)
 
     def delete_shift(self, shift_id):
         """
@@ -227,7 +229,7 @@ class ShiftService(ShiftComments, ShiftLogsComment):
         Args:
             shift_id (str): The ID of the shift to delete.
         """
-        self.postgres_repository.delete_shift(shift_id)
+        self.crud_shift_repository.delete_shift(shift_id)
 
     def _prepare_shift_with_metadata(self, shift: Dict[Any, Any]) -> Shift:
         """
@@ -292,10 +294,10 @@ class ShiftService(ShiftComments, ShiftLogsComment):
             ValueError: If the PostgresShiftRepository is not available.
             NotFoundError: If no shifts are found in the system.
         """
-        if not self.postgres_repository:
+        if not self.crud_shift_repository:
             raise ValueError("PostgresShiftRepository is not available")
 
-        shift = self.postgres_repository.get_current_shift()
+        shift = self.crud_shift_repository.get_current_shift()
         if shift:
             return self.get_shift(shift_id=shift["shift_id"])
         return None
@@ -310,4 +312,4 @@ class ShiftService(ShiftComments, ShiftLogsComment):
         Returns:
             Union[Shift, str]: The updated shift object if successful, or an error
         """
-        return self.postgres_repository.updated_shift_log_info(current_shift_id)
+        return self.crud_shift_repository.updated_shift_log_info(current_shift_id)
