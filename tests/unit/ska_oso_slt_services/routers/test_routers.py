@@ -94,7 +94,7 @@ def test_create_shift():
     mock_insert.assert_called_once()
 
 
-def test_create_end_shift():
+def test_update_end_shift_time():
     # Prepare test data with metadata
     current_time = get_datetime_for_timezone("UTC")
     shift_data = {

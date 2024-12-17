@@ -274,10 +274,32 @@ def update_shift(shift_id: str, shift: Shift):
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Shift Not Found"}}
+            },
+        },
         422: {
             "description": "Invalid Shift Id",
             "content": {
                 "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
             },
         },
     },
