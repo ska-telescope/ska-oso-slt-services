@@ -205,7 +205,6 @@ class TableCreator:
                 CONSTRAINT fk_shift FOREIGN KEY (shift_id)
                 REFERENCES public.tab_oda_slt(shift_id)
             );
-            CREATE SEQUENCE IF NOT EXISTS tab_oda_slt_shift_log_comments_id_seq;
             CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_comments_shift_id
             ON public.tab_oda_slt_shift_comments (shift_id);
             CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_comments_operator_name
