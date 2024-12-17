@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from deepdiff import DeepDiff
+from psycopg import sql
 
 from ska_oso_slt_services.common.constant import ODA_DATA_POLLING_TIME
 from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
@@ -493,9 +494,13 @@ class PostgresShiftRepository(CRUDShiftRepository):
                         e.last_modified_on >=%s
                     """
         eb_params = [filter_date_tz]
-        eb_rows = self.postgres_data_access.execute_query_or_update(
-            query=eb_query, params=tuple(eb_params), query_type="GET"
-        )
+        try:
+            eb_rows = self.postgres_data_access.get(
+                query=sql.SQL(eb_query), params=tuple(eb_params)
+            )
+        except Exception as e:
+            LOGGER.error("Error fetching ODA data: %s", str(e))
+            raise
 
         info = {}
         if eb_rows:
