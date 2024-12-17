@@ -881,6 +881,12 @@ def get_shift_comments(shift_id: Optional[str] = None):
                 "application/json": {"example": {"message": "Invalid Comment Id"}}
             },
         },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
         500: {
             "description": "Internal Server Error",
             "content": {

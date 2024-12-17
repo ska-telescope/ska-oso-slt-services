@@ -1,5 +1,3 @@
-import json
-import os
 from datetime import datetime
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
@@ -17,17 +15,6 @@ app = create_app()
 
 # Create the TestClient with the app instance
 client = TestClient(app)
-
-
-def load_string_from_file(filename):
-    """
-    Return a file from the current directory as a string
-    """
-    cwd, _ = os.path.split(__file__)
-    path = os.path.join(cwd, filename)
-    with open(path, "r", encoding="utf-8") as json_file:
-        json_data = json.load(json_file)
-        return json_data
 
 
 def test_create_shift():
@@ -101,19 +88,10 @@ def test_create_shift():
     mock_insert.assert_called_once()
 
 
-def test_update_shift():
-    # Existing shift data structure
-    existing_shift = load_string_from_file(
-        "test_data_files/testfile_existing_shift_data.json"
-    )
-
-    # Updated shift data for the test
-    update_data = load_string_from_file(
-        "test_data_files/testfile_update_shift_data.json"
-    )
+def test_update_shift(existing_shift_data, updated_shift_data):
 
     # Expected shift data after the update
-    expected_updated_shift = {**existing_shift, **update_data}
+    expected_updated_shift = {**existing_shift_data, **updated_shift_data}
 
     # Patch ShiftService.update_shift directly to return the expected updated shift
     with patch(
@@ -122,8 +100,8 @@ def test_update_shift():
     ):
         # Send PUT request
         response = client.put(
-            f"{API_PREFIX}/shifts/update/{existing_shift['shift_id']}",
-            json=update_data,
+            f"{API_PREFIX}/shifts/update/{existing_shift_data['shift_id']}",
+            json=updated_shift_data,
         )
 
     # Assert the response status code is OK
@@ -148,10 +126,12 @@ def test_update_shift():
     if isinstance(updated_shift_response, list):
         updated_shift_response = updated_shift_response[0]
 
-    assert updated_shift_response["shift_id"] == existing_shift["shift_id"]
-    assert updated_shift_response["shift_operator"] == update_data["shift_operator"]
-    assert updated_shift_response["annotations"] == update_data["annotations"]
-    assert updated_shift_response["comments"] == update_data["comments"]
+    assert updated_shift_response["shift_id"] == existing_shift_data["shift_id"]
+    assert (
+        updated_shift_response["shift_operator"] == updated_shift_data["shift_operator"]
+    )
+    assert updated_shift_response["annotations"] == updated_shift_data["annotations"]
+    assert updated_shift_response["comments"] == updated_shift_data["comments"]
 
 
 def test_update_shift_after_end():
@@ -222,14 +202,10 @@ def test_update_shift_after_end():
 @patch(
     "ska_oso_slt_services.services.shift_service.ShiftService.get_shift_logs_comments"
 )
-def test_get_shift_log_comments(mock_get_shift_comments):
+def test_get_shift_log_comments(mock_get_shift_comments, shift_log_comment_data):
     # Prepare test data
 
-    comment_data = load_string_from_file(
-        "test_data_files/testfile_shift_log_comments_data.json"
-    )
-
-    mock_get_shift_comments.return_value = comment_data
+    mock_get_shift_comments.return_value = shift_log_comment_data
 
     # Send a POST request to create a comment
     response = client.get(
@@ -241,12 +217,9 @@ def test_get_shift_log_comments(mock_get_shift_comments):
     ), f"Expected status code 200, but got {response.status_code}"
 
 
-def test_update_shift_log_comment():
+def test_update_shift_log_comment(shift_initial_comment_data):
     # Existing comment data with initial metadata
     current_time = get_datetime_for_timezone("UTC")
-    initial_comment_data = load_string_from_file(
-        "test_data_files/testfile_initial_log_comment_data.json"
-    )
 
     # Updated comment data
     updated_comment_data = {
@@ -260,14 +233,14 @@ def test_update_shift_log_comment():
 
     # Mock for the updated ShiftLogComment model instance
     mock_comment = MagicMock()
-    mock_comment.id = initial_comment_data["id"]
+    mock_comment.id = shift_initial_comment_data["id"]
     mock_comment.log_comment = updated_comment_data["log_comment"]
     mock_comment.operator_name = updated_comment_data["operator_name"]
-    mock_comment.shift_id = initial_comment_data["shift_id"]
-    mock_comment.eb_id = initial_comment_data["eb_id"]
+    mock_comment.shift_id = shift_initial_comment_data["shift_id"]
+    mock_comment.eb_id = shift_initial_comment_data["eb_id"]
     # mock_comment.image = updated_comment_data["image"]
     mock_comment.metadata = {
-        **initial_comment_data["metadata"],
+        **shift_initial_comment_data["metadata"],
         **updated_comment_data["metadata"],
     }
 
@@ -277,13 +250,13 @@ def test_update_shift_log_comment():
             "ska_oso_slt_services.data_access.postgres"
             ".execute_query.PostgresDataAccess.get",
             return_value=[
-                initial_comment_data
+                shift_initial_comment_data
             ],  # Ensures get_shift_logs_comment returns data
         ),
         patch(
             "ska_oso_slt_services.data_access.postgres"
             ".execute_query.PostgresDataAccess.get_one",
-            return_value=initial_comment_data,  # Ensures individual
+            return_value=shift_initial_comment_data,  # Ensures individual
             # comment retrieval works
         ),
         patch(
@@ -293,7 +266,7 @@ def test_update_shift_log_comment():
         ),
     ):
         # Send a PUT request to update the comment
-        comment_id = initial_comment_data["id"]
+        comment_id = shift_initial_comment_data["id"]
         response = client.put(
             f"{API_PREFIX}/shift_log_comments/{comment_id}",
             json=updated_comment_data,
@@ -347,15 +320,12 @@ def test_update_shift_log_comment():
     )
 
 
-def test_get_current_shift():
-    # Mock shift data
-    mock_shift = load_string_from_file(
-        "test_data_files/testfile_current_shift_data.json"
-    )
+def test_get_current_shift(current_shift_data):
+
     # Patch the database session to use our mock
     with patch(
         "ska_oso_slt_services.services." "shift_service.ShiftService.get_current_shift",
-        return_value=mock_shift,
+        return_value=current_shift_data,
     ):
         # Send a GET request to the endpoint
         response = client.get(f"{API_PREFIX}/current_shift")
@@ -368,40 +338,38 @@ def test_get_current_shift():
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.create_shift_comment")
-def test_create_shift_comments(mock_create_shift_comment):
+def test_create_shift_comments(mock_create_shift_comment, shift_comment_data):
     # Prepare test data
-    comment_data = load_string_from_file(
-        "test_data_files/testfile_shift_comment_data.json"
-    )[0]
-    mock_create_shift_comment.return_value = comment_data
+
+    mock_create_shift_comment.return_value = shift_comment_data[0]
 
     # Send a POST request to create a comment
-    response = client.post(f"{API_PREFIX}/shift_comment", json=comment_data)
+    response = client.post(f"{API_PREFIX}/shift_comment", json=shift_comment_data[0])
 
     assert (
         response.status_code == 200
     ), f"Expected status code 200, but got {response.status_code}"
 
     created_comment = response.json()[0]
-    print(f"created_comment['comment'] {created_comment['comment']}")
-    print(f"comment_data['comment'] {comment_data['comment']}")
-    assert created_comment["comment"] == comment_data["comment"], (
-        f"Expected comment to be '{comment_data['comment']}'"
+
+    assert created_comment["comment"] == shift_comment_data[0]["comment"], (
+        f"Expected comment to be '{shift_comment_data[0]['comment']}'"
         f", but got '{created_comment['comment']}'"
     )
 
     # Add more assertions as needed
     assert "metadata" in created_comment, "Metadata is missing in the response"
     metadata = created_comment["metadata"]
-    assert metadata["created_by"] == comment_data["metadata"]["created_by"], (
-        f"Expected created_by to be '{comment_data['metadata']['created_by']}'"
+    assert metadata["created_by"] == shift_comment_data[0]["metadata"]["created_by"], (
+        f"Expected created_by to be '{shift_comment_data[0]['metadata']['created_by']}'"
         f", but got '{metadata['created_by']}'"
     )
     assert (
-        metadata["last_modified_by"] == comment_data["metadata"]["last_modified_by"]
+        metadata["last_modified_by"]
+        == shift_comment_data[0]["metadata"]["last_modified_by"]
     ), (
         f"Expected last_modified_by to be"
-        f" '{comment_data['metadata']['last_modified_by']}'"
+        f" '{shift_comment_data[0]['metadata']['last_modified_by']}'"
         f", but got '{metadata['last_modified_by']}'"
     )
 
@@ -410,13 +378,9 @@ def test_create_shift_comments(mock_create_shift_comment):
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift_comments")
-def test_get_shift_comments(mock_get_shift_comments):
-    # Prepare test data
-    comment_data = load_string_from_file(
-        "test_data_files/testfile_shift_comment_data.json"
-    )
+def test_get_shift_comments(mock_get_shift_comments, shift_comment_data):
 
-    mock_get_shift_comments.return_value = comment_data
+    mock_get_shift_comments.return_value = shift_comment_data
 
     # Send a POST request to create a comment
     response = client.get(f"{API_PREFIX}/shift_comment?shift_id=test-shift-id")
@@ -426,37 +390,35 @@ def test_get_shift_comments(mock_get_shift_comments):
     ), f"Expected status code 200, but got {response.status_code}"
 
     created_comment = response.json()[0][0]
-    assert created_comment["comment"] == comment_data[0]["comment"], (
-        f"Expected comment to be '{comment_data[0]['comment']}',"
+    assert created_comment["comment"] == shift_comment_data[0]["comment"], (
+        f"Expected comment to be '{shift_comment_data[0]['comment']}',"
         f" but got '{created_comment['comment']}'"
     )
 
     # Add more assertions as needed
     assert "metadata" in created_comment, "Metadata is missing in the response"
     metadata = created_comment["metadata"]
-    assert metadata["created_by"] == comment_data[0]["metadata"]["created_by"], (
-        f"Expected created_by to be '{comment_data[0]['metadata']['created_by']}',"
+    assert metadata["created_by"] == shift_comment_data[0]["metadata"]["created_by"], (
+        f"Expected created_by to be "
+        f"'{shift_comment_data[0]['metadata']['created_by']}',"
         f" but got '{metadata['created_by']}'"
     )
     assert (
-        metadata["last_modified_by"] == comment_data[0]["metadata"]["last_modified_by"]
+        metadata["last_modified_by"]
+        == shift_comment_data[0]["metadata"]["last_modified_by"]
     ), (
         f"Expected last_modified_by to be"
-        f" '{comment_data[0]['metadata']['last_modified_by']}'"
+        f" '{shift_comment_data[0]['metadata']['last_modified_by']}'"
         f", but got '{metadata['last_modified_by']}'"
     )
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.update_shift_comments")
-def test_update_shift_comments(mock_update_shift_comment):
+def test_update_shift_comments(mock_update_shift_comment, shift_comment_data):
     # Prepare test data
     data_to_be_updated = {"comment": "This is a test comment"}
 
-    updated_comment_data = load_string_from_file(
-        "test_data_files/testfile_shift_comment_data.json"
-    )[0]
-
-    mock_update_shift_comment.return_value = updated_comment_data
+    mock_update_shift_comment.return_value = shift_comment_data[0]
 
     # Send a POST request to create a comment
     response = client.put(f"{API_PREFIX}/shift_comment/1", json=data_to_be_updated)
@@ -589,19 +551,7 @@ def test_get_shift_comment_image(mock_shift_comment_image):
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
-def test_get_shift(mock_get_shift_comments):
-    # Prepare test data
-    shift_comments = load_string_from_file(
-        "test_data_files/testfile_sample_shift_data.json"
-    )[0]["comments"]
-
-    shift_log_comments = load_string_from_file(
-        "test_data_files/testfile_sample_shift_data.json"
-    )[0]["shift_logs"][0]["comments"]
-
-    shift_data = load_string_from_file(
-        "test_data_files/testfile_sample_shift_data.json"
-    )
+def test_get_shift(mock_get_shift_comments, shift_data):
 
     mock_get_shift_comments.return_value = shift_data
 
@@ -614,10 +564,13 @@ def test_get_shift(mock_get_shift_comments):
 
     created_shift = response.json()[0][0]
 
-    assert created_shift["comments"][0]["comment"] == shift_comments[0]["comment"]
+    assert (
+        created_shift["comments"][0]["comment"]
+        == shift_data[0]["comments"][0]["comment"]
+    )
     assert (
         created_shift["shift_logs"][0]["comments"][0]["log_comment"]
-        == shift_log_comments[0]["log_comment"]
+        == shift_data[0]["shift_logs"][0]["comments"][0]["log_comment"]
     )
     # Add more assertions as needed
     assert "metadata" in created_shift, "Metadata is missing in the response"
@@ -636,21 +589,9 @@ def test_get_shift(mock_get_shift_comments):
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shifts")
-def test_get_shifts(mock_get_shift_log_comments):
-    # Prepare test data
-    shift_comments = load_string_from_file(
-        "test_data_files/testfile_sample_shift_history_data.json"
-    )[0]["comments"]
+def test_get_shifts(mock_get_shift_log_comments, shift_history_data):
 
-    shift_log_comments = load_string_from_file(
-        "test_data_files/testfile_sample_shift_history_data.json"
-    )[0]["shift_logs"][0]["comments"]
-
-    shift_data = load_string_from_file(
-        "test_data_files/testfile_sample_shift_history_data.json"
-    )
-
-    mock_get_shift_log_comments.return_value = shift_data
+    mock_get_shift_log_comments.return_value = shift_history_data
 
     # Send a POST request to create a comment
     response = client.get(f"{API_PREFIX}/shifts?match_type=equals&sbi_status=Created")
@@ -661,23 +602,28 @@ def test_get_shifts(mock_get_shift_log_comments):
 
     created_shift = response.json()[0][0]
 
-    assert created_shift["comments"][0]["comment"] == shift_comments[0]["comment"]
+    assert (
+        created_shift["comments"][0]["comment"]
+        == shift_history_data[0]["comments"][0]["comment"]
+    )
     assert (
         created_shift["shift_logs"][0]["comments"][0]["log_comment"]
-        == shift_log_comments[0]["log_comment"]
+        == shift_history_data[0]["shift_logs"][0]["comments"][0]["log_comment"]
     )
     # Add more assertions as needed
     assert "metadata" in created_shift, "Metadata is missing in the response"
     metadata = created_shift["metadata"]
-    assert metadata["created_by"] == shift_data[0]["metadata"]["created_by"], (
-        f"Expected created_by to be '{shift_data[0]['metadata']['created_by']}',"
+    assert metadata["created_by"] == shift_history_data[0]["metadata"]["created_by"], (
+        f"Expected created_by to be "
+        f"'{shift_history_data[0]['metadata']['created_by']}',"
         f" but got '{metadata['created_by']}'"
     )
     assert (
-        metadata["last_modified_by"] == shift_data[0]["metadata"]["last_modified_by"]
+        metadata["last_modified_by"]
+        == shift_history_data[0]["metadata"]["last_modified_by"]
     ), (
         f"Expected last_modified_by to be"
-        f" '{shift_data[0]['metadata']['last_modified_by']}'"
+        f" '{shift_history_data[0]['metadata']['last_modified_by']}'"
         f", but got '{metadata['last_modified_by']}'"
     )
 
