@@ -56,6 +56,32 @@ LOGGER = logging.getLogger(__name__)
 skuid = SkuidClient(SKUID_URL)
 
 
+def create_shift_id(
+    telescope_type: str = "m",
+    operator_location: str = None,
+    skuid_entity_type: str = SKUID_ENTITY_TYPE,
+) -> str:
+    """
+    Create a shift ID based on the provided parameters.
+
+    Args:
+        skuid_entity_type (str): The SKUID entity type.
+        telescope_type (str): The telescope type.
+        operator_location (str): The operator location.
+
+    Returns:
+        str: The generated shift ID.
+    """
+
+    if operator_location:
+
+        return f"{skuid.fetch_skuid(skuid_entity_type)}-{operator_location}".replace(
+            "t", telescope_type
+        )
+
+    return f"{skuid.fetch_skuid(skuid_entity_type)}".replace("t", telescope_type)
+
+
 class PostgresShiftRepository(CRUDShiftRepository):
     """
     Postgres implementation of the CRUDShiftRepository.
@@ -160,7 +186,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             Shift: The prepared shift object.
         """
         shift.shift_start = get_datetime_for_timezone("UTC")
-        shift.shift_id = skuid.fetch_skuid(SKUID_ENTITY_TYPE)
+        shift.shift_id = create_shift_id()
         return shift
 
     def _insert_shift_to_database(self, table_details, entity) -> None:
