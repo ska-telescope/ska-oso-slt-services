@@ -17,25 +17,14 @@ app = create_app()
 client = TestClient(app)
 
 
-def test_create_shift():
-    # Prepare test data with metadata
-    current_time = get_datetime_for_timezone("UTC")
-    shift_data = {
-        "shift_operator": "test",
-        "metadata": {
-            "created_by": "test",
-            "created_on": current_time.isoformat(),
-            "last_modified_by": "test",
-            "last_modified_on": current_time.isoformat(),
-        },
-    }
+def test_create_shift(updated_shift_data):
     # Create a mock for the shift model
     mock_shift = MagicMock()
-    mock_shift.shift_operator = shift_data["shift_operator"]
-    mock_shift.created_by = shift_data["metadata"]["created_by"]
-    mock_shift.created_on = current_time
-    mock_shift.last_modified_by = shift_data["metadata"]["last_modified_by"]
-    mock_shift.last_modified_on = current_time
+    mock_shift.shift_operator = updated_shift_data["shift_operator"]
+    mock_shift.created_by = updated_shift_data["metadata"]["created_by"]
+    mock_shift.created_on = updated_shift_data["metadata"]["created_on"]
+    mock_shift.last_modified_by = updated_shift_data["metadata"]["last_modified_by"]
+    mock_shift.last_modified_on = updated_shift_data["metadata"]["last_modified_on"]
 
     # Create a mock for the database session
     mock_db_session = MagicMock()
@@ -60,98 +49,45 @@ def test_create_shift():
         ):
 
             # Send a POST request to the endpoint
-            response = client.post(f"{API_PREFIX}/shifts/create", json=shift_data)
+            response = client.post(
+                f"{API_PREFIX}/shifts/create", json=updated_shift_data
+            )
     # Assertions
     assert (
         response.status_code == 200
     ), f"Expected status code 200, but got {response.status_code}"
 
     created_shift = response.json()
-    assert created_shift[0]["shift_operator"] == shift_data["shift_operator"], (
-        f"Expected shift_operator to be '{shift_data['shift_operator']}', but got"
+    assert created_shift[0]["shift_operator"] == updated_shift_data["shift_operator"], (
+        f"Expected shift_operator to be '{updated_shift_data['shift_operator']}',"
+        "but got"
         f" '{created_shift[0]['shift_operator']}'"
     )
 
     # Verify metadata
     assert "metadata" in created_shift[0], "Metadata is missing in the response"
     metadata = created_shift[0]["metadata"]
-    assert metadata["created_by"] == shift_data["metadata"]["created_by"], (
-        f"Expected created_by to be '{shift_data['metadata']['created_by']}', but got"
+    assert metadata["created_by"] == updated_shift_data["metadata"]["created_by"], (
+        f"Expected created_by to be '{updated_shift_data['metadata']['created_by']}',"
+        "but got"
         f" '{metadata['created_by']}'"
     )
-    assert metadata["last_modified_by"] == shift_data["metadata"]["last_modified_by"], (
+    assert (
+        metadata["last_modified_by"]
+        == updated_shift_data["metadata"]["last_modified_by"]
+    ), (
         "Expected last_modified_by to be"
-        f" '{shift_data['metadata']['last_modified_by']}', but got"
+        f" '{updated_shift_data['metadata']['last_modified_by']}', but got"
         f" '{metadata['last_modified_by']}'"
     )
 
     mock_insert.assert_called_once()
 
 
-def test_update_shift():
-    # Existing shift data structure
-    existing_shift = {
-        "shift_id": "test-id-1",
-        "shift_start": get_datetime_for_timezone("UTC"),
-        "shift_end": None,
-        "shift_operator": "old-operator",
-        "shift_logs": [
-            {
-                "info": {},
-                "source": "test",
-                "log_time": get_datetime_for_timezone("UTC"),
-                "comments": [],
-            }
-        ],
-        "media": [],
-        "annotations": "old-annotation",
-        "comments": [
-            {
-                "id": 1,
-                "comment": "test-comment-1",
-                "shift_id": "test-id-1",
-                "image": {
-                    "path": "file_path",
-                    "timestamp": get_datetime_for_timezone("UTC"),
-                },
-                "metadata": {},
-            }
-        ],
-        "created_by": "test-user-1",
-        "created_on": get_datetime_for_timezone("UTC"),
-        "last_modified_by": "test-user-1",
-        "last_modified_on": get_datetime_for_timezone("UTC"),
-    }
-
-    # Updated shift data for the test
-    update_data = {
-        "shift_id": "test-id-1",
-        "shift_start": "2024-09-14T16:49:54.889Z",
-        "shift_operator": "old-operator",
-        "shift_logs": [],
-        "media": [],
-        "annotations": "updated-annotation",
-        "comments": [
-            {
-                "id": 2,
-                "comment": "test-comment-1",
-                "shift_id": "test-id-1",
-                "image": [
-                    {"path": "file_path", "timestamp": "2024-09-14T16:49:54.889Z"}
-                ],
-                "metadata": {},
-            }
-        ],
-        "metadata": {
-            "created_by": "test-user-1",
-            "created_on": "2024-09-14T16:49:54.889Z",
-            "last_modified_by": "test-user-1",
-            "last_modified_on": "2024-09-14T16:49:54.889Z",
-        },
-    }
+def test_update_shift(existing_shift_data, updated_shift_data):
 
     # Expected shift data after the update
-    expected_updated_shift = {**existing_shift, **update_data}
+    expected_updated_shift = {**existing_shift_data, **updated_shift_data}
 
     # Patch ShiftService.update_shift directly to return the expected updated shift
     with patch(
@@ -160,8 +96,8 @@ def test_update_shift():
     ):
         # Send PUT request
         response = client.put(
-            f"{API_PREFIX}/shifts/update/{existing_shift['shift_id']}",
-            json=update_data,
+            f"{API_PREFIX}/shifts/update/{existing_shift_data['shift_id']}",
+            json=updated_shift_data,
         )
 
     # Assert the response status code is OK
@@ -186,10 +122,12 @@ def test_update_shift():
     if isinstance(updated_shift_response, list):
         updated_shift_response = updated_shift_response[0]
 
-    assert updated_shift_response["shift_id"] == existing_shift["shift_id"]
-    assert updated_shift_response["shift_operator"] == update_data["shift_operator"]
-    assert updated_shift_response["annotations"] == update_data["annotations"]
-    assert updated_shift_response["comments"] == update_data["comments"]
+    assert updated_shift_response["shift_id"] == existing_shift_data["shift_id"]
+    assert (
+        updated_shift_response["shift_operator"] == updated_shift_data["shift_operator"]
+    )
+    assert updated_shift_response["annotations"] == updated_shift_data["annotations"]
+    assert updated_shift_response["comments"] == updated_shift_data["comments"]
 
 
 def test_update_shift_after_end():
@@ -260,27 +198,10 @@ def test_update_shift_after_end():
 @patch(
     "ska_oso_slt_services.services.shift_service.ShiftService.get_shift_logs_comments"
 )
-def test_get_shift_log_comments(mock_get_shift_comments):
+def test_get_shift_log_comments(mock_get_shift_comments, shift_log_comment_data):
     # Prepare test data
 
-    comment_data = [
-        {
-            "log_comment": "This is a test comment",
-            "operator_name": "string",
-            "shift_id": "test-shift-id",
-            "image": {
-                "path": "string",
-                "timestamp": "2024-11-12 12:36:46.901000+00:00",
-            },
-            "eb_id": "string",
-            "created_on": "2024-11-12T18:06:53.378127+05:30",
-            "created_by": "string",
-            "last_modified_on": "2024-11-12T18:06:53.378127+05:30",
-            "last_modified_by": "string",
-        }
-    ]
-
-    mock_get_shift_comments.return_value = comment_data
+    mock_get_shift_comments.return_value = shift_log_comment_data
 
     # Send a POST request to create a comment
     response = client.get(
@@ -292,22 +213,9 @@ def test_get_shift_log_comments(mock_get_shift_comments):
     ), f"Expected status code 200, but got {response.status_code}"
 
 
-def test_update_shift_log_comment():
+def test_update_shift_log_comment(shift_initial_comment_data):
     # Existing comment data with initial metadata
     current_time = get_datetime_for_timezone("UTC")
-    initial_comment_data = {
-        "id": 1,
-        "log_comment": "This is the original comment",
-        "operator_name": "original_operator",
-        "shift_id": "test-shift-id",
-        "eb_id": "test-eb-id",
-        "metadata": {
-            "created_by": "original_operator",
-            "created_on": current_time.isoformat(),
-            "last_modified_by": "original_operator",
-            "last_modified_on": current_time.isoformat(),
-        },
-    }
 
     # Updated comment data
     updated_comment_data = {
@@ -321,14 +229,14 @@ def test_update_shift_log_comment():
 
     # Mock for the updated ShiftLogComment model instance
     mock_comment = MagicMock()
-    mock_comment.id = initial_comment_data["id"]
+    mock_comment.id = shift_initial_comment_data["id"]
     mock_comment.log_comment = updated_comment_data["log_comment"]
     mock_comment.operator_name = updated_comment_data["operator_name"]
-    mock_comment.shift_id = initial_comment_data["shift_id"]
-    mock_comment.eb_id = initial_comment_data["eb_id"]
+    mock_comment.shift_id = shift_initial_comment_data["shift_id"]
+    mock_comment.eb_id = shift_initial_comment_data["eb_id"]
     # mock_comment.image = updated_comment_data["image"]
     mock_comment.metadata = {
-        **initial_comment_data["metadata"],
+        **shift_initial_comment_data["metadata"],
         **updated_comment_data["metadata"],
     }
 
@@ -338,13 +246,13 @@ def test_update_shift_log_comment():
             "ska_oso_slt_services.data_access.postgres"
             ".execute_query.PostgresDataAccess.get",
             return_value=[
-                initial_comment_data
+                shift_initial_comment_data
             ],  # Ensures get_shift_logs_comment returns data
         ),
         patch(
             "ska_oso_slt_services.data_access.postgres"
             ".execute_query.PostgresDataAccess.get_one",
-            return_value=initial_comment_data,  # Ensures individual
+            return_value=shift_initial_comment_data,  # Ensures individual
             # comment retrieval works
         ),
         patch(
@@ -354,7 +262,7 @@ def test_update_shift_log_comment():
         ),
     ):
         # Send a PUT request to update the comment
-        comment_id = initial_comment_data["id"]
+        comment_id = shift_initial_comment_data["id"]
         response = client.put(
             f"{API_PREFIX}/shift_log_comments/{comment_id}",
             json=updated_comment_data,
@@ -408,31 +316,12 @@ def test_update_shift_log_comment():
     )
 
 
-def test_get_current_shift():
-    # Mock shift data
-    mock_shift = {
-        "shift_id": "test-id",
-        "shift_start": get_datetime_for_timezone("UTC"),
-        "shift_operator": "test",
-        "shift_logs": [
-            {
-                "info": {},
-                "source": "test",
-                "log_time": get_datetime_for_timezone("UTC"),
-            }
-        ],
-        "media": [{"type": "test", "path": "test"}],
-        "annotations": "test",
-        "comments": "test",
-        "created_by": "test",
-        "created_on": get_datetime_for_timezone("UTC"),
-        "last_modified_by": "test",
-        "last_modified_on": get_datetime_for_timezone("UTC"),
-    }
+def test_get_current_shift(current_shift_data):
+
     # Patch the database session to use our mock
     with patch(
         "ska_oso_slt_services.services." "shift_service.ShiftService.get_current_shift",
-        return_value=mock_shift,
+        return_value=current_shift_data,
     ):
         # Send a GET request to the endpoint
         response = client.get(f"{API_PREFIX}/current_shift")
@@ -445,50 +334,38 @@ def test_get_current_shift():
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.create_shift_comment")
-def test_create_shift_comments(mock_create_shift_comment):
+def test_create_shift_comments(mock_create_shift_comment, shift_comment_data):
     # Prepare test data
-    current_time = get_datetime_for_timezone("UTC")
-    comment_data = {
-        "comment": "This is a test comment",
-        "shift_id": "test-shift-id",
-        "image": [{"path": "https://example.com/image.png"}],
-        "metadata": {
-            "created_by": "test_user",
-            "created_on": current_time.isoformat(),
-            "last_modified_by": "test_user",
-            "last_modified_on": current_time.isoformat(),
-        },
-    }
 
-    mock_create_shift_comment.return_value = comment_data
+    mock_create_shift_comment.return_value = shift_comment_data[0]
 
     # Send a POST request to create a comment
-    response = client.post(f"{API_PREFIX}/shift_comment", json=comment_data)
+    response = client.post(f"{API_PREFIX}/shift_comment", json=shift_comment_data[0])
 
     assert (
         response.status_code == 200
     ), f"Expected status code 200, but got {response.status_code}"
 
     created_comment = response.json()[0]
-    print(f"created_comment['comment'] {created_comment['comment']}")
-    print(f"comment_data['comment'] {comment_data['comment']}")
-    assert created_comment["comment"] == comment_data["comment"], (
-        f"Expected comment to be '{comment_data['comment']}'"
+
+    assert created_comment["comment"] == shift_comment_data[0]["comment"], (
+        f"Expected comment to be '{shift_comment_data[0]['comment']}'"
         f", but got '{created_comment['comment']}'"
     )
 
     # Add more assertions as needed
     assert "metadata" in created_comment, "Metadata is missing in the response"
     metadata = created_comment["metadata"]
-    assert metadata["created_by"] == comment_data["metadata"]["created_by"], (
-        f"Expected created_by to be '{comment_data['metadata']['created_by']}'"
+    assert metadata["created_by"] == shift_comment_data[0]["metadata"]["created_by"], (
+        f"Expected created_by to be '{shift_comment_data[0]['metadata']['created_by']}'"
         f", but got '{metadata['created_by']}'"
     )
     assert (
-        metadata["last_modified_by"] == comment_data["metadata"]["last_modified_by"]
+        metadata["last_modified_by"]
+        == shift_comment_data[0]["metadata"]["last_modified_by"]
     ), (
         f"Expected last_modified_by to be"
-        f" '{comment_data['metadata']['last_modified_by']}'"
+        f" '{shift_comment_data[0]['metadata']['last_modified_by']}'"
         f", but got '{metadata['last_modified_by']}'"
     )
 
@@ -497,36 +374,9 @@ def test_create_shift_comments(mock_create_shift_comment):
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift_comments")
-def test_get_shift_comments(mock_get_shift_comments):
-    # Prepare test data
-    current_time = get_datetime_for_timezone("UTC")
+def test_get_shift_comments(mock_get_shift_comments, shift_comment_data):
 
-    comment_data = [
-        {
-            "comment": "This is a test comment",
-            "shift_id": "test-shift-id",
-            "image": {"path": "https://example.com/image.png"},
-            "metadata": {
-                "created_by": "test_user",
-                "created_on": current_time.isoformat(),
-                "last_modified_by": "test_user",
-                "last_modified_on": current_time.isoformat(),
-            },
-        },
-        {
-            "comment": "This is a test comment",
-            "shift_id": "test-shift-id",
-            "image": {"path": "https://example.com/image.png"},
-            "metadata": {
-                "created_by": "test_user",
-                "created_on": current_time.isoformat(),
-                "last_modified_by": "test_user",
-                "last_modified_on": current_time.isoformat(),
-            },
-        },
-    ]
-
-    mock_get_shift_comments.return_value = comment_data
+    mock_get_shift_comments.return_value = shift_comment_data
 
     # Send a POST request to create a comment
     response = client.get(f"{API_PREFIX}/shift_comment?shift_id=test-shift-id")
@@ -536,47 +386,35 @@ def test_get_shift_comments(mock_get_shift_comments):
     ), f"Expected status code 200, but got {response.status_code}"
 
     created_comment = response.json()[0][0]
-    assert created_comment["comment"] == comment_data[0]["comment"], (
-        f"Expected comment to be '{comment_data[0]['comment']}',"
+    assert created_comment["comment"] == shift_comment_data[0]["comment"], (
+        f"Expected comment to be '{shift_comment_data[0]['comment']}',"
         f" but got '{created_comment['comment']}'"
     )
 
     # Add more assertions as needed
     assert "metadata" in created_comment, "Metadata is missing in the response"
     metadata = created_comment["metadata"]
-    assert metadata["created_by"] == comment_data[0]["metadata"]["created_by"], (
-        f"Expected created_by to be '{comment_data[0]['metadata']['created_by']}',"
+    assert metadata["created_by"] == shift_comment_data[0]["metadata"]["created_by"], (
+        f"Expected created_by to be "
+        f"'{shift_comment_data[0]['metadata']['created_by']}',"
         f" but got '{metadata['created_by']}'"
     )
     assert (
-        metadata["last_modified_by"] == comment_data[0]["metadata"]["last_modified_by"]
+        metadata["last_modified_by"]
+        == shift_comment_data[0]["metadata"]["last_modified_by"]
     ), (
         f"Expected last_modified_by to be"
-        f" '{comment_data[0]['metadata']['last_modified_by']}'"
+        f" '{shift_comment_data[0]['metadata']['last_modified_by']}'"
         f", but got '{metadata['last_modified_by']}'"
     )
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.update_shift_comments")
-def test_update_shift_comments(mock_update_shift_comment):
+def test_update_shift_comments(mock_update_shift_comment, shift_comment_data):
     # Prepare test data
-    current_time = get_datetime_for_timezone("UTC")
+    data_to_be_updated = {"comment": "This is a test comment"}
 
-    data_to_be_updated = {"comment": "This is a updated test comment"}
-
-    updated_comment_data = {
-        "comment": "This is a updated test comment",
-        "shift_id": "test-shift-id",
-        "image": {"path": "https://example.com/image.png"},
-        "metadata": {
-            "created_by": "test_user",
-            "created_on": current_time.isoformat(),
-            "last_modified_by": "test_user",
-            "last_modified_on": current_time.isoformat(),
-        },
-    }
-
-    mock_update_shift_comment.return_value = updated_comment_data
+    mock_update_shift_comment.return_value = shift_comment_data[0]
 
     # Send a POST request to create a comment
     response = client.put(f"{API_PREFIX}/shift_comment/1", json=data_to_be_updated)
@@ -593,31 +431,10 @@ def test_update_shift_comments(mock_update_shift_comment):
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.post_media")
-def test_create_shift_comment_image(mock_shift_comment_image):
-    # Prepare test data with metadata
-    test_file = {"file": ("test_image.png", b"dummy image content", "image/png")}
-    shift_data = {
-        "operator_name": "Monica",
-        "shift_id": "shift-20241111-2",
-        "image": [
-            {
-                "path": "https://skao-611985328822-shift-log-tool-storage.s3."
-                "amazonaws.com/4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac"
-                "53284f533d34e0b5f6.jpeg",
-                "unique_id": "4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac"
-                "53284f533d34e0b5f6.jpeg",
-                "timestamp": "2024-11-11T15:46:13.223618Z",
-            }
-        ],
-        "metadata": {
-            "created_by": "Monica",
-            "created_on": "2024-11-11T15:46:12.378390Z",
-            "last_modified_by": "Monica",
-            "last_modified_on": "2024-11-11T15:46:12.378390Z",
-        },
-    }
+def test_create_shift_comment_image(mock_shift_comment_image, shift_comment_image_data):
 
-    mock_shift_comment_image.return_value = shift_data
+    test_file = {"file": ("test_image.png", b"dummy image content", "image/png")}
+    mock_shift_comment_image.return_value = shift_comment_image_data
 
     # Send a POST request to the endpoint
     response = client.post(
@@ -632,32 +449,25 @@ def test_create_shift_comment_image(mock_shift_comment_image):
     ), f"Expected status code 200, but got {response.status_code}"
 
     created_shift = response.json()
-    assert created_shift[0]["operator_name"] == shift_data["operator_name"], (
-        f"Expected operator_name to be '{shift_data['operator_name']}', but got"
+    assert (
+        created_shift[0]["operator_name"] == shift_comment_image_data["operator_name"]
+    ), (
+        f"Expected operator_name to be '{shift_comment_image_data['operator_name']}'"
+        ", but got"
         f" '{created_shift[0]['operator_name']}'"
     )
-    assert created_shift[0]["shift_id"] == shift_data["shift_id"], (
-        f"Expected shift_id to be '{shift_data['shift_id']}', but got"
+    assert created_shift[0]["shift_id"] == shift_comment_image_data["shift_id"], (
+        f"Expected shift_id to be '{shift_comment_image_data['shift_id']}', but got"
         f" '{created_shift[0]['shift_id']}'"
     )
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.add_media")
-def test_add_shift_comment_image(mock_shift_comment_image):
+def test_add_shift_comment_image(mock_shift_comment_image, shift_comment_image_data):
     # Prepare test data with metadata
     test_file = {"files": ("test_image.png", b"dummy image content", "image/png")}
-    shift_data = [
-        {
-            "path": "https://skao-611985328822-shift-log-tool-storage.s3."
-            "amazonaws.com/d03269ecb544276928aad4916b0a1f5c11d6ebe9e2439d"
-            "b4708369f72fcf1746.jpeg",
-            "unique_id": "d03269ecb544276928aad4916b0a1f5c11d6ebe9e2439db"
-            "4708369f72fcf1746.jpeg",
-            "timestamp": "2024-11-11T15:42:58.481265Z",
-        }
-    ]
 
-    mock_shift_comment_image.return_value = shift_data
+    mock_shift_comment_image.return_value = shift_comment_image_data["image"]
 
     # Send a POST request to the endpoint
     response = client.put(f"{API_PREFIX}/shift_comment/upload_image/2", files=test_file)
@@ -669,35 +479,11 @@ def test_add_shift_comment_image(mock_shift_comment_image):
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_media")
-def test_get_shift_comment_image(mock_shift_comment_image):
+def test_get_shift_comment_image(
+    mock_shift_comment_image, get_shift_comment_image_data
+):
 
-    shift_data = [
-        {
-            "file_key": "4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac"
-            "53284f533d34e0b5f6.jpeg",
-            "media_content": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxIQEh"
-            "UQEBIVFRUVFRcVFRUXFRUVGBgXFRUWFhgVFRUYHSggGBolGxUYITIhJSkrLi"
-            "4uFx8zODMtNygtLisBCgoKDg0OGBAQGi0fHx8tLS0tLS0tLS0tLS0tLS0tLS0"
-            "tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAOAA4QMBIgAC"
-            "EQEDEQH/xAAbAAABBQEBAAAAAAAAAAAAAAADAAECBAUGB//EAD0QAAEDAgQEA"
-            "wcDAwMCBwAAAAEAAhEDIQQSMUEFUWFxBiKBE5GhscHR8DJC4RQjUgcVYpLxM1"
-            "NUcoKTov/EABkBAQEBAQEBAAAAAAAAAAAAAAABAgMEBf/EAB8RAQEBAQACAgMB"
-            "AAAAAAAAAAABEQISITFBE1FhA//aAAwDAQACEQMRAD8AohqWVGyp8i+Vj0A5Us"
-            "qNkSyJgBlSyo+RNlTAHKnyouRPlTFCDU+VFDU4amAYapBqIGpw1MAw1SDUQNUg"
-            "1MMQDUQNThqmAmGGAUgE4CkAmCMJQpQnhXEQhNCJCUKgRCiQjZVEtTAAtQy1WS"
-            "1QLVcFZzUJzVac1Cc1BXyp0TKnQFyp8qLlSypi4FlSyomVKFMAoSyouVNlTALK"
-            "nyouVLKrihhqkGqYapBqYIBqkGogYpBiuAYanDUUMT5UwDDU+VEyp4TBABOApwk"
-            "ApiIwlCnCeFcEMqWVThPCYB5VEtRsqYtTDAC1QLVYIUCFcMVi1Dc1WnNQnNUMV8"
-            "qSLlSRBsqWVThPCuNBFqbKiwllTAPKllRcqfKmAWVLKi5UoTAMNUg1TATgKiIap"
-            "AKQCcNTBGE4CmGp8quCEJ4UgE8KYIQnAU4TwmCEJ4UoShMEYSU4ShMEITEIiZXAM"
-            "tUC1GITEJgruahuarJahuCgrwkiwkgJCaEXKllVwChKETKnypgGGp8qJCeEA8qWV"
-            "EhPCAYanDVOE8KiIanAUgFIBFRDU8KcJQghCUKcJQgjCUKUJ4REITwpJQgjCUKUJ"
-            "4QQhNCnCUIBwmIRCFGEAyENzUchQcEAcqSJCSYJwlClCaEVGEymoqIUJ0ydA6SaUp",
-            "content_type": "image/jpeg",
-        }
-    ]
-
-    mock_shift_comment_image.return_value = shift_data
+    mock_shift_comment_image.return_value = get_shift_comment_image_data
 
     # Send a POST request to the endpoint
     response = client.get(f"{API_PREFIX}/shift_comment/download_images/3")
@@ -709,123 +495,7 @@ def test_get_shift_comment_image(mock_shift_comment_image):
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
-def test_get_shift(mock_get_shift_comments):
-    # Prepare test data
-    current_time = get_datetime_for_timezone("UTC")
-    shift_comments = [
-        {
-            "id": 1,
-            "comment": "This is updated comment",
-            "operator_name": "johnny",
-            "shift_id": "shift-20241112-1",
-            "metadata": {
-                "created_by": "john",
-                "created_on": current_time,
-                "last_modified_by": "john",
-                "last_modified_on": current_time,
-            },
-        }
-    ]
-    shift_log_comments = [
-        {
-            "id": 1,
-            "log_comment": "This is log comment",
-            "operator_name": "max",
-            "shift_id": "shift-20241112-1",
-            "eb_id": "eb-t0001-20241022-00002",
-            "metadata": {
-                "created_by": "max",
-                "created_on": "2024-11-12T14:21:47.447462+05:30",
-                "last_modified_by": "max",
-                "last_modified_on": "2024-11-12T14:21:47.447462+05:30",
-            },
-        }
-    ]
-    shift_data = [
-        {
-            "shift_id": "shift-20241112-1",
-            "shift_start": "2024-11-12T13:04:55.874585+05:30",
-            "shift_operator": "john",
-            "comments": shift_comments,
-            "shift_logs": [
-                {
-                    "info": {
-                        "eb_id": "eb-t0001-20241022-00002",
-                        "sbd_ref": "sbd-t0001-20240822-00008",
-                        "sbi_ref": "sbi-t0001-20240822-00009",
-                        "metadata": {
-                            "version": 1,
-                            "created_by": "DefaultUser",
-                            "created_on": "2024-10-22T11:25:36.953526Z",
-                            "pdm_version": "15.4.0",
-                            "last_modified_by": "DefaultUser",
-                            "last_modified_on": "2024-10-22T11:25:36.953526Z",
-                        },
-                        "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
-                        "telescope": "ska_mid",
-                        "sbi_status": "failed",
-                        "sbd_version": 1,
-                        "request_responses": [
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.assign_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting."
-                                "functions.devicecontrol.configure_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.scan",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions."
-                                "devicecontrol.release_all_resources",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "error": {"detail": "this is an error"},
-                                "status": "ERROR",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.end",
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                        ],
-                    },
-                    "source": "ODA",
-                    "log_time": "2024-10-22T11:24:14.406107Z",
-                    "comments": shift_log_comments,
-                }
-            ],
-            "metadata": {
-                "created_by": "john",
-                "created_on": "2024-11-12T13:04:55.860503+05:30",
-                "last_modified_by": "max1",
-                "last_modified_on": "2024-11-12T20:52:10.208101+05:30",
-            },
-        },
-        200,
-    ]
+def test_get_shift(mock_get_shift_comments, shift_data):
 
     mock_get_shift_comments.return_value = shift_data
 
@@ -838,10 +508,13 @@ def test_get_shift(mock_get_shift_comments):
 
     created_shift = response.json()[0][0]
 
-    assert created_shift["comments"][0]["comment"] == shift_comments[0]["comment"]
+    assert (
+        created_shift["comments"][0]["comment"]
+        == shift_data[0]["comments"][0]["comment"]
+    )
     assert (
         created_shift["shift_logs"][0]["comments"][0]["log_comment"]
-        == shift_log_comments[0]["log_comment"]
+        == shift_data[0]["shift_logs"][0]["comments"][0]["log_comment"]
     )
     # Add more assertions as needed
     assert "metadata" in created_shift, "Metadata is missing in the response"
@@ -860,236 +533,9 @@ def test_get_shift(mock_get_shift_comments):
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shifts")
-def test_get_shifts(mock_get_shift_log_comments):
-    # Prepare test data
-    current_time = get_datetime_for_timezone("UTC")
+def test_get_shifts(mock_get_shift_log_comments, shift_history_data):
 
-    current_time = get_datetime_for_timezone("UTC")
-    shift_comments = [
-        {
-            "id": 1,
-            "comment": "This is updated comment",
-            "operator_name": "johnny",
-            "shift_id": "shift-20241112-1",
-            "metadata": {
-                "created_by": "john",
-                "created_on": current_time,
-                "last_modified_by": "john",
-                "last_modified_on": current_time,
-            },
-        },
-        {
-            "id": 2,
-            "comment": "This is updated comment",
-            "operator_name": "johnny",
-            "shift_id": "shift-20241112-2",
-            "metadata": {
-                "created_by": "john",
-                "created_on": current_time,
-                "last_modified_by": "john",
-                "last_modified_on": current_time,
-            },
-        },
-    ]
-    shift_log_comments = [
-        {
-            "id": 1,
-            "log_comment": "This is log comment",
-            "operator_name": "max",
-            "shift_id": "shift-20241112-1",
-            "eb_id": "eb-t0001-20241022-00002",
-            "metadata": {
-                "created_by": "max",
-                "created_on": "2024-11-12T14:21:47.447462+05:30",
-                "last_modified_by": "max",
-                "last_modified_on": "2024-11-12T14:21:47.447462+05:30",
-            },
-        },
-        {
-            "id": 2,
-            "log_comment": "This is log comment",
-            "operator_name": "max",
-            "shift_id": "shift-20241112-2",
-            "eb_id": "eb-t0001-20241022-00002",
-            "metadata": {
-                "created_by": "max",
-                "created_on": "2024-11-12T14:21:47.447462+05:30",
-                "last_modified_by": "max",
-                "last_modified_on": "2024-11-12T14:21:47.447462+05:30",
-            },
-        },
-    ]
-
-    shift_data = [
-        {
-            "shift_id": "shift-20241112-1",
-            "shift_start": "2024-11-12T13:04:55.874585+05:30",
-            "shift_operator": "john",
-            "comments": shift_comments,
-            "shift_logs": [
-                {
-                    "info": {
-                        "eb_id": "eb-t0001-20241022-00002",
-                        "sbd_ref": "sbd-t0001-20240822-00008",
-                        "sbi_ref": "sbi-t0001-20240822-00009",
-                        "metadata": {
-                            "version": 1,
-                            "created_by": "DefaultUser",
-                            "created_on": "2024-10-22T11:25:36.953526Z",
-                            "pdm_version": "15.4.0",
-                            "last_modified_by": "DefaultUser",
-                            "last_modified_on": "2024-10-22T11:25:36.953526Z",
-                        },
-                        "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
-                        "telescope": "ska_mid",
-                        "sbi_status": "failed",
-                        "sbd_version": 1,
-                        "request_responses": [
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.assign_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting."
-                                "functions.devicecontrol.configure_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.scan",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol"
-                                ".release_all_resources",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "error": {"detail": "this is an error"},
-                                "status": "ERROR",
-                                "request": "ska_oso_scripting."
-                                "functions.devicecontrol.end",
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                        ],
-                    },
-                    "source": "ODA",
-                    "log_time": "2024-10-22T11:24:14.406107Z",
-                    "comments": shift_log_comments,
-                }
-            ],
-            "metadata": {
-                "created_by": "john",
-                "created_on": "2024-11-12T13:04:55.860503+05:30",
-                "last_modified_by": "max1",
-                "last_modified_on": "2024-11-12T20:52:10.208101+05:30",
-            },
-        },
-        {
-            "shift_id": "shift-20241112-2",
-            "shift_start": "2024-11-12T13:04:55.874585+05:30",
-            "shift_operator": "john",
-            "comments": shift_comments,
-            "shift_logs": [
-                {
-                    "info": {
-                        "eb_id": "eb-t0001-20241022-00002",
-                        "sbd_ref": "sbd-t0001-20240822-00008",
-                        "sbi_ref": "sbi-t0001-20240822-00009",
-                        "metadata": {
-                            "version": 1,
-                            "created_by": "DefaultUser",
-                            "created_on": "2024-10-22T11:25:36.953526Z",
-                            "pdm_version": "15.4.0",
-                            "last_modified_by": "DefaultUser",
-                            "last_modified_on": "2024-10-22T11:25:36.953526Z",
-                        },
-                        "interface": "https://schema.skao.int/ska-oso-pdm-eb/0.1",
-                        "telescope": "ska_mid",
-                        "sbi_status": "failed",
-                        "sbd_version": 1,
-                        "request_responses": [
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting."
-                                "functions.devicecontrol.assign_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting"
-                                ".functions"
-                                ".devicecontrol.configure_resource",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting."
-                                "functions.devicecontrol.scan",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "status": "OK",
-                                "request": "ska_oso_scripting."
-                                "functions"
-                                ".devicecontrol.release_all_resources",
-                                "response": {"result": "this is a result"},
-                                "request_args": {"kwargs": {"subarray_id": "1"}},
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                                "response_received_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                            {
-                                "error": {"detail": "this is an error"},
-                                "status": "ERROR",
-                                "request": "ska_oso_scripting"
-                                ".functions.devicecontrol.end",
-                                "request_sent_at": "2022-09-23T15:43:53.971548Z",
-                            },
-                        ],
-                    },
-                    "source": "ODA",
-                    "log_time": "2024-10-22T11:24:14.406107Z",
-                    "comments": shift_log_comments,
-                }
-            ],
-            "metadata": {
-                "created_by": "john",
-                "created_on": "2024-11-12T13:04:55.860503+05:30",
-                "last_modified_by": "max1",
-                "last_modified_on": "2024-11-12T20:52:10.208101+05:30",
-            },
-        },
-        200,
-    ]
-
-    mock_get_shift_log_comments.return_value = shift_data
+    mock_get_shift_log_comments.return_value = shift_history_data
 
     # Send a POST request to create a comment
     response = client.get(f"{API_PREFIX}/shifts?match_type=equals&sbi_status=Created")
@@ -1100,23 +546,28 @@ def test_get_shifts(mock_get_shift_log_comments):
 
     created_shift = response.json()[0][0]
 
-    assert created_shift["comments"][0]["comment"] == shift_comments[0]["comment"]
+    assert (
+        created_shift["comments"][0]["comment"]
+        == shift_history_data[0]["comments"][0]["comment"]
+    )
     assert (
         created_shift["shift_logs"][0]["comments"][0]["log_comment"]
-        == shift_log_comments[0]["log_comment"]
+        == shift_history_data[0]["shift_logs"][0]["comments"][0]["log_comment"]
     )
     # Add more assertions as needed
     assert "metadata" in created_shift, "Metadata is missing in the response"
     metadata = created_shift["metadata"]
-    assert metadata["created_by"] == shift_data[0]["metadata"]["created_by"], (
-        f"Expected created_by to be '{shift_data[0]['metadata']['created_by']}',"
+    assert metadata["created_by"] == shift_history_data[0]["metadata"]["created_by"], (
+        f"Expected created_by to be "
+        f"'{shift_history_data[0]['metadata']['created_by']}',"
         f" but got '{metadata['created_by']}'"
     )
     assert (
-        metadata["last_modified_by"] == shift_data[0]["metadata"]["last_modified_by"]
+        metadata["last_modified_by"]
+        == shift_history_data[0]["metadata"]["last_modified_by"]
     ), (
         f"Expected last_modified_by to be"
-        f" '{shift_data[0]['metadata']['last_modified_by']}'"
+        f" '{shift_history_data[0]['metadata']['last_modified_by']}'"
         f", but got '{metadata['last_modified_by']}'"
     )
 
@@ -1124,98 +575,71 @@ def test_get_shifts(mock_get_shift_log_comments):
 @patch(
     "ska_oso_slt_services.services.shift_service.ShiftService.create_shift_logs_comment"
 )
-def test_create_shift_log_comment(mock_create_shift_comment):
-    # Prepare test data
-    current_time = get_datetime_for_timezone("UTC")
-    comment_data = {
-        "log_comment": "This is a test comment",
-        "operator_name": "test_operator",
-        "shift_id": "test-shift-id",
-        "eb_id": "test-eb-id",
-        "image": [
-            {
-                "path": "https://skao-611985328822-shift-log-tool-storage.s3."
-                "amazonaws.com/4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac"
-                "53284f533d34e0b5f6.jpeg",
-                "unique_id": "4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac"
-                "53284f533d34e0b5f6.jpeg",
-                "timestamp": "2024-11-11T15:46:13.223618Z",
-            }
-        ],
-        "metadata": {
-            "created_by": "test_operator",
-            "created_on": current_time.isoformat(),
-            "last_modified_by": "test_operator",
-            "last_modified_on": current_time.isoformat(),
-        },
-    }
+def test_create_shift_log_comment(mock_create_shift_comment, shift_log_comment_data):
 
-    mock_create_shift_comment.return_value = comment_data
+    mock_create_shift_comment.return_value = shift_log_comment_data[0]
 
     # Send a POST request to create a comment
-    response = client.post(f"{API_PREFIX}/shift_log_comments", json=comment_data)
+    response = client.post(
+        f"{API_PREFIX}/shift_log_comments", json=shift_log_comment_data[0]
+    )
 
     assert (
         response.status_code == 200
     ), f"Expected status code 200, but got {response.status_code}"
 
     created_comment = response.json()[0]
-    assert created_comment["log_comment"] == comment_data["log_comment"], (
-        f"Expected log_comment to be '{comment_data['log_comment']}', but got"
+    assert created_comment["log_comment"] == shift_log_comment_data[0]["log_comment"], (
+        f"Expected log_comment to be '{shift_log_comment_data[0]['log_comment']}',"
+        "but got"
         f" '{created_comment['log_comment']}'"
     )
-    assert created_comment["operator_name"] == comment_data["operator_name"], (
-        f"Expected operator_name to be '{comment_data['operator_name']}', but got"
+    assert (
+        created_comment["operator_name"] == shift_log_comment_data[0]["operator_name"]
+    ), (
+        f"Expected operator_name to be '{shift_log_comment_data[0]['operator_name']}',"
+        "but got"
         f" '{created_comment['operator_name']}'"
     )
-    assert created_comment["image"][0]["path"] == comment_data["image"][0]["path"], (
-        f"Expected image path to be '{comment_data['image']['path']}', but got"
+    assert (
+        created_comment["image"][0]["path"]
+        == shift_log_comment_data[0]["image"][0]["path"]
+    ), (
+        f"Expected image path to be '{shift_log_comment_data[0]['image']['path']}',"
+        "but got"
         f" '{created_comment['image']['path']}'"
     )
 
     # Verify metadata
     assert "metadata" in created_comment, "Metadata is missing in the response"
     metadata = created_comment["metadata"]
-    assert metadata["created_by"] == comment_data["metadata"]["created_by"], (
-        f"Expected created_by to be '{comment_data['metadata']['created_by']}', but got"
-        f" '{metadata['created_by']}'"
-    )
+
     assert (
-        metadata["last_modified_by"] == comment_data["metadata"]["last_modified_by"]
+        metadata["created_by"] == shift_log_comment_data[0]["metadata"]["created_by"]
+    ), (
+        f"Expected created_by to be "
+        f"'{shift_log_comment_data[0]['metadata']['created_by']}'"
+        f", but got '{metadata['created_by']}'"
+    )
+
+    assert (
+        metadata["last_modified_by"]
+        == shift_log_comment_data[0]["metadata"]["last_modified_by"]
     ), (
         "Expected last_modified_by to be"
-        f" '{comment_data['metadata']['last_modified_by']}', but got"
+        f" '{shift_log_comment_data[0]['metadata']['last_modified_by']}', but got"
         f" '{metadata['last_modified_by']}'"
     )
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.post_media")
-def test_post_shift_log_comment_image(mock_shift_comment_image):
+def test_post_shift_log_comment_image(
+    mock_shift_comment_image, shift_log_comment_image_data
+):
     # Prepare test data with metadata
     test_file = {"file": ("test_image.png", b"dummy image content", "image/png")}
-    shift_data = {
-        "operator_name": "Monica",
-        "shift_id": "shift-20241111-2",
-        "eb_id": "test-id",
-        "image": [
-            {
-                "path": "https://skao-611985328822-shift-log-tool-storage.s3."
-                "amazonaws.com/4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac"
-                "53284f533d34e0b5f6.jpeg",
-                "unique_id": "4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac"
-                "53284f533d34e0b5f6.jpeg",
-                "timestamp": "2024-11-11T15:46:13.223618Z",
-            }
-        ],
-        "metadata": {
-            "created_by": "Monica",
-            "created_on": "2024-11-11T15:46:12.378390Z",
-            "last_modified_by": "Monica",
-            "last_modified_on": "2024-11-11T15:46:12.378390Z",
-        },
-    }
 
-    mock_shift_comment_image.return_value = shift_data
+    mock_shift_comment_image.return_value = shift_log_comment_image_data
 
     # Send a POST request to the endpoint
     response = client.post(
@@ -1229,46 +653,27 @@ def test_post_shift_log_comment_image(mock_shift_comment_image):
     ), f"Expected status code 200, but got {response.status_code}"
 
     created_shift = response.json()
-    assert created_shift[0]["operator_name"] == shift_data["operator_name"], (
-        f"Expected operator_name to be '{shift_data['operator_name']}', but got"
-        f" '{created_shift[0]['operator_name']}'"
+    assert (
+        created_shift[0]["operator_name"]
+        == shift_log_comment_image_data["operator_name"]
+    ), (
+        f"Expected operator_name to be "
+        f"'{shift_log_comment_image_data['operator_name']}'"
+        f", but got '{created_shift[0]['operator_name']}'"
     )
-    assert created_shift[0]["shift_id"] == shift_data["shift_id"], (
-        f"Expected shift_id to be '{shift_data['shift_id']}', but got"
+
+    assert created_shift[0]["shift_id"] == shift_log_comment_image_data["shift_id"], (
+        f"Expected shift_id to be '{shift_log_comment_image_data['shift_id']}', but got"
         f" '{created_shift[0]['shift_id']}'"
     )
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_media")
-def test_get_shift_log_comment_image(mock_shift_comment_image):
+def test_get_shift_log_comment_image(
+    mock_shift_comment_image, get_shift_comment_image_data
+):
 
-    shift_data = [
-        {
-            "file_key": "4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac"
-            "53284f533d34e0b5f6.jpeg",
-            "media_content": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxIQEh"
-            "UQEBIVFRUVFRcVFRUXFRUVGBgXFRUWFhgVFRUYHSggGBolGxUYITIhJSkrLi"
-            "4uFx8zODMtNygtLisBCgoKDg0OGBAQGi0fHx8tLS0tLS0tLS0tLS0tLS0tLS0"
-            "tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAOAA4QMBIgAC"
-            "EQEDEQH/xAAbAAABBQEBAAAAAAAAAAAAAAADAAECBAUGB//EAD0QAAEDAgQEA"
-            "wcDAwMCBwAAAAEAAhEDIQQSMUEFUWFxBiKBE5GhscHR8DJC4RQjUgcVYpLxM1"
-            "NUcoKTov/EABkBAQEBAQEBAAAAAAAAAAAAAAABAgMEBf/EAB8RAQEBAQACAgMB"
-            "AAAAAAAAAAABEQISITFBE1FhA//aAAwDAQACEQMRAD8AohqWVGyp8i+Vj0A5Us"
-            "qNkSyJgBlSyo+RNlTAHKnyouRPlTFCDU+VFDU4amAYapBqIGpw1MAw1SDUQNUg"
-            "1MMQDUQNThqmAmGGAUgE4CkAmCMJQpQnhXEQhNCJCUKgRCiQjZVEtTAAtQy1WS"
-            "1QLVcFZzUJzVac1Cc1BXyp0TKnQFyp8qLlSypi4FlSyomVKFMAoSyouVNlTALK"
-            "nyouVLKrihhqkGqYapBqYIBqkGogYpBiuAYanDUUMT5UwDDU+VEyp4TBABOApwk"
-            "ApiIwlCnCeFcEMqWVThPCYB5VEtRsqYtTDAC1QLVYIUCFcMVi1Dc1WnNQnNUMV8"
-            "qSLlSRBsqWVThPCuNBFqbKiwllTAPKllRcqfKmAWVLKi5UoTAMNUg1TATgKiIap"
-            "AKQCcNTBGE4CmGp8quCEJ4UgE8KYIQnAU4TwmCEJ4UoShMEYSU4ShMEITEIiZXAM"
-            "tUC1GITEJgruahuarJahuCgrwkiwkgJCaEXKllVwChKETKnypgGGp8qJCeEA8qWV"
-            "EhPCAYanDVOE8KiIanAUgFIBFRDU8KcJQghCUKcJQgjCUKUJ4REITwpJQgjCUKUJ"
-            "4QQhNCnCUIBwmIRCFGEAyENzUchQcEAcqSJCSYJwlClCaEVGEymoqIUJ0ydA6SaUp",
-            "content_type": "image/jpeg",
-        }
-    ]
-
-    mock_shift_comment_image.return_value = shift_data
+    mock_shift_comment_image.return_value = get_shift_comment_image_data
 
     # Send a POST request to the endpoint
     response = client.get(f"{API_PREFIX}/shift_log_comments/download_images/3")
@@ -1282,63 +687,37 @@ def test_get_shift_log_comment_image(mock_shift_comment_image):
 @patch(
     "ska_oso_slt_services.services.shift_service.ShiftService.updated_shift_log_info"
 )
-def test_patch_shift_log_info_success(mock_update_shift):
+def test_patch_shift_log_info_success(mock_update_shift, shift_patch_log_data):
     """Test successful update of shift log info."""
-    # Prepare test data
-    test_shift_id = "shift-20241112-1"
-    expected_response = {
-        "shift_id": test_shift_id,
-        "shift_type": "ODA",
-        "log_info": {
-            "status": "completed",
-            "start_time": "2024-11-12T10:00:00Z",
-            "end_time": "2024-11-12T18:00:00Z",
-            "operator_name": "John Doe",
-            "comments": "Shift completed successfully",
-        },
-        "metadata": {
-            "created_by": "John Doe",
-            "created_on": "2024-11-12T10:00:00Z",
-            "last_modified_by": "John Doe",
-            "last_modified_on": "2024-11-12T18:00:00Z",
-        },
-    }
 
     # Configure mock to return the expected response
-    mock_update_shift.return_value = expected_response
+    mock_update_shift.return_value = shift_patch_log_data
 
     # Create test client
     client = TestClient(app)
 
     # Make request to the endpoint
     response = client.patch(
-        f"{API_PREFIX}/shifts/patch/update_shift_log_info/{test_shift_id}"
+        f"{API_PREFIX}/shifts/patch/update_shift_log_info/shift-20241112-1"
     )
 
     # Assertions
     assert response.status_code == HTTPStatus.OK
-    assert response.json()[0] == expected_response
+    assert response.json()[0] == shift_patch_log_data
 
     # Verify mock was called with correct arguments
-    mock_update_shift.assert_called_once_with(current_shift_id=test_shift_id)
+    mock_update_shift.assert_called_once_with(
+        current_shift_id=shift_patch_log_data["shift_id"]
+    )
 
 
 @patch("ska_oso_slt_services.services.shift_service.ShiftService." "add_media")
-def test_add_shift_log_comment_image(mock_shift_comment_image):
-    # Prepare test data with metadata
-    test_file = {"files": ("test_image.png", b"dummy image content", "image/png")}
-    shift_data = [
-        {
-            "path": "https://skao-611985328822-shift-log-tool-storage.s3."
-            "amazonaws.com/d03269ecb544276928aad4916b0a1f5c11d6ebe9e2439d"
-            "b4708369f72fcf1746.jpeg",
-            "unique_id": "d03269ecb544276928aad4916b0a1f5c11d6ebe9e2439db"
-            "4708369f72fcf1746.jpeg",
-            "timestamp": "2024-11-11T15:42:58.481265Z",
-        }
-    ]
+def test_add_shift_log_comment_image(
+    mock_shift_comment_image, shift_log_comment_image_data
+):
 
-    mock_shift_comment_image.return_value = shift_data
+    test_file = {"files": ("test_image.png", b"dummy image content", "image/png")}
+    mock_shift_comment_image.return_value = shift_log_comment_image_data["image"]
 
     # Send a POST request to the endpoint
     response = client.put(
