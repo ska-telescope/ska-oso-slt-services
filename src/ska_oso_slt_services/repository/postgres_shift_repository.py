@@ -155,7 +155,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             Shift: The prepared shift object.
         """
-        random_number = random.randint(1, 9)
+        random_number = random.randint(1, 9999)
         shift.shift_start = get_datetime_for_timezone("UTC")
         shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}-{random_number}"
         return shift
@@ -666,7 +666,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         return shift_comment
 
-    def get_shift_comments(self, shift_id=None):
+    def get_shift_comments(self, shift_id: str = None):
         """
         Retrieve comments from shift based on shift ID.
 
@@ -773,7 +773,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         return shift_annotation
 
-    def get_shift_annotations(self, shift_id=None):
+    def get_shift_annotations(self, shift_id: str = None):
         """
         Retrieve annotations from shift based on shift ID.
 
