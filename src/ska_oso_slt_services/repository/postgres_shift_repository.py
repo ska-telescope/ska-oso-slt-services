@@ -38,6 +38,7 @@ from ska_oso_slt_services.domain.shift_models import (
     Metadata,
     SbiEntityStatus,
     Shift,
+    ShiftAnnotation,
     ShiftComment,
     ShiftLogComment,
     ShiftLogs,
@@ -755,6 +756,22 @@ class PostgresShiftRepository(CRUDShiftRepository):
             table_details=table_mapping, entity=shift_comment
         )
         return shift_comment
+
+    def create_shift_annotation(self, shift_annotation: ShiftAnnotation):
+        """
+        Create a new comment for a shift and save it to the database.
+
+        Args:
+            shift_annotation (ShiftAnnotation): The comment data to create.
+
+        Returns:
+            ShiftAnnotation: The newly created shift comment.
+        """
+        self._insert_shift_to_database(
+            table_details=ShiftAnnotationMapping(), entity=shift_annotation
+        )
+
+        return shift_annotation
 
     def get_shift_annotations(self, shift_id=None):
         """
