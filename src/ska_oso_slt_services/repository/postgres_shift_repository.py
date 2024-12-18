@@ -13,6 +13,7 @@ from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import update_metadata
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
 from ska_oso_slt_services.data_access.postgres.mapping import (
+    ShiftAnnotationMapping,
     ShiftCommentMapping,
     ShiftLogCommentMapping,
     ShiftLogMapping,
@@ -23,7 +24,7 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     select_by_date_query,
     select_by_shift_params,
     select_by_text_query,
-    select_comments_query,
+    select_common_query,
     select_latest_query,
     select_latest_shift_query,
     select_logs_by_status,
@@ -378,7 +379,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             List[Dict]: List of comments associated with the specified filters.
         """
-        query, params = select_comments_query(
+        query, params = select_common_query(
             table_details=ShiftLogCommentMapping(), shift_id=shift_id, eb_id=eb_id
         )
         comments = self.postgres_data_access.get(query=query, params=params)
@@ -394,7 +395,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             Dict: The comment data associated with the specified ID.
         """
-        query, params = select_comments_query(
+        query, params = select_common_query(
             table_details=ShiftLogCommentMapping(), id=comment_id
         )
         comments = self.postgres_data_access.get(query=query, params=params)[0]
@@ -674,7 +675,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             List[Dict]: List of comments associated with the specified filters.
         """
-        query, params = select_comments_query(
+        query, params = select_common_query(
             table_details=ShiftCommentMapping(), shift_id=shift_id
         )
         comments = self.postgres_data_access.get(query=query, params=params)
@@ -690,9 +691,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             List[Dict]: List of comments associated with the specified filters.
         """
-        query, params = select_comments_query(
-            table_details=table_mapping, id=comment_id
-        )
+        query, params = select_common_query(table_details=table_mapping, id=comment_id)
         comment = self.postgres_data_access.get(query=query, params=params)
         if comment:
             return comment[0]
@@ -756,6 +755,41 @@ class PostgresShiftRepository(CRUDShiftRepository):
             table_details=table_mapping, entity=shift_comment
         )
         return shift_comment
+
+    def get_shift_annotations(self, shift_id=None):
+        """
+        Retrieve annotations from shift based on shift ID.
+
+        Args:
+            shift_id (Optional[str]): The shift ID to filter annotations by.
+
+        Returns:
+            List[Dict]: List of annotations associated with the specified filters.
+        """
+        query, params = select_common_query(
+            table_details=ShiftAnnotationMapping(), shift_id=shift_id
+        )
+        annotations = self.postgres_data_access.get(query=query, params=params)
+        return annotations
+
+    def get_shift_annotation(self, annotation_id: int, table_mapping: Any):
+        """
+        Retrieve annotations from shift based on annotation ID.
+
+        Args:
+            annotation_id (Optional[int]): The annotation ID to filter annotations by.
+
+        Returns:
+            List[Dict]: List of annotations associated with the specified filters.
+        """
+        query, params = select_common_query(
+            table_details=table_mapping, id=annotation_id
+        )
+        annotation = self.postgres_data_access.get(query=query, params=params)
+        if annotation:
+            return annotation[0]
+        else:
+            raise NotFoundError(f"No annotation found with ID: {annotation_id}")
 
 
 class ShiftLogUpdater:

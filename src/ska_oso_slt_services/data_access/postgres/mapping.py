@@ -313,3 +313,77 @@ class ShiftCommentMapping:
         return tuple(
             map_fn(shift) for map_fn in self.table_details.column_map.values()
         ) + tuple(map_fn(shift) for map_fn in self.table_details.metadata_map.values())
+
+
+class ShiftAnnotationMapping:
+    """
+    Provides mapping functionality for Shift Annotation object
+    to database operations.
+    """
+
+    @property
+    def table_details(self) -> TableDetails:
+        """
+        Get the table details for shift annotations.
+
+        Returns:
+            AnnotationTableDetails: An object containing the table name,
+            identifier field, and column mappings.
+        """
+        return TableDetails(
+            table_name="tab_oda_slt_shift_annotations",
+            identifier_field="id",
+            column_map={
+                "annotation": lambda annotation: annotation.annotation,
+                "operator_name": lambda annotation: annotation.operator_name,
+                "shift_id": lambda annotation: annotation.shift_id,
+            },
+        )
+
+    def get_columns_with_metadata(self) -> Tuple[str]:
+        """
+        Get a tuple of column names including metadata fields.
+
+        Returns:
+            Tuple[str]: A tuple containing all column names and
+            metadata field names.
+        """
+        return tuple(self.table_details.column_map.keys()) + tuple(
+            self.table_details.metadata_map.keys()
+        )
+
+    def get_metadata_columns(self) -> Tuple[str]:
+        """
+        Get a tuple of column names including metadata fields.
+
+        Returns:
+            Tuple[str]: A tuple containing only metadata field names.
+        """
+        return tuple(self.table_details.metadata_map.keys())
+
+    def get_metadata_params(self, shift) -> Tuple[SqlTypes]:
+        """
+        Get parameter values for metadata fields.
+
+        Returns:
+            Tuple[SqlTypes]: A tuple containing parameter values
+            for all metadata fields.
+        """
+        return tuple(
+            map_fn(shift) for map_fn in self.table_details.metadata_map.values()
+        )
+
+    def get_params_with_metadata(self, shift) -> Tuple[SqlTypes]:
+        """
+        Get parameter values for a given shift, including metadata.
+
+        Args:
+            shift: The Shift object to extract parameters from.
+
+        Returns:
+            Tuple[SqlTypes]: A tuple containing
+            parameter values for all columns and metadata fields.
+        """
+        return tuple(
+            map_fn(shift) for map_fn in self.table_details.column_map.values()
+        ) + tuple(map_fn(shift) for map_fn in self.table_details.metadata_map.values())

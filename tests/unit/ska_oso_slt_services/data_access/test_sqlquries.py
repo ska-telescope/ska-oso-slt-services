@@ -12,7 +12,7 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     patch_query,
     select_by_date_query,
     select_by_text_query,
-    select_comments_query,
+    select_common_query,
     select_latest_query,
     select_latest_shift_query,
     update_query,
@@ -327,13 +327,13 @@ class TestShiftQueries(unittest.TestCase):
         for part in expected_query_parts:
             self.assertIn(part, query_string)
 
-    def test_select_comments_query_with_shift_id(self):
-        """Test select_comments_query with shift_id parameter"""
+    def test_select_common_query_with_shift_id(self):
+        """Test select_common_query with shift_id parameter"""
         # Test data
         test_shift_id = "shift123"
 
         # Execute the function with shift_id
-        query, params = select_comments_query(
+        query, params = select_common_query(
             table_details=self.table_details, shift_id=test_shift_id
         )
 
@@ -353,14 +353,14 @@ class TestShiftQueries(unittest.TestCase):
         self.assertEqual(len(params), 1)
         self.assertEqual(params[0], test_shift_id)
 
-    def test_select_comments_query_with_shift_id_and_eb_id(self):
-        """Test select_comments_query with both shift_id and eb_id parameters"""
+    def test_select_common_query_with_shift_id_and_eb_id(self):
+        """Test select_common_query with both shift_id and eb_id parameters"""
         # Test data
         test_shift_id = "shift123"
         test_eb_id = "eb456"
 
         # Execute the function with both shift_id and eb_id
-        query, params = select_comments_query(
+        query, params = select_common_query(
             table_details=self.table_details, shift_id=test_shift_id, eb_id=test_eb_id
         )
 

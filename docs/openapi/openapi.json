@@ -8,7 +8,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift": {
       "get": {
         "tags": [
-          "shifts"
+          "Shifts"
         ],
         "summary": "Get a shift",
         "description": "Retrieve a specific shift by its ID.\n\nArgs:\n    shift_id (str): The unique identifier of the shift.\n\nRaises:\n    HTTPException: If the shift is not found.",
@@ -88,7 +88,7 @@
     "/ska-oso-slt-services/slt/api/v0/shifts": {
       "get": {
         "tags": [
-          "shifts"
+          "Shifts"
         ],
         "summary": "Retrieve shift data based on shift attributes like shift_id,match type and entity status",
         "description": "Retrieve all shifts.\nThis endpoint returns a list of all shifts in the system.",
@@ -317,7 +317,7 @@
     "/ska-oso-slt-services/slt/api/v0/shifts/create": {
       "post": {
         "tags": [
-          "shifts"
+          "Shifts"
         ],
         "summary": "Create a new shift",
         "description": "Create a new shift.\n\nArgs:\n    shift (ShiftCreate): The shift data to create.\n\nReturns:\n    Shift: The created shift.",
@@ -388,7 +388,7 @@
     "/ska-oso-slt-services/slt/api/v0/shifts/update/{shift_id}": {
       "put": {
         "tags": [
-          "shifts"
+          "Shifts"
         ],
         "summary": "Update an existing shift",
         "description": "Update an existing shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift (ShiftUpdate): The updated shift data.\n\nRaises:\n    HTTPException: If the shift is not found.",
@@ -735,7 +735,7 @@
     "/ska-oso-slt-services/slt/api/v0/current_shift": {
       "get": {
         "tags": [
-          "shifts"
+          "Shifts"
         ],
         "summary": "Get Current Shift",
         "description": "Retrieve the current active shift.\n\nThis endpoint returns the most recent shift based on the last modified or\ncreated time.\nIt does not require any input parameters and is used to retrieve the latest shift\nthat is currently active in the system.\n\nReturns:\n    Shift: The latest shift object in the system.\n    HTTPStatus: HTTP 200 OK on success.\n\nRaises:\n    HTTPException: If there is an issue retrieving the current shift\n     or if no shift is found.",
@@ -828,7 +828,7 @@
     "/ska-oso-slt-services/slt/api/v0/shifts/patch/update_shift_log_info/{shift_id}": {
       "patch": {
         "tags": [
-          "shifts"
+          "Shifts"
         ],
         "summary": "Update Shift Log info",
         "description": "Partially update an existing shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift (ShiftUpdate): The partial shift data to update.\n\nRaises:\n    HTTPException: If the shift is not found.",
