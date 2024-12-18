@@ -63,7 +63,7 @@ class ShiftAnnotations(BaseRepositoryService):
         shift_annotations_obj_with_metadata = []
         for shift_annotation in shift_annotations:
             shift_annotation_with_metadata = (
-                self._prepare_shift_annotation_with_metadata(shift_annotation)
+                self._prepare_shift_common_with_metadata(shift_annotation, shift_model=ShiftAnnotation)
             )
             shift_annotations_obj_with_metadata.append(shift_annotation_with_metadata)
 
@@ -89,8 +89,8 @@ class ShiftAnnotations(BaseRepositoryService):
             raise NotFoundError("No Shift annotation found for the given query.")
         LOGGER.info("Shift annotations : %s", shift_annotation)
 
-        shift_annotation_with_metadata = self._prepare_shift_annotation_with_metadata(
-            shift_annotation
+        shift_annotation_with_metadata = self._prepare_shift_common_with_metadata(
+            shift_annotation, shift_model=ShiftAnnotation
         )
 
         return shift_annotation_with_metadata

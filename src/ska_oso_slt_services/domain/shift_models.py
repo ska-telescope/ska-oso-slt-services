@@ -155,7 +155,7 @@ class Shift(ShiftBaseClass):
 
     :param shift_logs Optional[List[ShiftLogs]]: The logs associated with the shift.
     :param media Optional[List[Media]]: The media associated with the shift.
-    :param metadata Optional[Metadat]: Metadata contains shift additional info
+    :param metadata Optional[Metadata]: Metadata contains shift additional info
     like shift created_on, created_bye etc...
     """
 

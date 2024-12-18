@@ -16,7 +16,7 @@ class TestShiftService:
     )
     @patch(
         "ska_oso_slt_services.services.shift_service."
-        "ShiftService._prepare_shift_comment_with_metadata"
+        "ShiftService._prepare_shift_common_with_metadata"
     )
     @patch(
         "ska_oso_slt_services.services."
@@ -83,7 +83,7 @@ class TestShiftService:
     )
     @patch(
         "ska_oso_slt_services.services.shift_service."
-        "ShiftService._prepare_shift_comment_with_metadata"
+        "ShiftService._prepare_shift_common_with_metadata"
     )
     @patch(
         "ska_oso_slt_services.services.shift_service."

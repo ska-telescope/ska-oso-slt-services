@@ -964,15 +964,15 @@ def get_media_for_comment(comment_id: Optional[int]):
         },
     },
 )
-def get_shift_annotation(annotation_id: str) -> ShiftAnnotation:
+def get_shift_annotation(shift_id: str) -> ShiftAnnotation:
     """
-    Get Annotation based on annotation_id.
+    Get Annotation based on shift_id.
 
     Args:
-        annotation_id (str): The Annotation id to get.
+        shift_id (str): The shift id to get.
 
     Returns:
         ShiftAnnotation: The shift annotation.
     """
-    shift_annotation_obj = shift_service.get_shift_annotation(annotation_id)
-    return shift_annotation_obj, HTTPStatus.CREATED
+    shift_annotations = shift_service.get_shift_annotations(shift_id)
+    return shift_annotations, HTTPStatus.OK
