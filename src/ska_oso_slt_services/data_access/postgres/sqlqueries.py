@@ -436,7 +436,8 @@ def build_like_query(
 
 
 def select_logs_by_status(
-    table_details: TableDetails, qry_params: SbiEntityStatus, status_column: str
+    table_details: TableDetails, qry_params: SbiEntityStatus, 
+    status_column: str, eb_id: Optional[str] = None
 ) -> Tuple[str, Tuple[str]]:
     """
     Creates a query to select logs based on the status of the shift.
@@ -453,6 +454,18 @@ def select_logs_by_status(
     dynamic_columns = table_details.get_columns_with_metadata()
     column_selection = ", ".join(dynamic_columns)
 
+    # Start building the WHERE clause
+    where_conditions = ["log->'info'->>'sbi_status' = %s"]
+    params = [qry_params.sbi_status.value]
+
+    # Add eb_id condition if provided
+    if eb_id:
+        where_conditions.append("log->'info'->>'eb_id' = %s")
+        params.append(eb_id)
+
+     # Join the WHERE conditions with AND
+    where_clause = " AND ".join(where_conditions)
+
     # Build the dynamic column selection part of the query_
     query_str = f"""
         SELECT
@@ -468,13 +481,11 @@ def select_logs_by_status(
             {table_details.table_details.table_name},
             jsonb_array_elements(shift_logs) AS log
         WHERE
-            log->'info'->>{status_column!r} = %s
+            {where_clause}
         GROUP BY
             {column_selection}
     """
-    params = (qry_params.sbi_status.value,)
-
-    return query_str, params
+    return query_str, tuple(params)
 
 
 def select_comments_query(

@@ -113,9 +113,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
             query, params = select_by_shift_params(
                 self.table_details, shift, match_type
             )
-        elif eb_id and match_type.dict()["match_type"]:
-            query, params = select_by_shift_params(
-                self.table_details, shift, match_type
+        elif eb_id:
+            query, params = select_logs_by_status(
+                self.table_details, eb_id, "eb_id"
             )
         else:
             raise NotFoundError("Shift not found please pass parameters correctly")
