@@ -167,6 +167,16 @@ class SbiEntityStatus(BaseModel):
     sbi_status: Optional[SBIStatus] = None
 
 
+class EntityFilter(BaseModel):
+    """
+    Represents a query for filtering shifts based on text.
+    :param text Optional[str]: The text to match against.
+    """
+
+    sbi_id: Optional[str] = None
+    eb_id: Optional[str] = None
+
+
 class MatchType(BaseModel):
     """
     Represents a query for filtering shifts based on text.
