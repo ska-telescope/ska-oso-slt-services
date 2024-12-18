@@ -9,6 +9,7 @@ from deepdiff import DeepDiff
 from psycopg import sql
 
 from ska_oso_slt_services.common.constant import ODA_DATA_POLLING_TIME
+from ska_oso_slt_services.common.custom_exceptions import ODADataError
 from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import update_metadata
@@ -92,9 +93,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         if shift.shift_start and shift.shift_end:
             query, params = select_by_date_query(self.table_details, shift)
-        elif shift.comments and match_type.dict()["match_type"]:
+        elif shift.annotations and match_type.dict()["match_type"]:
             query, params = select_by_text_query(
-                self.table_details, shift.comments, match_type
+                self.table_details, shift.annotations, match_type
             )
         elif entity_status.sbi_status:
             query, params = select_logs_by_status(
@@ -466,72 +467,89 @@ class PostgresShiftRepository(CRUDShiftRepository):
         return shift
 
     def get_oda_data(self, filter_date):
-        filter_date_tz = datetime.fromisoformat(filter_date).replace(
-            tzinfo=timezone(timedelta(hours=0, minutes=0))
-        )
-        eb_query = """
-                    SELECT
-                        e.eb_id,
-                        e.info,
-                        e.sbd_id,
-                        e.sbi_id,
-                        e.sbd_version,
-                        e.version,
-                        e.created_on,
-                        e.created_by,
-                        e.last_modified_on,
-                        e.last_modified_by,
-                        (
-                            SELECT current_status
-                            FROM tab_oda_eb_status_history
-                            WHERE eb_ref = e.eb_id
-                            ORDER BY id DESC
-                            LIMIT 1
-                        ) AS current_status
-                    FROM
-                        tab_oda_eb e
-                    WHERE
-                        e.last_modified_on >=%s
-                    """
-        eb_params = [filter_date_tz]
+        """Retrieve and process ODA data for the given filter date.
+
+        Args:
+            filter_date: The date to filter ODA data from
+
+        Returns:
+            dict: Processed ODA information
+
+        Raises:
+            ODADataError: If there are issues with data retrieval or processing
+        """
         try:
+            filter_date_tz = datetime.fromisoformat(filter_date).replace(
+                tzinfo=timezone(timedelta(hours=0, minutes=0))
+            )
+            eb_query = """
+                        SELECT
+                            e.eb_id,
+                            e.info,
+                            e.sbd_id,
+                            e.sbi_id,
+                            e.sbd_version,
+                            e.version,
+                            e.created_on,
+                            e.created_by,
+                            e.last_modified_on,
+                            e.last_modified_by,
+                            (
+                                SELECT current_status
+                                FROM tab_oda_eb_status_history
+                                WHERE eb_ref = e.eb_id
+                                ORDER BY id DESC
+                                LIMIT 1
+                            ) AS current_status
+                        FROM
+                            tab_oda_eb e
+                        WHERE
+                            e.last_modified_on >=%s
+                        """
+            eb_params = [filter_date_tz]
             eb_rows = self.postgres_data_access.get(
                 query=sql.SQL(eb_query), params=tuple(eb_params)
             )
-        except Exception as e:
+            if not eb_rows:
+                raise ODADataError("No data found for the given filter date")
+        except Exception as e:  # pylint: disable=W0718
             LOGGER.error("Error fetching ODA data: %s", str(e))
-            raise
+        else:
+            info = {}
+            if eb_rows:
+                for eb in eb_rows:
+                    if not isinstance(eb.get("info"), dict):
+                        LOGGER.warning(  # pylint: disable=W1203
+                            f"Missing or invalid info for eb_id {eb.get('eb_id')}"
+                        )
+                        continue
+                    request_responses = eb["info"].get("request_responses", [])
 
-        info = {}
-        if eb_rows:
-            for eb in eb_rows:
-                request_responses = eb["info"].get("request_responses", [])
-
-                if not request_responses:
-                    sbi_current_status = "Created"
-                else:
-                    ok_count = sum(
-                        1
-                        for response in request_responses
-                        if response["status"] == "OK"
-                    )
-                    error_count = sum(
-                        1
-                        for response in request_responses
-                        if response["status"] == "ERROR"
-                    )
-
-                    if error_count > 0:
-                        sbi_current_status = "Failed"
-                    elif ok_count == 5:  # Assuming the total number of blocks is 5
-                        sbi_current_status = "Completed"
+                    if not request_responses:
+                        sbi_current_status = "Created"
                     else:
-                        sbi_current_status = "Executing"
+                        ok_count = sum(
+                            1
+                            for response in request_responses
+                            if response["status"] == "OK"
+                        )
+                        error_count = sum(
+                            1
+                            for response in request_responses
+                            if response["status"] == "ERROR"
+                        )
 
-                info[eb["eb_id"]] = eb["info"]
-                info[eb["eb_id"]]["sbi_status"] = sbi_current_status
-                info[eb["eb_id"]]["eb_status"] = eb["current_status"]
-        return info
+                        if error_count > 0:
+                            sbi_current_status = "Failed"
+                        elif ok_count == 5:  # Assuming the total number of blocks is 5
+                            sbi_current_status = "Completed"
+                        else:
+                            sbi_current_status = "Executing"
+
+                    info[eb["eb_id"]] = eb["info"]
+                    info[eb["eb_id"]]["sbi_status"] = sbi_current_status
+                    info[eb["eb_id"]]["eb_status"] = eb["current_status"]
+            return info
 
     def _extract_eb_id_from_key(self, key: str) -> str:
         """

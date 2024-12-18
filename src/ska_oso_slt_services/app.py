@@ -16,6 +16,7 @@ from ska_oso_slt_services.common import (
     internal_server_handler,
     record_not_found_handler,
 )
+from ska_oso_slt_services.common.custom_exceptions import ODADataError
 from ska_oso_slt_services.routers.shift_router import router
 
 KUBE_NAMESPACE = os.getenv("KUBE_NAMESPACE", "ska-oso-slt-services")
@@ -53,6 +54,7 @@ def create_app(production=PRODUCTION) -> FastAPI:
     app.exception_handler(DatabaseError)(database_error_handler)
     app.exception_handler(DataError)(database_error_handler)
     app.exception_handler(InternalError)(database_error_handler)
+    app.exception_handler(ODADataError)(database_error_handler)
     if production:
         app.exception_handler(Exception)(internal_server_handler)
     return app

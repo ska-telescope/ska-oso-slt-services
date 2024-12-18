@@ -128,7 +128,6 @@ class ShiftBaseClass(SLTObject):
     shift_end: Optional[datetime] = None
     shift_operator: Optional[str] = None
     annotations: Optional[str] = None
-    comments: Optional[List[ShiftComment]] = None
 
 
 class Shift(ShiftBaseClass):
@@ -145,6 +144,7 @@ class Shift(ShiftBaseClass):
     shift_logs: Optional[List[ShiftLogs]] = None
     media: Optional[List[Media]] = None
     metadata: Optional[Metadata] = None
+    comments: Optional[List[ShiftComment]] = None
 
 
 class Filter(Enum):
