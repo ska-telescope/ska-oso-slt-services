@@ -96,3 +96,49 @@ def shift_history_data():
     return load_string_from_file(
         f"{json_file_path}/testfile_sample_shift_history_data.json"
     )
+
+
+@pytest.fixture
+def shift_comment_image_data():
+    """Fixture to load and return shift comment image data from a JSON file.
+
+    Returns contents of the JSON file containing shift comment image data
+    loaded as a string.
+    """
+    return load_string_from_file(
+        f"{json_file_path}/testfile_shift_comment_image_data.json"
+    )
+
+
+@pytest.fixture
+def shift_log_comment_image_data():
+    """Fixture to load and return shift comment image data from a JSON file.
+
+    Returns contents of the JSON file containing shift comment image data
+    loaded as a string.
+    """
+    return load_string_from_file(
+        f"{json_file_path}/testfile_shift_log_comment_image_data.json"
+    )
+
+
+@pytest.fixture
+def shift_patch_log_data():
+    """Fixture to load and return shift patch log data from a JSON file.
+
+    Returns contents of the JSON file containing shift patch log data
+    loaded as a string.
+    """
+    return load_string_from_file(f"{json_file_path}/testfile_patch_shift_log_data.json")
+
+
+@pytest.fixture
+def get_shift_comment_image_data():
+    """Fixture to load and return get shift comment image data from a JSON file.
+
+    Returns contents of the JSON file containing get shift comment image data
+    loaded as a string.
+    """
+    return load_string_from_file(
+        f"{json_file_path}/testfile_get_shift_comment_image_data.json"
+    )

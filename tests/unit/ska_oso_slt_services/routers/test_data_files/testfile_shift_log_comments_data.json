@@ -1,16 +1,21 @@
 [
     {
         "log_comment": "This is a test comment",
-        "operator_name": "string",
+        "operator_name": "test_operator",
         "shift_id": "test-shift-id",
-        "image": {
-            "path": "string",
-            "timestamp": "2024-11-12 12:36:46.901000+00:00"
-        },
-        "eb_id": "string",
-        "created_on": "2024-11-12T18:06:53.378127+05:30",
-        "created_by": "string",
-        "last_modified_on": "2024-11-12T18:06:53.378127+05:30",
-        "last_modified_by": "string"
+        "eb_id": "test-eb-id",
+        "image": [
+            {
+                "path": "https://skao-611985328822-shift-log-tool-storage.s3.amazonaws.com/4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac53284f533d34e0b5f6.jpeg",
+                "unique_id": "4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac53284f533d34e0b5f6.jpeg",
+                "timestamp": "2024-11-11T15:46:13.223618Z"
+            }
+        ],
+        "metadata": {
+            "created_by": "test_operator",
+            "created_on": "2024-11-11T15:46:12.378390Z",
+            "last_modified_by": "test_operator",
+            "last_modified_on": "2024-11-11T15:46:12.378390Z"
+        }
     }
 ]

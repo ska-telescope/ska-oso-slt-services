@@ -1,7 +1,7 @@
 {
     "shift_id": "test-id-1",
     "shift_start": "2024-09-14T16:49:54.889Z",
-    "shift_operator": "old-operator",
+    "shift_operator": "test-user-1",
     "shift_logs": [],
     "media": [],
     "annotations": "updated-annotation",
