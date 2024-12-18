@@ -253,10 +253,10 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         return shift_load
 
     def _prepare_shift_common_with_metadata(
-        self, shift_data: Dict[Any, Any], shift_model: Any
+        self, shift_data: Dict[Any, Any], shift_model: ShiftComment | ShiftAnnotation
     ) -> ShiftComment | ShiftAnnotation:
         """
-        Prepare a shift comment object with metadata.
+        Prepare a shift data object with metadata.
 
         Args:
             shift_data (Dict[Any, Any]): Raw shift comment or annotation data from
