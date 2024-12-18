@@ -8,12 +8,12 @@ from ska_oso_slt_services.domain.shift_models import (
     MatchType,
     SbiEntityStatus,
     Shift,
-    ShiftComment,
     ShiftAnnotation,
+    ShiftComment,
     ShiftLogComment,
 )
-from ska_oso_slt_services.services.shift_comments_service import ShiftComments
 from ska_oso_slt_services.services.shift_annotation_service import ShiftAnnotations
+from ska_oso_slt_services.services.shift_comments_service import ShiftComments
 from ska_oso_slt_services.services.shift_logs_comment_service import ShiftLogsComment
 
 LOGGER = logging.getLogger(__name__)
@@ -85,7 +85,9 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
             if shift.get("comments"):
                 for comment in shift["comments"]:
                     prepare_comment_with_metadata.append(
-                        self._prepare_shift_common_with_metadata(comment, shift_model=ShiftComment)
+                        self._prepare_shift_common_with_metadata(
+                            comment, shift_model=ShiftComment
+                        )
                     )
 
             per_eb_comment_metadata = []
@@ -150,7 +152,9 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
             if shift.get("comments"):
                 for comment in shift["comments"]:
                     prepare_comment_with_metadata.append(
-                        self._prepare_shift_common_with_metadata(comment, shift_model=ShiftComment)
+                        self._prepare_shift_common_with_metadata(
+                            comment, shift_model=ShiftComment
+                        )
                     )
             per_eb_comment_metadata = []
             if shift.get("shift_logs"):
@@ -255,7 +259,8 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         Prepare a shift comment object with metadata.
 
         Args:
-            shift_data (Dict[Any, Any]): Raw shift comment or annotation data from the database.
+            shift_data (Dict[Any, Any]): Raw shift comment or annotation data from
+            the database.
 
         Returns:
             ShiftComment: A ShiftComment object with metadata included.
