@@ -300,7 +300,9 @@ class ShiftService(ShiftComments, ShiftLogsComment):
         shift = self.crud_shift_repository.get_current_shift()
         if shift:
             return self.get_shift(shift_id=shift["shift_id"])
-        return None
+        else:
+            raise NotFoundError("No shift found")
+
 
     def updated_shift_log_info(self, current_shift_id: str) -> Union[Shift, str]:
         """
