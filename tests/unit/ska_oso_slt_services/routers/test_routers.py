@@ -1,6 +1,6 @@
 from datetime import datetime
 from http import HTTPStatus
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,7 +9,6 @@ from ska_oso_slt_services import create_app  # Import your create_app function
 from ska_oso_slt_services.app import API_PREFIX
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
-from ska_oso_slt_services.domain.shift_models import Shift
 
 # Create the FastAPI app instance
 app = create_app()
@@ -432,7 +431,9 @@ def test_update_shift_comments(mock_update_shift_comment, shift_comment_data):
 
 @patch("ska_oso_slt_services.services.media_service.MediaService.post_media")
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
-def test_create_shift_comment_image(mock_get_shift, mock_shift_comment_image, shift_comment_image_data):
+def test_create_shift_comment_image(
+    mock_get_shift, mock_shift_comment_image, shift_comment_image_data
+):
 
     test_file = {"file": ("test_image.png", b"dummy image content", "image/png")}
     mock_shift_comment_image.return_value = shift_comment_image_data
