@@ -1365,3 +1365,63 @@ def test_add_shift_log_comment_image(mock_shift_comment_image):
     assert (
         response.status_code == 200
     ), f"Expected status code 200, but got {response.status_code}"
+
+
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift_annotations")
+def test_get_shift_annotations(mock_get_shift_annotations):
+    # Prepare test data
+    current_time = get_datetime_for_timezone("UTC")
+
+    annotation_data = [
+        {
+            "annotation": "This is a test annotation",
+            "shift_id": "test-shift-id",
+            "metadata": {
+                "created_by": "test_user",
+                "created_on": current_time.isoformat(),
+                "last_modified_by": "test_user",
+                "last_modified_on": current_time.isoformat(),
+            },
+        },
+        {
+            "annotation": "This is a test annotation",
+            "shift_id": "test-shift-id",
+            "metadata": {
+                "created_by": "test_user",
+                "created_on": current_time.isoformat(),
+                "last_modified_by": "test_user",
+                "last_modified_on": current_time.isoformat(),
+            },
+        },
+    ]
+
+    mock_get_shift_annotations.return_value = annotation_data
+
+    # Send a POST request to create a annotation
+    response = client.get(f"{API_PREFIX}/shift_annotation?shift_id=test-shift-id")
+
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_annotation = response.json()[0][0]
+    assert created_annotation["annotation"] == annotation_data[0]["annotation"], (
+        f"Expected annotation_data to be '{annotation_data[0]['annotation']}',"
+        f" but got '{created_annotation['annotation']}'"
+    )
+
+    # Add more assertions as needed
+    assert "metadata" in created_annotation, "Metadata is missing in the response"
+    metadata = created_annotation["metadata"]
+    assert metadata["created_by"] == annotation_data[0]["metadata"]["created_by"], (
+        f"Expected created_by to be '{annotation_data[0]['metadata']['created_by']}',"
+        f" but got '{metadata['created_by']}'"
+    )
+    assert (
+        metadata["last_modified_by"]
+        == annotation_data[0]["metadata"]["last_modified_by"]
+    ), (
+        f"Expected last_modified_by to be"
+        f" '{annotation_data[0]['metadata']['last_modified_by']}'"
+        f", but got '{metadata['last_modified_by']}'"
+    )
