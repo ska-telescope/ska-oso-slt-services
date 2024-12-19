@@ -25,6 +25,7 @@ class TestShiftQueries(unittest.TestCase):
     def setUp(self):
         # Create a mock TableDetails object
         self.table_details = ShiftLogMapping()
+        self.entity_id = "test"
 
         # Create a mock Shift object
         self.shift = Shift(
@@ -60,7 +61,7 @@ class TestShiftQueries(unittest.TestCase):
         self.assertIn(self.shift.shift_end, params)
 
     def test_update_query(self):
-        query, params = update_query(self.table_details, self.shift)
+        query, params = update_query(self.entity_id, self.table_details, self.shift)
 
         # Check if the query is of the correct type
         self.assertIsInstance(query, sql.Composed)
@@ -307,7 +308,7 @@ class TestShiftQueries(unittest.TestCase):
         self.assertIn("SELECT shift_id", query_string)  # Only shift_id is selected
         self.assertIn('FROM "tab_oda_slt"', query_string)
         self.assertIn("WHERE shift_end IS NULL", query_string)
-        self.assertIn("ORDER BY created_on DESC", query_string)
+        self.assertIn("ORDER BY id DESC", query_string)
         self.assertIn("LIMIT 1", query_string)
 
         # Check if parameters tuple is empty as expected
@@ -318,7 +319,7 @@ class TestShiftQueries(unittest.TestCase):
             "SELECT shift_id",
             'FROM "tab_oda_slt"',
             "WHERE shift_end IS NULL",
-            "ORDER BY created_on DESC",
+            "ORDER BY id DESC",
             "LIMIT 1",
         ]
 
