@@ -917,6 +917,63 @@ def get_media_for_comment(comment_id: Optional[int]):
     return image_response, HTTPStatus.OK
 
 
+@router.post(
+    "/shift_annotation",
+    tags=["Shift Annotations"],
+    summary="Create a new shift annotation",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_annotation.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Invalid Shift Id",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def create_shift_annotation(shift_annotation: ShiftAnnotation):
+    """
+    Create a new annotation.
+
+    Args:
+        shift_annotation (ShiftAnnotation): The shift annotation to create.
+
+    Returns:
+        ShiftAnnotation: The created shift annotation.
+    """
+    shift_annotation_obj = shift_service.create_shift_annotation(shift_annotation)
+    return shift_annotation_obj, HTTPStatus.CREATED
+
+
 @router.get(
     "/shift_annotation",
     tags=["Shift Annotations"],
@@ -964,7 +1021,7 @@ def get_media_for_comment(comment_id: Optional[int]):
         },
     },
 )
-def get_shift_annotation(shift_id: str) -> ShiftAnnotation:
+def get_shift_annotation(shift_id: str):
     """
     Get Annotation based on shift_id.
 
@@ -974,5 +1031,5 @@ def get_shift_annotation(shift_id: str) -> ShiftAnnotation:
     Returns:
         ShiftAnnotation: The shift annotation.
     """
-    shift_annotations = shift_service.get_shift_annotations(shift_id)
-    return shift_annotations, HTTPStatus.OK
+    shift_annotations_obj = shift_service.get_shift_annotations(shift_id)
+    return shift_annotations_obj, HTTPStatus.OK

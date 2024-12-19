@@ -34,9 +34,9 @@ class ShiftAnnotations(BaseRepositoryService):
                 f"No shift found with ID: {shift_annotation_data.shift_id}"
             )
 
-        shift_comment = set_new_metadata(shift_annotation_data, shift.shift_operator)
-        return self.crud_shift_repository.create_shift_comment(
-            shift_comment=shift_comment
+        shift_annotation = set_new_metadata(shift_annotation_data, shift.shift_operator)
+        return self.crud_shift_repository.create_shift_annotation(
+            shift_annotation=shift_annotation
         )
 
     def get_shift_annotations(self, shift_id: str = None) -> List[ShiftAnnotation]:
@@ -63,7 +63,7 @@ class ShiftAnnotations(BaseRepositoryService):
         shift_annotations_obj_with_metadata = []
         for shift_annotation in shift_annotations:
             shift_annotation_with_metadata = self._prepare_shift_common_with_metadata(
-                shift_annotation, shift_model=ShiftAnnotation
+                shift_data=shift_annotation, shift_model=ShiftAnnotation
             )
             shift_annotations_obj_with_metadata.append(shift_annotation_with_metadata)
 
