@@ -976,51 +976,6 @@ def create_shift_log_media(
     return media, HTTPStatus.OK
 
 
-@router.put(
-    "/shift_log_comments/upload_image/{comment_id}",
-    tags=["Shift Log Comments"],
-    summary="Upload image for Shift log comment",
-    responses={
-        200: {
-            "description": "Successful Response",
-            "content": {
-                "application/json": {
-                    "example": [
-                        {
-                            "path": "test_path",
-                            "unique_id": "test_unique_id",
-                            "timestamp": "2024-11-11T15:46:13.223618Z",
-                        }
-                    ]
-                }
-            },
-        },
-        422: {
-            "description": "Unprocessable Content",
-            "content": {
-                "application/json": {"example": {"message": "Invalid Comment Id"}}
-            },
-        },
-    },
-)
-def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(...)):
-    """
-    Uploads FIle to s3 and updates the relevant Shift Log comment image with the URL
-
-    Args:
-        comment_id: Comment ID
-        file(s): File(s) to be uploaded
-
-    Returns:
-         shift_log_comment (ShiftLogComment): The updated shift log comment  data.
-    """
-
-    media = shift_service.update_shift_log_with_image(
-        comment_id=comment_id, files=files, shift_model=ShiftLogComment
-    )
-    return media, HTTPStatus.OK
-
-
 @router.get(
     "/shift_log_comments/download_images/{comment_id}",
     tags=["Shift Log Comments"],
