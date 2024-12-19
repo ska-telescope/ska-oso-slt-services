@@ -142,3 +142,15 @@ def get_shift_comment_image_data():
     return load_string_from_file(
         f"{json_file_path}/testfile_get_shift_comment_image_data.json"
     )
+
+
+@pytest.fixture
+def shift_annotation_data():
+    """Fixture to load and return shift annotation data from a JSON file.
+
+    Returns contents of the JSON file containing shift annotation data
+    loaded as a string.
+    """
+    return load_string_from_file(
+        f"{json_file_path}/testfile_shift_annotation_data.json"
+    )

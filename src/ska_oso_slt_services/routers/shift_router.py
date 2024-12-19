@@ -1373,3 +1373,70 @@ def get_shift_annotation(shift_id: str) -> ShiftAnnotation:
     """
     shift_annotations = shift_service.get_shift_annotations(shift_id)
     return shift_annotations, HTTPStatus.OK
+
+
+@router.put(
+    "/shift_annotation/{annotation_id}",
+    tags=["Shift Annotations"],
+    summary="Update an existing shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_annotation.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Invalid Annotation ID",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Annotation Id"}}
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def update_shift_annotations(annotation_id: str, shift_annotation: ShiftAnnotation):
+    """
+    Update an existing shift annotation.
+
+    Args:
+        annotation_id (str): The unique identifier of the shift to update.
+        shift_annotation (ShiftAnnotation): The updated shift annotation data.
+
+    Raises:
+        HTTPException: If the shift is not found.
+    """
+
+    shift_annotations = shift_service.update_shift_annotations(
+        annotation_id=annotation_id, shift_annotation=shift_annotation
+    )
+    return shift_annotations, HTTPStatus.OK
