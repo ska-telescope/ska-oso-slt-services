@@ -13,6 +13,32 @@ LOGGER = logging.getLogger(__name__)
 
 class ShiftLogsComment(MediaService, BaseRepositoryService):
 
+    def create_shift_log(
+        self, shift_id: int, shift_log: ShiftLogComment
+    ) -> ShiftLogComment:
+        """
+        Create a new shift log.
+
+        Args:
+            shift_id (int): The ID of the shift to which the log belongs.
+            shift_log (ShiftLogComment): The shift log object to be created.
+
+        Returns:
+            ShiftLogComment: The created shift log object.
+
+        Raises:
+            NotFoundError: If the shift is not found.
+        """
+        shift = self.crud_shift_repository.get_shifts(Shift(shift_id=shift_id))
+        if not shift:
+            raise NotFoundError("Shift not found")
+        shift_log.shift_id = shift_id
+        shift_log_dict = shift_log.dict()
+        shift_log_dict["metadata"] = set_new_metadata(shift_log)
+        shift_log = ShiftLogComment(**shift_log_dict)
+        self.crud_shift_repository.create_shift_log(shift_log)
+        return shift_log
+
     def create_shift_logs_comment(self, shift_log_comment_data) -> ShiftLogComment:
         """
         Create a new comment for a shift log with metadata.
@@ -29,10 +55,6 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         shift = Shift(**shift)
         if not shift:
             raise NotFoundError(f"Shift not found {shift_log_comment_data.shift_id}")
-        if shift and shift.shift_operator != shift_log_comment_data.operator_name:
-            raise NotFoundError(
-                f"Shift operator not found {shift_log_comment_data.operator_name}"
-            )
         missing_fields = []
         if not shift_log_comment_data.shift_id:
             missing_fields.append("shift_id")

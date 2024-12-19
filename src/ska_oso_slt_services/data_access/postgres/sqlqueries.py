@@ -504,7 +504,9 @@ def select_comments_query(
         QueryAndParameters: A tuple of the query and parameters.
     """
     # Get the columns for the select statement
-    columns = table_details.get_columns_with_metadata()
+    column_list = list(table_details.get_columns_with_metadata())
+    column_list.append("id")
+    columns = tuple(column_list)
 
     # Start building the base SQL query
     base_query = sql.SQL(

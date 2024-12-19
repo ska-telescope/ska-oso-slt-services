@@ -9,7 +9,6 @@ from deepdiff import DeepDiff
 from psycopg import sql
 
 from ska_oso_slt_services.common.constant import ODA_DATA_POLLING_TIME
-from ska_oso_slt_services.common.custom_exceptions import ODADataError
 from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import update_metadata
@@ -155,7 +154,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             Shift: The prepared shift object.
         """
-        random_number = random.randint(1, 9)
+        random_number = random.randint(1, 1000)
         shift.shift_start = get_datetime_for_timezone("UTC")
         shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}-{random_number}"
         return shift
@@ -412,10 +411,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The newly created shift log comment.
         """
-        self._insert_shift_to_database(
+        unique_id = self._insert_shift_to_database(
             table_details=ShiftLogCommentMapping(), entity=shift_log_comment
         )
-
+        if unique_id:
+            shift_log_comment.id = unique_id.get("id")
         return shift_log_comment
 
     def update_shift_logs_comments(
@@ -476,7 +476,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             dict: Processed ODA information
 
         Raises:
-            ODADataError: If there are issues with data retrieval or processing
+            Exception: If there are issues with data retrieval or processing
         """
         try:
             filter_date_tz = datetime.fromisoformat(filter_date).replace(
@@ -510,8 +510,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
             eb_rows = self.postgres_data_access.get(
                 query=sql.SQL(eb_query), params=tuple(eb_params)
             )
-            if not eb_rows:
-                raise ODADataError("No data found for the given filter date")
         except Exception as e:  # pylint: disable=W0718
             LOGGER.error("Error fetching ODA data: %s", str(e))
         else:
@@ -681,10 +679,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftComment: The newly created shift comment.
         """
-        self._insert_shift_to_database(
+        unique_id = self._insert_shift_to_database(
             table_details=ShiftCommentMapping(), entity=shift_comment
         )
-
+        if unique_id:
+            shift_comment.id = unique_id.get("id")
         return shift_comment
 
     def get_shift_comments(self, shift_id=None):
