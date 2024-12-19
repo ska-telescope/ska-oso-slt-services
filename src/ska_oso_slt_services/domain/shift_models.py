@@ -64,6 +64,7 @@ class ShiftLogComment(SLTObject):
     :param metadata Optional[Metadata]: Metadata contains shift additional info
      like shift created_on, created_bye etc...
     """
+
     id: Optional[int] = None
     log_comment: Optional[str] = None
     operator_name: Optional[str] = None
@@ -86,6 +87,7 @@ class ShiftComment(SLTObject):
     :param metadata Optional[Metadata]: Metadata contains shift additional info
     like shift created_on, created_bye etc...
     """
+
     id: Optional[int] = None
     comment: Optional[str] = None
     operator_name: Optional[str] = None

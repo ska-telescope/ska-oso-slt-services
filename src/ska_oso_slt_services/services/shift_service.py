@@ -303,7 +303,6 @@ class ShiftService(ShiftComments, ShiftLogsComment):
         else:
             raise NotFoundError("No shift found")
 
-
     def updated_shift_log_info(self, current_shift_id: str) -> Union[Shift, str]:
         """
         Update the shift log info for a given shift ID.
