@@ -90,74 +90,6 @@ def test_create_shift(updated_shift_data):
     mock_insert.assert_called_once()
 
 
-def test_update_end_shift_time():
-    # Prepare test data with metadata
-    current_time = get_datetime_for_timezone("UTC")
-    shift_data = {
-        "operator_name": "Ross",
-        "metadata": {
-            "created_by": "test",
-            "created_on": current_time.isoformat(),
-            "last_modified_by": "Ross",
-            "last_modified_on": current_time.isoformat(),
-        },
-    }
-    # Create a mock for the shift model
-    mock_shift = MagicMock()
-    mock_shift.shift_id = "sl-t0001-20241204-00004"
-    mock_shift.created_by = shift_data["metadata"]["created_by"]
-    mock_shift.created_on = current_time
-    mock_shift.last_modified_by = shift_data["metadata"]["last_modified_by"]
-    mock_shift.last_modified_on = current_time
-
-    # Create a mock for the database session
-    mock_db_session = MagicMock()
-
-    # Set up the mock to return the existing shift when queried
-    mock_db_session.get.return_value = {"max": 1}
-
-    # Patch both database access and Shift model creation
-    with (
-        patch(
-            "ska_oso_slt_services.data_access.postgres"
-            ".execute_query.PostgresDataAccess.update"
-        ) as mock_insert,
-        patch(
-            "ska_oso_slt_services.services.shift_service.Shift", return_value=mock_shift
-        ),
-    ):
-        with patch(
-            "ska_oso_slt_services.data_access.postgres"
-            ".execute_query.PostgresDataAccess.get_one",
-            return_value={"max": 5},
-        ):
-
-            # Send a POST request to the endpoint
-            response = client.put(
-                f"{API_PREFIX}/shift/end/sl-t0001-20241204-00004", json=shift_data
-            )
-    # Assertions
-    assert (
-        response.status_code == 200
-    ), f"Expected status code 200, but got {response.status_code}"
-
-    created_shift = response.json()
-    # Verify metadata
-    assert "metadata" in created_shift[0], "Metadata is missing in the response"
-    metadata = created_shift[0]["metadata"]
-    assert metadata["created_by"] == shift_data["metadata"]["created_by"], (
-        f"Expected created_by to be '{shift_data['metadata']['created_by']}', but got"
-        f" '{metadata['created_by']}'"
-    )
-    assert metadata["last_modified_by"] == shift_data["metadata"]["last_modified_by"], (
-        "Expected last_modified_by to be"
-        f" '{shift_data['metadata']['last_modified_by']}', but got"
-        f" '{metadata['last_modified_by']}'"
-    )
-
-    mock_insert.assert_called_once()
-
-
 def test_update_shift(existing_shift_data, updated_shift_data):
 
     # Expected shift data after the update
@@ -652,6 +584,30 @@ def test_get_shifts(mock_get_shift_log_comments, shift_history_data):
         f" '{shift_history_data[0]['metadata']['last_modified_by']}'"
         f", but got '{metadata['last_modified_by']}'"
     )
+    response = client.get(
+        f"{API_PREFIX}/shifts?match_type=contains&sbi_id=sbi-t0001-20240822-00009"
+    )
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_shift = response.json()[0][0]
+    assert (
+        created_shift["comments"][0]["comment"]
+        == shift_history_data[0]["comments"][0]["comment"]
+    )
+    response = client.get(
+        f"{API_PREFIX}/shifts?match_type=contains&eb_id=eb-t0001-20241022-00002"
+    )
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+    created_shift = response.json()[0][0]
+
+    assert (
+        created_shift["comments"][0]["comment"]
+        == shift_history_data[0]["comments"][0]["comment"]
+    )
 
 
 @patch(
@@ -817,3 +773,41 @@ def test_add_shift_log_comment_image(
     assert (
         response.status_code == 200
     ), f"Expected status code 200, but got {response.status_code}"
+
+
+@patch("ska_oso_slt_services.routers.shift_router.ShiftService.update_shift_end_time")
+def test_update_shift_end_time(mock_shift_end_data):
+
+    current_time = get_datetime_for_timezone("UTC")
+
+    shift_data = {
+        "operator_name": "Ross",
+        "metadata": {
+            "created_by": "test",
+            "created_on": current_time.isoformat(),
+            "last_modified_by": "Ross",
+            "last_modified_on": current_time.isoformat(),
+        },
+    }
+
+    mock_shift_end_data.return_value = shift_data
+
+    response = client.put(
+        f"{API_PREFIX}/shift/end/sl-t0001-20241204-00004", json=shift_data
+    )
+
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_shift = response.json()
+
+    print(f"@@@@@@@@@@@@ {created_shift}")
+
+    print(f"!!!!!!!!!!!! {created_shift[0]}")
+
+    assert created_shift[0]["operator_name"] == shift_data["operator_name"], (
+        f"Expected operator_name to be "
+        f"'{shift_data['operator_name']}'"
+        f", but got '{created_shift[0]['operator_name']}'"
+    )

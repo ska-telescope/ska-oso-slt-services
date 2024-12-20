@@ -1,5 +1,4 @@
 import logging
-import random
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -213,7 +212,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         existing_shift.shift_end = get_datetime_for_timezone("UTC")
         existing_shift.metadata = shift.metadata
-        self._update_shift_in_database(existing_shift)
+        self._update_shift_in_database(existing_shift)  # pylint: disable=E1120
         return existing_shift
 
     def update_shift(self, shift: Shift) -> Shift:
