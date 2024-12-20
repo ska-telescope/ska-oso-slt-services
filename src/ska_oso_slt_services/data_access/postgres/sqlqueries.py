@@ -443,9 +443,9 @@ def build_like_query(
 def select_logs_by_status(
     table_details: TableDetails,
     qry_params: SbiEntityStatus = None,
-    status_column: Optional[str] = None,
+    status_column: str = None,
     entity_filter: EntityFilter = None,
-    match_type: Optional[MatchType] = None,
+    match_type: MatchType = None,
 ) -> Tuple[str, Tuple[str]]:
     """
     Creates an optimized query to select logs based on the
@@ -454,9 +454,9 @@ def select_logs_by_status(
     Args:
         match_type(MatchType): The type of matching to perform.
         table_details (TableDetails): The information about the table to query.
-        qry_params (SbiEntityStatus, optional): The JSON-based query parameters.
-        status_column (str, optional): The column to search within
-        entity_filter (EntityFilter, optional): Filter for sbi_id and eb_id search
+        qry_params (SbiEntityStatus): The JSON-based query parameters.
+        status_column (str): The column to search within
+        entity_filter (EntityFilter): Filter for sbi_id and eb_id search
 
     Returns:
         QueryAndParameters: A tuple of the query and parameters.
