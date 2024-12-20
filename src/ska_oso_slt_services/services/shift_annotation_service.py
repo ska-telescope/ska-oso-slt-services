@@ -63,7 +63,7 @@ class ShiftAnnotations(BaseRepositoryService):
         shift_annotations_obj_with_metadata = []
         for shift_annotation in shift_annotations:
             shift_annotation_with_metadata = self._prepare_shift_common_with_metadata(
-                shift_annotation, shift_model=ShiftAnnotation
+                shift_data=shift_annotation, shift_model=ShiftAnnotation
             )
             shift_annotations_obj_with_metadata.append(shift_annotation_with_metadata)
 

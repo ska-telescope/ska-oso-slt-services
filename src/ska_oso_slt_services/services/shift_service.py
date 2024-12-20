@@ -6,6 +6,7 @@ from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
 from ska_oso_slt_services.domain.shift_models import (
     MatchType,
+    Metadata,
     SbiEntityStatus,
     Shift,
     ShiftAnnotation,
@@ -267,7 +268,9 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
             ShiftAnnotation: A ShiftAnnotation object with metadata included.
         """
         shift_data_load = shift_model.model_validate(shift_data)
-        shift_data_load = set_new_metadata(shift_data_load)
+        metadata_dict = self._create_metadata(shift_data)
+        shift_data_load.metadata = Metadata.model_validate(metadata_dict)
+
         return shift_data_load
 
     def _prepare_shift_log_comment_with_metadata(
@@ -309,6 +312,23 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         if shift:
             return self.get_shift(shift_id=shift["shift_id"])
         return None
+
+    def _create_metadata(self, shift: Dict[Any, Any]) -> Dict[str, str]:
+        """
+        Create metadata dictionary from shift data.
+
+        Args:
+            shift (Dict[Any, Any]): The shift data.
+
+        Returns:
+            Dict[str, str]: A dictionary containing metadata information.
+        """
+        return {
+            "created_by": shift["created_by"],
+            "created_on": shift["created_on"],
+            "last_modified_on": shift["last_modified_on"],
+            "last_modified_by": shift["last_modified_by"],
+        }
 
     def updated_shift_log_info(self, current_shift_id: str) -> Union[Shift, str]:
         """
