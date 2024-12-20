@@ -124,13 +124,11 @@ class ShiftBaseClass(SLTObject):
     :param annotations Optional[str]: Annotations for the shift.
     :param comments Optional[List[ShiftComment]]: List of comments for the shift.
     """
-
     shift_id: Optional[str] = None
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None
     shift_operator: Optional[str] = None
     annotations: Optional[str] = None
-    comments: Optional[List[ShiftComment]] = None
 
 
 class Shift(ShiftBaseClass):
@@ -147,6 +145,7 @@ class Shift(ShiftBaseClass):
     shift_logs: Optional[List[ShiftLogs]] = None
     media: Optional[List[Media]] = None
     metadata: Optional[Metadata] = None
+    comments: Optional[List[ShiftComment]] = None
 
 
 class Filter(Enum):

@@ -57,7 +57,9 @@ def insert_query(
     return query, params
 
 
-def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
+def update_query(
+    entity_id: str | int, table_details: TableDetails, entity: Any
+) -> QueryAndParameters:
     """
     Creates a query and parameters to update the given entity in the table,
     overwriting values in the existing row and returning the row ID.
@@ -66,6 +68,7 @@ def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
     then no update is performed.
 
     Args:
+        entity_id: The entity_id contais id of shift or comment
         table_details (TableDetails): The information about the table
         to perform the update on.
         entity: The entity which will be persisted.
@@ -78,8 +81,6 @@ def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
     params = table_details.get_params_with_metadata(entity)
 
     # Add the identifier value (e.g., shift_id or comment_id) to the end of params
-    identifier_value = getattr(entity, table_details.table_details.identifier_field)
-
     query = sql.SQL(
         """
         UPDATE {table} SET ({fields}) = ({values})
@@ -92,7 +93,7 @@ def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
         fields=sql.SQL(",").join(map(sql.Identifier, columns)),
         values=sql.SQL(",").join(sql.Placeholder() * len(params)),
     )
-    return query, params + (identifier_value,)
+    return query, params + (entity_id,)
 
 
 def select_latest_query(
@@ -112,7 +113,7 @@ def select_latest_query(
         which psycopg will safely combine.
     """
     columns = table_details.get_columns_with_metadata()
-    where_clause = sql.SQL("WHERE {identifier_field} = %s ORDER BY id").format(
+    where_clause = sql.SQL("WHERE {identifier_field} = %s ORDER BY id DESC").format(
         identifier_field=sql.Identifier(table_details.table_details.identifier_field),
     )
     params = (shift_id,)
@@ -143,6 +144,7 @@ def select_metadata_query(
     Creates a query to select all columns for all shifts.
 
     Args:
+        entity_id: id of shift of comment.
         table_details (TableDetails): The information about the table to query.
 
     Returns:
@@ -218,6 +220,7 @@ def select_by_shift_params(
             ),
         )
         + where_clause
+        + sql.SQL(" ORDER BY id DESC")
     )
 
     return query, tuple(params)
@@ -275,6 +278,7 @@ def select_by_date_query(
             ),
         )
         + where_clause
+        + sql.SQL(" ORDER BY id DESC")
     )
 
     return query, params
@@ -500,7 +504,9 @@ def select_comments_query(
         QueryAndParameters: A tuple of the query and parameters.
     """
     # Get the columns for the select statement
-    columns = table_details.get_columns_with_metadata()
+    column_list = list(table_details.get_columns_with_metadata())
+    column_list.append("id")
+    columns = tuple(column_list)
 
     # Start building the base SQL query
     base_query = sql.SQL(
@@ -547,26 +553,6 @@ def select_comments_query(
     return query, tuple(params)
 
 
-def select_last_serial_id(table_details: TableDetails) -> QueryAndParameters:
-    """
-    Creates a query to select the last serial ID from the table.
-
-    Args:
-        table_details (TableDetails): The information about the table to query.
-
-    Returns:
-        QueryAndParameters: A tuple of the query and parameters.
-    """
-    query = sql.SQL(
-        """
-        SELECT MAX(id) FROM {table}
-        """
-    ).format(
-        table=sql.Identifier(table_details.table_details.table_name),
-    )
-    return query, ()
-
-
 def select_latest_shift_query(table_details: TableDetails) -> QueryAndParameters:
     """
     Creates a query and parameters to find the latest shift in the table,
@@ -584,7 +570,7 @@ def select_latest_shift_query(table_details: TableDetails) -> QueryAndParameters
         SELECT shift_id
         FROM {table}
         WHERE shift_end IS NULL
-        ORDER BY created_on DESC LIMIT 1
+        ORDER BY id DESC LIMIT 1
         """
     ).format(table=sql.Identifier(table_details.table_details.table_name))
 

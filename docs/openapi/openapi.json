@@ -62,6 +62,16 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -78,6 +88,16 @@
               "application/json": {
                 "example": {
                   "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -209,26 +229,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "anyOf": [
-                  {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/ShiftComment"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": "Comments"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -282,6 +282,16 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -307,6 +317,16 @@
                   "ctx": {
                     "error": "input is too short"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -337,7 +357,14 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {},
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Shift Created Successfully",
+            "content": {
+              "application/json": {
                 "example": [
                   {
                     "shift_id": "string",
@@ -363,6 +390,16 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Content",
             "content": {
@@ -378,6 +415,16 @@
                   "ctx": {
                     "error": "input is too short"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -445,12 +492,42 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Shift Not Found"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Invalid Shift Id",
             "content": {
               "application/json": {
                 "example": {
                   "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -544,7 +621,14 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {},
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Shift Log Comments Created Successfully",
+            "content": {
+              "application/json": {
                 "example": [
                   {
                     "log_comment": "string",
@@ -566,6 +650,16 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Content",
             "content": {
@@ -581,6 +675,16 @@
                   "ctx": {
                     "error": "input is too short"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -655,12 +759,42 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Shift Not Found"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "example": {
                   "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -724,12 +858,42 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Shift Not Found"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Invalid Comment ID",
             "content": {
               "application/json": {
                 "example": {
                   "message": "Invalid Comment Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -743,7 +907,7 @@
           "Shift Log Comments"
         ],
         "summary": "Upload image for Shift log comment",
-        "description": "Uploads FIle to s3 and updates the relevant Shift Log comment image with the URL\n\nArgs:\n    comment_id: Comment ID\n    File: File to be uploaded\n\nReturns:\n     shift_log_comment (ShiftLogComment): The updated shift log comment  data.",
+        "description": "Uploads FIle to s3 and updates the relevant Shift Log comment image with the URL\n\nArgs:\n    comment_id: Comment ID\n    file(s): File(s) to be uploaded\n\nReturns:\n     shift_log_comment (ShiftLogComment): The updated shift log comment  data.",
         "operationId": "update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__comment_id__put",
         "parameters": [
           {
@@ -774,11 +938,31 @@
                 "schema": {},
                 "example": [
                   {
-                    "file_extension": "test",
                     "path": "test_path",
-                    "unique_id": "test_unique_id"
+                    "unique_id": "test_unique_id",
+                    "timestamp": "2024-11-11T15:46:13.223618Z"
                   }
                 ]
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Comment ID Not Found"
+                }
               }
             }
           },
@@ -788,6 +972,16 @@
               "application/json": {
                 "example": {
                   "message": "Invalid Comment Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -856,6 +1050,16 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -881,6 +1085,16 @@
                   "ctx": {
                     "error": "input is too short"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -1034,12 +1248,32 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "example": {
                   "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -1070,7 +1304,14 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {},
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Shift Comments Created Successfully",
+            "content": {
+              "application/json": {
                 "example": [
                   {
                     "id": 0,
@@ -1095,12 +1336,32 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Invalid Shift Id",
             "content": {
               "application/json": {
                 "example": {
                   "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -1172,12 +1433,32 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Invalid Shift Id",
             "content": {
               "application/json": {
                 "example": {
                   "message": "No shifts log comments found for the given query."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -1254,6 +1535,16 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Invalid Comment ID",
             "content": {
@@ -1265,11 +1556,124 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                "example": {
+                  "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ska-oso-slt-services/slt/api/v0/shift_log_comments/upload_image": {
+      "post": {
+        "tags": [
+          "Shift Log Comments"
+        ],
+        "summary": "Upload image for shift",
+        "description": "Upload one or more image files for a specific shift.\n\nThis endpoint allows uploading multiple image files associated\nwith a particular shift identified by the shift_id.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    eb_id (str): The EB ID associated with the shift.\n    files (list[UploadFile]): A list of files to be uploaded.\n\nReturns:\n    list: A list containing elements:\n        - image_response: The media (image) data associated with the comment.\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.",
+        "operationId": "create_shift_log_media_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image_post",
+        "parameters": [
+          {
+            "name": "shift_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shift Id"
+            }
+          },
+          {
+            "name": "shift_operator",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shift Operator"
+            }
+          },
+          {
+            "name": "eb_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Eb Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_shift_log_media_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Image Uploaded Successfully",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "path": "test_path",
+                    "unique_id": "test_unique_id",
+                    "timestamp": "2024-11-11T15:46:13.223618Z"
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -1308,16 +1712,53 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {},
+                "example": [
+                  {
+                    "file_key": "test.jpeg",
+                    "media_content": "test_media_content",
+                    "content_type": "image/jpeg"
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Comment ID Not Found"
+                }
               }
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                "example": {
+                  "message": "Invalid Comment Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -1331,8 +1772,8 @@
           "Shift Comments"
         ],
         "summary": "Upload image for shift",
-        "description": "Create a new shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    file (list[UploadFile]): A list of files to be uploaded.\n        \nReturns:\n    ShiftLogComment: The created shift log comment.",
-        "operationId": "post_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post",
+        "description": "Create a new shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    file (list[UploadFile]): A list of files to be uploaded.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
+        "operationId": "create_media_for_comment_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post",
         "parameters": [
           {
             "name": "shift_id",
@@ -1358,7 +1799,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_post_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post"
+                "$ref": "#/components/schemas/Body_create_media_for_comment_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post"
               }
             }
           }
@@ -1368,14 +1809,31 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {},
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Image Uploaded Successfully",
+            "content": {
+              "application/json": {
                 "example": [
                   {
-                    "file_extension": "test",
                     "path": "test_path",
-                    "unique_id": "test_unique_id"
+                    "unique_id": "test_unique_id",
+                    "timestamp": "2024-11-11T15:46:13.223618Z"
                   }
                 ]
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
               }
             }
           },
@@ -1384,7 +1842,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Comment Id"
+                  "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -1399,7 +1867,7 @@
         ],
         "summary": "Upload image for shift",
         "description": "Upload one or more image files for a specific shift.\n\nThis endpoint allows uploading multiple image files associated\nwith a particular shift identified by the shift_id.\n\nArgs:\n    comment_id (Optional[int]): The unique identifier of the\n        comment to which the images will be associated.\n    files (list[UploadFile]): A list of files to be uploaded.\n        Each file should be an image. This parameter uses\n        FastAPI's File(...) for handling file uploads.\n\nReturns:\n    list: A list containing elements:\n        - image_response: The media (image) data associated with the comment.\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.",
-        "operationId": "add_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put",
+        "operationId": "add_media_to_comment_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put",
         "parameters": [
           {
             "name": "comment_id",
@@ -1423,7 +1891,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_add_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put"
+                "$ref": "#/components/schemas/Body_add_media_to_comment_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put"
               }
             }
           }
@@ -1433,16 +1901,53 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {},
+                "example": [
+                  {
+                    "path": "test_path",
+                    "unique_id": "test_unique_id",
+                    "timestamp": "2024-11-11T15:46:13.223618Z"
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Comment ID Not Found"
+                }
               }
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                "example": {
+                  "message": "Invalid Comment Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -1457,7 +1962,7 @@
         ],
         "summary": "download shift image",
         "description": "Retrieve media associated with a shift comment.\n\nArgs:\n    comment_id (Optional[int]): The unique identifier of the comment.\n        If None, returns all media.\n\nReturns:\n    tuple: A tuple containing:\n        - image_response: The media data from the shift service\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval",
-        "operationId": "get_media_ska_oso_slt_services_slt_api_v0_shift_comment_download_images__comment_id__get",
+        "operationId": "get_media_for_comment_ska_oso_slt_services_slt_api_v0_shift_comment_download_images__comment_id__get",
         "parameters": [
           {
             "name": "comment_id",
@@ -1481,16 +1986,53 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {},
+                "example": [
+                  {
+                    "file_key": "test.jpeg",
+                    "media_content": "test_media_content",
+                    "content_type": "image/jpeg"
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Comment ID Not Found"
+                }
               }
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                "example": {
+                  "message": "Invalid Comment Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -1501,7 +2043,7 @@
   },
   "components": {
     "schemas": {
-      "Body_add_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put": {
+      "Body_add_media_to_comment_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put": {
         "properties": {
           "files": {
             "items": {
@@ -1516,9 +2058,9 @@
         "required": [
           "files"
         ],
-        "title": "Body_add_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put"
+        "title": "Body_add_media_to_comment_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image__comment_id__put"
       },
-      "Body_post_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post": {
+      "Body_create_media_for_comment_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post": {
         "properties": {
           "file": {
             "type": "string",
@@ -1530,9 +2072,9 @@
         "required": [
           "file"
         ],
-        "title": "Body_post_media_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post"
+        "title": "Body_create_media_for_comment_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post"
       },
-      "Body_update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__comment_id__put": {
+      "Body_create_shift_log_media_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image_post": {
         "properties": {
           "file": {
             "type": "string",
@@ -1543,6 +2085,23 @@
         "type": "object",
         "required": [
           "file"
+        ],
+        "title": "Body_create_shift_log_media_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image_post"
+      },
+      "Body_update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__comment_id__put": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string",
+              "format": "binary"
+            },
+            "type": "array",
+            "title": "Files"
+          }
+        },
+        "type": "object",
+        "required": [
+          "files"
         ],
         "title": "Body_update_shift_log_with_image_ska_oso_slt_services_slt_api_v0_shift_log_comments_upload_image__comment_id__put"
       },
@@ -1711,20 +2270,6 @@
             ],
             "title": "Annotations"
           },
-          "comments": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/ShiftComment"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Comments"
-          },
           "shift_logs": {
             "anyOf": [
               {
@@ -1762,6 +2307,20 @@
                 "type": "null"
               }
             ]
+          },
+          "comments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ShiftComment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments"
           }
         },
         "type": "object",

@@ -82,7 +82,7 @@ class ShiftLogMapping:
         return TableDetails(
             table_name="tab_oda_slt",
             identifier_field="shift_id",
-            text_base_search_fields="comments",
+            text_base_search_fields="annotations",
             column_map={
                 "shift_id": lambda shift: shift.shift_id,
                 "shift_start": lambda shift: shift.shift_start,
@@ -183,7 +183,6 @@ class ShiftLogCommentMapping:
             table_name="tab_oda_slt_shift_log_comments",
             identifier_field="id",
             column_map={
-                "id": lambda comment: comment.id,
                 "log_comment": lambda comment: comment.log_comment,
                 "operator_name": lambda comment: comment.operator_name,
                 "shift_id": lambda comment: comment.shift_id,
@@ -260,7 +259,6 @@ class ShiftCommentMapping:
             table_name="tab_oda_slt_shift_comments",
             identifier_field="id",
             column_map={
-                "id": lambda comment: comment.id,
                 "comment": lambda comment: comment.comment,
                 "operator_name": lambda comment: comment.operator_name,
                 "shift_id": lambda comment: comment.shift_id,

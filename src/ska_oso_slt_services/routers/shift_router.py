@@ -11,10 +11,6 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, UploadFile
 
-from ska_oso_slt_services.data_access.postgres.mapping import (
-    ShiftCommentMapping,
-    ShiftLogCommentMapping,
-)
 from ska_oso_slt_services.domain.shift_models import (
     MatchType,
     SbiEntityStatus,
@@ -22,9 +18,6 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftBaseClass,
     ShiftComment,
     ShiftLogComment,
-)
-from ska_oso_slt_services.repository.postgres_shift_repository import (
-    PostgresShiftRepository,
 )
 from ska_oso_slt_services.services.shift_service import ShiftService
 
@@ -40,7 +33,7 @@ class ShiftServiceSingleton:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            cls._instance = ShiftService([PostgresShiftRepository])
+            cls._instance = ShiftService()
         return cls._instance
 
 
@@ -53,8 +46,6 @@ def get_shift_service() -> ShiftService:
 
 
 shift_service = get_shift_service()
-# shift_log_updater = ShiftLogUpdater()
-
 
 router = APIRouter()
 
@@ -78,6 +69,14 @@ router = APIRouter()
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
         404: {
             "description": "Not Found",
             "content": {
@@ -88,6 +87,14 @@ router = APIRouter()
             "description": "Unprocessable Content",
             "content": {
                 "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
             },
         },
     },
@@ -127,6 +134,14 @@ def get_shift(shift_id: Optional[str] = None):
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
         404: {
             "description": "Not Found",
             "content": {
@@ -144,6 +159,14 @@ def get_shift(shift_id: Optional[str] = None):
                         "input": "test",
                         "ctx": {"error": "input is too short"},
                     }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
                 }
             },
         },
@@ -167,8 +190,8 @@ def get_shifts(
     tags=["shifts"],
     summary="Create a new shift",
     responses={
-        200: {
-            "description": "Successful Response",
+        201: {
+            "description": "Shift Created Successfully",
             "content": {
                 "application/json": {
                     "example": [
@@ -178,6 +201,14 @@ def get_shifts(
                             ).read_text()
                         )
                     ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
                 }
             },
         },
@@ -192,6 +223,14 @@ def get_shifts(
                         "input": "test",
                         "ctx": {"error": "input is too short"},
                     }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
                 }
             },
         },
@@ -232,10 +271,32 @@ def create_shift(shift: Shift):
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Shift Not Found"}}
+            },
+        },
         422: {
             "description": "Invalid Shift Id",
             "content": {
                 "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
             },
         },
     },
@@ -324,8 +385,8 @@ def update_shift_end_time(shift_id: str, shift: Shift):
     tags=["Shift Log Comments"],
     summary="Create a new shift log comment",
     responses={
-        200: {
-            "description": "Successful Response",
+        201: {
+            "description": "Shift Log Comments Created Successfully",
             "content": {
                 "application/json": {
                     "example": [
@@ -335,6 +396,14 @@ def update_shift_end_time(shift_id: str, shift: Shift):
                             ).read_text()
                         )
                     ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
                 }
             },
         },
@@ -349,6 +418,14 @@ def update_shift_end_time(shift_id: str, shift: Shift):
                         "input": "test",
                         "ctx": {"error": "input is too short"},
                     }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
                 }
             },
         },
@@ -387,10 +464,32 @@ def create_shift_log_comments(shift_log_comment: ShiftLogComment):
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Shift Not Found"}}
+            },
+        },
         422: {
             "description": "Unprocessable Content",
             "content": {
                 "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
             },
         },
     },
@@ -430,10 +529,32 @@ def get_shift_log_comments(shift_id: Optional[str] = None, eb_id: Optional[str] 
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Shift Not Found"}}
+            },
+        },
         422: {
             "description": "Invalid Comment ID",
             "content": {
                 "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
             },
         },
     },
@@ -475,10 +596,32 @@ def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogCommen
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Comment ID Not Found"}}
+            },
+        },
         422: {
             "description": "Unprocessable Content",
             "content": {
                 "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
             },
         },
     },
@@ -495,11 +638,8 @@ def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(
          shift_log_comment (ShiftLogComment): The updated shift log comment  data.
     """
 
-    media = shift_service.add_media(
-        comment_id=comment_id,
-        files=files,
-        shift_model=ShiftLogComment,
-        table_mapping=ShiftLogCommentMapping(),
+    media = shift_service.update_shift_log_with_image(
+        comment_id=comment_id, files=files, shift_model=ShiftLogComment
     )
     return media, HTTPStatus.OK
 
@@ -524,6 +664,14 @@ def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
         404: {
             "description": "Not Found",
             "content": {
@@ -541,6 +689,14 @@ def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(
                         "input": "test",
                         "ctx": {"error": "input is too short"},
                     }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
                 }
             },
         },
@@ -586,10 +742,26 @@ def get_current_shift():
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
         422: {
             "description": "Unprocessable Content",
             "content": {
                 "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
             },
         },
     },
@@ -614,8 +786,8 @@ def patch_shift_log_info(shift_id: Optional[str]):
     tags=["Shift Comments"],
     summary="Create a new shift comment",
     responses={
-        200: {
-            "description": "Successful Response",
+        201: {
+            "description": "Shift Comments Created Successfully",
             "content": {
                 "application/json": {
                     "example": [
@@ -628,10 +800,26 @@ def patch_shift_log_info(shift_id: Optional[str]):
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
         404: {
             "description": "Invalid Shift Id",
             "content": {
                 "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
             },
         },
     },
@@ -669,6 +857,14 @@ def create_shift_comments(shift_comment: ShiftComment):
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
         404: {
             "description": "Invalid Shift Id",
             "content": {
@@ -676,6 +872,14 @@ def create_shift_comments(shift_comment: ShiftComment):
                     "example": {
                         "message": "No shifts log comments found for the given query."
                     }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
                 }
             },
         },
@@ -715,10 +919,32 @@ def get_shift_comments(shift_id: Optional[str] = None):
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
         404: {
             "description": "Invalid Comment ID",
             "content": {
                 "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
             },
         },
     },
@@ -746,8 +972,8 @@ def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
     tags=["Shift Log Comments"],
     summary="Upload image for shift",
     responses={
-        200: {
-            "description": "Successful Response",
+        201: {
+            "description": "Image Uploaded Successfully",
             "content": {
                 "application/json": {
                     "example": [
@@ -760,15 +986,31 @@ def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
         422: {
             "description": "Unprocessable Content",
             "content": {
                 "application/json": {"example": {"message": "Invalid Shift Id"}}
             },
         },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
     },
 )
-def post_shift_log_media(
+def create_shift_log_media(
     shift_id: str, shift_operator: str, eb_id: str, file: UploadFile = File(...)
 ):
     """
@@ -788,12 +1030,11 @@ def post_shift_log_media(
             - image_response: The media (image) data associated with the comment.
             - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.
     """
-    media = shift_service.post_media(
+    media = shift_service.create_shift_log_media(
         shift_id=shift_id,
         shift_operator=shift_operator,
         file=file,
         shift_model=ShiftLogComment,
-        table_mapping=ShiftLogCommentMapping(),
         eb_id=eb_id,
     )
     return media, HTTPStatus.OK
@@ -818,10 +1059,32 @@ def post_shift_log_media(
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Comment ID Not Found"}}
+            },
+        },
         422: {
             "description": "Unprocessable Content",
             "content": {
                 "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
             },
         },
     },
@@ -839,9 +1102,7 @@ def get_shift_log_media(comment_id: Optional[int]):
             - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval
     """
 
-    image_response = shift_service.get_media(
-        comment_id, shift_model=ShiftLogComment, table_mapping=ShiftLogCommentMapping()
-    )
+    image_response = shift_service.get_shift_log_media(comment_id)
     return image_response, HTTPStatus.OK
 
 
@@ -850,8 +1111,8 @@ def get_shift_log_media(comment_id: Optional[int]):
     tags=["Shift Comments"],
     summary="Upload image for shift",
     responses={
-        200: {
-            "description": "Successful Response",
+        201: {
+            "description": "Image Uploaded Successfully",
             "content": {
                 "application/json": {
                     "example": [
@@ -864,15 +1125,33 @@ def get_shift_log_media(comment_id: Optional[int]):
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
         422: {
             "description": "Unprocessable Content",
             "content": {
                 "application/json": {"example": {"message": "Invalid Shift Id"}}
             },
         },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
     },
 )
-def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...)):
+def create_media_for_comment(
+    shift_id: str, shift_operator: str, file: UploadFile = File(...)
+):
     """
     Create a new shift.
 
@@ -884,12 +1163,11 @@ def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...))
     Returns:
         ShiftLogComment: The created shift log comment.
     """
-    media = shift_service.post_media(
+    media = shift_service.create_media_for_comment(
         shift_id=shift_id,
         shift_operator=shift_operator,
         file=file,
         shift_model=ShiftComment,
-        table_mapping=ShiftCommentMapping(),
     )
     return media, HTTPStatus.OK
 
@@ -913,15 +1191,39 @@ def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...))
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Comment ID Not Found"}}
+            },
+        },
         422: {
             "description": "Unprocessable Content",
             "content": {
                 "application/json": {"example": {"message": "Invalid Comment Id"}}
             },
         },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
     },
 )
-def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
+def add_media_to_comment(
+    comment_id: Optional[str], files: list[UploadFile] = File(...)
+):
     """
     Upload one or more image files for a specific shift.
 
@@ -940,8 +1242,8 @@ def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
             - image_response: The media (image) data associated with the comment.
             - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.
     """
-    media = shift_service.add_media(
-        comment_id, files, shift_model=ShiftComment, table_mapping=ShiftCommentMapping()
+    media = shift_service.add_media_to_comment(
+        comment_id, files, shift_model=ShiftComment
     )
     return media, HTTPStatus.OK
 
@@ -965,15 +1267,37 @@ def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
                 }
             },
         },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Comment ID Not Found"}}
+            },
+        },
         422: {
             "description": "Unprocessable Content",
             "content": {
                 "application/json": {"example": {"message": "Invalid Comment Id"}}
             },
         },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
     },
 )
-def get_media(comment_id: Optional[int]):
+def get_media_for_comment(comment_id: Optional[int]):
     """Retrieve media associated with a shift comment.
 
     Args:
@@ -986,7 +1310,7 @@ def get_media(comment_id: Optional[int]):
             - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval
     """
 
-    image_response = shift_service.get_media(
-        comment_id, shift_model=ShiftComment, table_mapping=ShiftCommentMapping()
+    image_response = shift_service.get_media_for_comment(
+        comment_id, shift_model=ShiftComment
     )
     return image_response, HTTPStatus.OK
