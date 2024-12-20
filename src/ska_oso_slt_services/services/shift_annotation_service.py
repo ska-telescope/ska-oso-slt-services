@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
-from ska_oso_slt_services.common.metadata_mixin import set_new_metadata
+from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
 from ska_oso_slt_services.data_access.postgres.mapping import ShiftAnnotationMapping
 from ska_oso_slt_services.domain.shift_models import ShiftAnnotation
 from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
@@ -94,3 +94,49 @@ class ShiftAnnotations(BaseRepositoryService):
         )
 
         return shift_annotation_with_metadata
+
+    def update_shift_annotations(
+        self, annotation_id: int, shift_annotation: ShiftAnnotation
+    ):
+        """
+        Update an existing shift annotation with new data.
+
+        Args:
+            annotation_id (int): The ID of the annotation to update.
+            shift_annotation (ShiftAnnotation): The updated annotation data.
+
+        Returns:
+            ShiftAnnotation: The updated shift annotation.
+
+        Raises:
+            NotFoundError: If no annotation is found with the provided ID.
+        """
+        # for getting shift_id to get operator name
+        existing_shift_annotation = self.get_shift_annotation(
+            annotation_id=annotation_id
+        )
+
+        if not existing_shift_annotation:
+            raise NotFoundError(f"No annotation found with id: {annotation_id}")
+
+        shift = self.get_shift(existing_shift_annotation.shift_id)
+        if not shift:
+            raise NotFoundError(
+                f"No Shift found with id: {shift_annotation['shift_id']}"
+            )
+
+        metadata = self.crud_shift_repository.get_latest_metadata(
+            entity_id=annotation_id, table_details=ShiftAnnotationMapping()
+        )
+        if not metadata:
+            raise NotFoundError(f"No annotation found with ID: {annotation_id}")
+
+        shift_log_annotation_with_metadata = update_metadata(
+            entity=shift_annotation,
+            metadata=metadata,
+            last_modified_by=shift.shift_operator,
+        )
+
+        return self.crud_shift_repository.update_shift_annotations(
+            annotation_id, shift_log_annotation_with_metadata
+        )

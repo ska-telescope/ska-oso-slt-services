@@ -808,6 +808,41 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             raise NotFoundError(f"No annotation found with ID: {annotation_id}")
 
+    def update_shift_annotations(
+        self, annotation_id: int, shift_annotation: ShiftAnnotation
+    ):
+        """
+        Update an existing shift annotation with new data.
+
+        Args:
+            annotation_id: Id of annotation which needs to update.
+            shift_annotation (ShiftAnnotation): The updated annotation data.
+
+        Returns:
+            ShiftAnnotation: The updated shift annotation.
+        """
+        existing_shift_annotation = ShiftAnnotation.model_validate(
+            self.get_shift_annotation(
+                annotation_id=annotation_id, table_mapping=ShiftAnnotationMapping()
+            )
+        )
+        if shift_annotation.annotation:
+            existing_shift_annotation.annotation = shift_annotation.annotation
+        if shift_annotation.operator_name:
+            existing_shift_annotation.operator_name = shift_annotation.operator_name
+        if shift_annotation.shift_id:
+            existing_shift_annotation.shift_id = shift_annotation.shift_id
+        if shift_annotation.operator_name:
+            existing_shift_annotation.operator_name = shift_annotation.operator_name
+        existing_shift_annotation.metadata = shift_annotation.metadata
+        self._update_shift_in_database(
+            entity_id=annotation_id,
+            entity=existing_shift_annotation,
+            table_details=ShiftAnnotationMapping(),
+        )
+
+        return existing_shift_annotation
+
 
 class ShiftLogUpdater:
     def __init__(self):
