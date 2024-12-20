@@ -472,7 +472,7 @@ def select_logs_by_status(
     if qry_params and status_column:
         conditions.append(
             f"log->>'info' ? {status_column!r}"
-            "AND (log->'info'->>{status_column!r})::text = %s"
+            " AND (log->'info'->>{status_column!r})::text = %s"
         )
         params.append(qry_params.sbi_status.value)
 
