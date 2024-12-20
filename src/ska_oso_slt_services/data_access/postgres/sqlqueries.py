@@ -13,6 +13,7 @@ from psycopg import sql
 
 from ska_oso_slt_services.data_access.postgres.mapping import TableDetails
 from ska_oso_slt_services.domain.shift_models import (
+    EntityFilter,
     MatchType,
     SbiEntityStatus,
     Shift,
@@ -440,45 +441,102 @@ def build_like_query(
 
 
 def select_logs_by_status(
-    table_details: TableDetails, qry_params: SbiEntityStatus, status_column: str
+    table_details: TableDetails,
+    qry_params: SbiEntityStatus = None,
+    status_column: str = None,
+    entity_filter: EntityFilter = None,
+    match_type: MatchType = None,
 ) -> Tuple[str, Tuple[str]]:
     """
-    Creates a query to select logs based on the status of the shift.
+    Creates an optimized query to select logs based on the
+    status of the shift or entity IDs.
 
     Args:
+        match_type(MatchType): The type of matching to perform.
         table_details (TableDetails): The information about the table to query.
         qry_params (SbiEntityStatus): The JSON-based query parameters.
         status_column (str): The column to search within
+        entity_filter (EntityFilter): Filter for sbi_id and eb_id search
 
     Returns:
         QueryAndParameters: A tuple of the query and parameters.
     """
-    # Get the dynamic columns
+    # Use list comprehension for better performance
     dynamic_columns = table_details.get_columns_with_metadata()
-    column_selection = ", ".join(dynamic_columns)
 
-    # Build the dynamic column selection part of the query_
-    query_str = f"""
+    # Pre-allocate conditions and params lists with estimated size
+    conditions = []
+    params = []
+
+    # Add status condition if applicable
+    if qry_params and status_column:
+        conditions.append(
+            f"log->>'info' ? {status_column!r}"
+            " AND (log->'info'->>{status_column!r})::text = %s"
+        )
+        params.append(qry_params.sbi_status.value)
+
+    # Process entity filter conditions
+    if entity_filter:
+        match_type_value = match_type.dict()["match_type"].value if match_type else None
+
+        # Helper function to determine operator and value
+        def get_operator_and_value(id_value: str) -> Tuple[str, str]:
+            if match_type_value in ["starts_with", "contains"]:
+                operator = "LIKE"
+                value = (
+                    f"{id_value}%"
+                    if match_type_value == "starts_with"
+                    else f"%{id_value}%"
+                )
+            else:
+                operator = "="
+                value = id_value
+            return operator, value
+
+        # Add SBI ID condition
+        if entity_filter.sbi_id:
+            operator, value = get_operator_and_value(entity_filter.sbi_id)
+            conditions.append(f"(log->'info'->>'sbi_ref')::text {operator} %s")
+            params.append(value)
+
+        # Add EB ID condition
+        if entity_filter.eb_id:
+            operator, value = get_operator_and_value(entity_filter.eb_id)
+            conditions.append(f"(log->'info'->>'eb_id')::text {operator} %s")
+            params.append(value)
+
+    # Build the WHERE clause once
+    where_clause = " AND ".join(conditions) if conditions else "TRUE"
+
+    # Use a pre-built template string for better performance
+    query_template = """
         SELECT
-            {column_selection},
+            {columns},
             jsonb_agg(
                 jsonb_build_object(
                     'info', log->'info',
                     'source', log->'source',
                     'log_time', log->'log_time'
-                )
-            ) shift_logs
+                ) ORDER BY (log->>'log_time')::timestamp
+            ) FILTER (WHERE log IS NOT NULL) AS shift_logs
         FROM
-            {table_details.table_details.table_name},
+            {table_name},
             jsonb_array_elements(shift_logs) AS log
         WHERE
-            log->'info'->>{status_column!r} = %s
+            {where_clause}
         GROUP BY
-            {column_selection}
+            {columns}
     """
-    params = (qry_params.sbi_status.value,)
 
-    return query_str, params
+    # Format the query with all components
+    query_str = query_template.format(
+        columns=", ".join(dynamic_columns),
+        table_name=table_details.table_details.table_name,
+        where_clause=where_clause,
+    )
+
+    return query_str, tuple(params)
 
 
 def select_comments_query(
