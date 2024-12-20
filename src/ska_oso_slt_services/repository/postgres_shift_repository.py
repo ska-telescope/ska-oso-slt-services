@@ -58,26 +58,22 @@ skuid = SkuidClient(SKUID_URL)
 
 def create_shift_id(
     telescope_type: str = "m",
-    operator_location: str = None,
     skuid_entity_type: str = SKUID_ENTITY_TYPE,
 ) -> str:
     """
     Create a shift ID based on the provided parameters.
+    ##TODO
+    For now telescope_type is hardcoded to 'm'
+    but we have to handle that dynamically through
+    environment variable.
 
     Args:
         skuid_entity_type (str): The SKUID entity type.
-        telescope_type (str): The telescope type.
-        operator_location (str): The operator location.
+        telescope_type (str): The Telescope type MID or LOW.
 
     Returns:
         str: The generated shift ID.
     """
-
-    if operator_location:
-
-        return f"{skuid.fetch_skuid(skuid_entity_type)}-{operator_location}".replace(
-            "t", telescope_type
-        )
 
     return f"{skuid.fetch_skuid(skuid_entity_type)}".replace("t", telescope_type)
 
