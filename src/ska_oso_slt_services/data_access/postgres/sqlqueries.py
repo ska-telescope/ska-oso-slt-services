@@ -443,7 +443,7 @@ def build_like_query(
 def select_logs_by_status(
     table_details: TableDetails,
     qry_params: SbiEntityStatus = None,
-    status_column: str = None,
+    status_column: Optional[str] = None,
     entity_filter: EntityFilter = None,
     match_type: Optional[MatchType] = None,
 ) -> Tuple[str, Tuple[str]]:
