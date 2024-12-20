@@ -427,11 +427,8 @@ def test_update_shift_comments(mock_update_shift_comment, shift_comment_data):
 
 @patch("ska_oso_slt_services.services.media_service.MediaService.post_media")
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
-@patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
 def test_create_shift_comment_image(
-    mock_get_shift, 
     mock_get_shift, mock_shift_comment_image, shift_comment_image_data
-
 ):
     test_file = {"file": ("test_image.png", b"dummy image content", "image/png")}
     mock_shift_comment_image.return_value = shift_comment_image_data
@@ -636,7 +633,6 @@ def test_create_shift_log_comment(mock_create_shift_comment, shift_log_comment_d
 
 
 @patch("ska_oso_slt_services.services.media_service.MediaService.post_media")
-@patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
 @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
 def test_post_shift_log_comment_image(
     mock_get_shift, mock_shift_comment_image, shift_log_comment_image_data
