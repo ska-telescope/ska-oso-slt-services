@@ -579,6 +579,30 @@ def test_get_shifts(mock_get_shift_log_comments, shift_history_data):
         f" '{shift_history_data[0]['metadata']['last_modified_by']}'"
         f", but got '{metadata['last_modified_by']}'"
     )
+    response = client.get(
+        f"{API_PREFIX}/shifts?match_type=contains&sbi_id=sbi-t0001-20240822-00009"
+    )
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_shift = response.json()[0][0]
+    assert (
+        created_shift["comments"][0]["comment"]
+        == shift_history_data[0]["comments"][0]["comment"]
+    )
+    response = client.get(
+        f"{API_PREFIX}/shifts?match_type=contains&eb_id=eb-t0001-20241022-00002"
+    )
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+    created_shift = response.json()[0][0]
+
+    assert (
+        created_shift["comments"][0]["comment"]
+        == shift_history_data[0]["comments"][0]["comment"]
+    )
 
 
 @patch(

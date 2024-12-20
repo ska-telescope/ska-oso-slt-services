@@ -33,6 +33,7 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     update_query,
 )
 from ska_oso_slt_services.domain.shift_models import (
+    EntityFilter,
     MatchType,
     Media,
     Metadata,
@@ -73,6 +74,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         shift: Optional[Shift] = None,
         match_type: Optional[MatchType] = None,
         entity_status: Optional[SbiEntityStatus] = None,
+        entities: Optional[EntityFilter] = None,
     ) -> List[Shift]:
         """
         Retrieve a list of shifts based on the provided query parameters.
@@ -96,9 +98,13 @@ class PostgresShiftRepository(CRUDShiftRepository):
             query, params = select_by_text_query(
                 self.table_details, shift.annotations, match_type
             )
-        elif entity_status.sbi_status:
+        elif entity_status and entity_status.sbi_status:
             query, params = select_logs_by_status(
                 self.table_details, entity_status, "sbi_status"
+            )
+        elif entities and (entities.sbi_id or entities.eb_id):
+            query, params = select_logs_by_status(
+                self.table_details, entity_filter=entities, match_type=match_type
             )
         elif (shift.shift_id or shift.shift_operator) and match_type.dict()[
             "match_type"
