@@ -98,11 +98,11 @@ def test_update_end_shift_time():
     # Prepare test data with metadata
     current_time = get_datetime_for_timezone("UTC")
     shift_data = {
-        "shift_end": current_time.isoformat(),
+        "operator_name": "Ross",
         "metadata": {
             "created_by": "test",
             "created_on": current_time.isoformat(),
-            "last_modified_by": "test",
+            "last_modified_by": "Ross",
             "last_modified_on": current_time.isoformat(),
         },
     }

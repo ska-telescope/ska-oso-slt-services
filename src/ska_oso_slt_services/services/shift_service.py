@@ -226,29 +226,29 @@ class ShiftService:
         shift = set_new_metadata(shift_data, created_by=shift_data.shift_operator)
         return self.postgres_repository.create_shift(shift)
 
-    def update_shift_end_time(self, shift_id: str) -> Shift:
+    def update_shift_end_time(self, shift_id: str, shift_data: Shift) -> Shift:
         """
         Update the end time of a shift.
 
         Args:
             shift_id (str): A shift id to update shift end.
+            shift_data (Shift): A shift object for update shift end.
 
         Returns:
             Shift: The updated shift data.
         """
-        shift = self.postgres_repository.get_shift(shift_id)
+        shift_data.shift_id = shift_id
 
         metadata = self.postgres_repository.get_latest_metadata(shift_id)
 
-        if not metadata or not shift:
+        if not metadata:
 
             raise NotFoundError(f"No Shift found with ID: {shift_id}")
-        
+
         shift = update_metadata(
             shift_data, metadata=metadata, last_modified_by=shift_data.shift_operator
         )
 
-        #get operator name in shift_data
         return self.postgres_repository.update_shift_end_time(shift)
 
     def update_shift(self, shift_id: str, shift_data: Shift) -> Shift:

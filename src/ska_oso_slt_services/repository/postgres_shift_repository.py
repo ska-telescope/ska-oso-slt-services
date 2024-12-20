@@ -197,17 +197,15 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Update the end time of a shift.
 
         Args:
-            shift_id (str): The ID of the shift to update.
+            shift (Shift): A shift object for update shift end.
 
         Returns:
             Shift: The updated shift object.
         """
-        existing_shift = Shift.model_validate(shift)
+        existing_shift = Shift.model_validate(self.get_shift(shift.shift_id))
+
         existing_shift.shift_end = get_datetime_for_timezone("UTC")
-        existing_shift = update_metadata(
-            existing_shift, metadata=existing_shift.metadata, last_modified_by=existing_shift.shift_operator
-        )
-        # existing_shift.metadata = shift.metadata
+        existing_shift.metadata = shift.metadata
         self._update_shift_in_database(existing_shift)
         return existing_shift
 
