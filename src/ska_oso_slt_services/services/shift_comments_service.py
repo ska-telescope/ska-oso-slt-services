@@ -59,8 +59,8 @@ class ShiftComments(MediaService, BaseRepositoryService):
 
         shift_comments_obj_with_metadata = []
         for shift_comment in shift_comments:
-            shift_comment_with_metadata = self._prepare_shift_common_with_metadata(
-                shift_comment, shift_model=ShiftComment
+            shift_comment_with_metadata = self._prepare_shift_comment_with_metadata(
+                shift_comment
             )
             shift_comments_obj_with_metadata.append(shift_comment_with_metadata)
 
@@ -86,8 +86,8 @@ class ShiftComments(MediaService, BaseRepositoryService):
             raise NotFoundError("No shift comment found for the given query.")
         LOGGER.info("Shift log comments : %s", shift_comment)
 
-        shift_comment_with_metadata = self._prepare_shift_common_with_metadata(
-            shift_comment, shift_model=ShiftComment
+        shift_comment_with_metadata = self._prepare_shift_comment_with_metadata(
+            shift_comment
         )
 
         return shift_comment_with_metadata

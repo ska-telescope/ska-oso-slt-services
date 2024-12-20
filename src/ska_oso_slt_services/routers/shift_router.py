@@ -11,7 +11,6 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, UploadFile
 
-from ska_oso_slt_services.data_access.postgres.mapping import ShiftLogCommentMapping
 from ska_oso_slt_services.domain.shift_models import (
     MatchType,
     SbiEntityStatus,
@@ -576,11 +575,8 @@ def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(
          shift_log_comment (ShiftLogComment): The updated shift log comment  data.
     """
 
-    media = shift_service.add_media(
-        comment_id=comment_id,
-        files=files,
-        shift_model=ShiftLogComment,
-        table_mapping=ShiftLogCommentMapping(),
+    media = shift_service.update_shift_log_with_image(
+        comment_id=comment_id, files=files, shift_model=ShiftLogComment
     )
     return media, HTTPStatus.OK
 

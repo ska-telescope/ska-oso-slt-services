@@ -412,10 +412,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The newly created shift log comment.
         """
-        self._insert_shift_to_database(
+        unique_id = self._insert_shift_to_database(
             table_details=ShiftLogCommentMapping(), entity=shift_log_comment
         )
-
+        if unique_id:
+            shift_log_comment.id = unique_id.get("id")
         return shift_log_comment
 
     def update_shift_logs_comments(
@@ -660,10 +661,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftComment: The newly created shift comment.
         """
-        self._insert_shift_to_database(
+        unique_id = self._insert_shift_to_database(
             table_details=ShiftCommentMapping(), entity=shift_comment
         )
-
+        if unique_id:
+            shift_comment.id = unique_id.get("id")
         return shift_comment
 
     def get_shift_comments(self, shift_id: str = None):
