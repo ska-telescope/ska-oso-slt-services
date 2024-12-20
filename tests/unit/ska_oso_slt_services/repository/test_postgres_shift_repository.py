@@ -25,17 +25,15 @@ class TestPostgressShiftRepository(unittest.TestCase):
             tzinfo=timezone(timedelta(hours=0, minutes=0))
         )
 
-        mock_eb_rows = [
+        mock_eb_rows = (
             self._create_mock_eb("EB001", ["OK", "OK", "OK", "OK", "OK"], "Completed"),
             self._create_mock_eb("EB002", ["OK", "ERROR", "OK"], "Failed"),
             self._create_mock_eb("EB003", ["OK", "OK"], "In Progress"),
             self._create_mock_eb("EB004", [], "Created"),
-        ]
+        )
 
         # Set up the mock
-        repository.postgres_data_access.execute_query_or_update.return_value = (
-            mock_eb_rows
-        )
+        repository.postgres_data_access.get.return_value = mock_eb_rows
         # Call the method
         result = repository.get_oda_data(filter_date)
 
@@ -45,8 +43,8 @@ class TestPostgressShiftRepository(unittest.TestCase):
         self._assert_eb_status("EB003", result, "Executing", "In Progress")
         self._assert_eb_status("EB004", result, "Created", "Created")
 
-        repository.postgres_data_access.execute_query_or_update.assert_called_once_with(
-            query=unittest.mock.ANY, params=(expected_filter_date_tz,), query_type="GET"
+        repository.postgres_data_access.get.assert_called_once_with(
+            query=unittest.mock.ANY, params=(expected_filter_date_tz,)
         )
 
     def _create_mock_eb(self, eb_id, statuses, current_status):
