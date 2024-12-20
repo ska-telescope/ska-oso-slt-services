@@ -304,18 +304,17 @@ def update_shift(shift_id: str, shift: Shift):
         },
     },
 )
-def update_shift_end_time(shift_id: str, shift: Shift):
+def update_shift_end_time(shift_id: str):
     """
     Update an existing shift end time.
 
     Args:
         shift_id (str): The unique identifier of the shift to update.
-        shift (ShiftUpdate): The updated shift data.
 
     Raises:
         HTTPException: If the shift is not found.
     """
-    shifts = shift_service.update_shift_end_time(shift_id, shift)
+    shifts = shift_service.update_shift_end_time(shift_id)
     return shifts, HTTPStatus.OK
 
 
