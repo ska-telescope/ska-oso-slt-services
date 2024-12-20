@@ -484,10 +484,11 @@ def select_logs_by_status(
         def get_operator_and_value(id_value: str) -> Tuple[str, str]:
             if match_type_value in ["starts_with", "contains"]:
                 operator = "LIKE"
-                if match_type_value == "starts_with":
-                    value = f"{id_value}%"
-                else:
-                    value = f"%{id_value}%"
+                value = (
+                    f"{id_value}%"
+                    if match_type_value == "starts_with"
+                    else f"%{id_value}%"
+                )
             else:
                 operator = "="
                 value = id_value
@@ -561,7 +562,9 @@ def select_comments_query(
         QueryAndParameters: A tuple of the query and parameters.
     """
     # Get the columns for the select statement
-    columns = table_details.get_columns_with_metadata()
+    column_list = list(table_details.get_columns_with_metadata())
+    column_list.append("id")
+    columns = tuple(column_list)
 
     # Start building the base SQL query
     base_query = sql.SQL(

@@ -23,7 +23,7 @@ class MediaService(BaseRepositoryService):
         Returns:
             Shift: The updated comment with the added media.
         """
-        metadata = self.crud_shift_repository.get_latest_metadata(
+        latest_metadata = self.crud_shift_repository.get_latest_metadata(
             entity_id=comment_id, table_details=table_mapping
         )
 
@@ -31,11 +31,11 @@ class MediaService(BaseRepositoryService):
             shift_model = Shift.model_validate(shift_model)
 
         stored_shift = shift_model
-        stored_shift.metadata = metadata
+        stored_shift.metadata = latest_metadata
 
         shift = update_metadata(
             entity=stored_shift,
-            metadata=metadata,
+            metadata=latest_metadata,
         )
         result = self.crud_shift_repository.add_media(
             comment_id=comment_id,
@@ -51,12 +51,9 @@ class MediaService(BaseRepositoryService):
         Create a new comment for a shift log with metadata.
 
         Args:
-            shift_id: The unique identifier for the shift log.
-            shift_operator: The operator of the shift log.
             file: The file to be uploaded.
-            shift_model: The model of the shift log.
+            shift_comment: Comment against Shift.
             table_mapping: The Database Model Mapping Class.
-            eb_id: The EB ID of the shift log.
 
         Returns:
             ShiftLogComment: The created shift log comment.

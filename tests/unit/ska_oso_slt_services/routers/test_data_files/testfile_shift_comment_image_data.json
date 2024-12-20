@@ -1,0 +1,17 @@
+{
+    "operator_name": "Monica",
+    "shift_id": "shift-20241111-2",
+    "image": [
+        {
+            "path": "https://skao-611985328822-shift-log-tool-storage.s3.amazonaws.com/4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac53284f533d34e0b5f6.jpeg",
+            "unique_id": "4164416f58f6daaddb7c8a2bbad3897844ba7ab3b898ac53284f533d34e0b5f6.jpeg",
+            "timestamp": "2024-11-11T15:46:13.223618Z"
+        }
+    ],
+    "metadata": {
+        "created_by": "Monica",
+        "created_on": "2024-11-11T15:46:12.378390Z",
+        "last_modified_by": "Monica",
+        "last_modified_on": "2024-11-11T15:46:12.378390Z"
+    }
+}

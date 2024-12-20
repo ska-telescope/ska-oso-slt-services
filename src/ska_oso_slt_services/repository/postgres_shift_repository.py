@@ -159,7 +159,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             Shift: The prepared shift object.
         """
-        random_number = random.randint(1, 9)
+        random_number = random.randint(1, 1000)
         shift.shift_start = get_datetime_for_timezone("UTC")
         shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}-{random_number}"
         return shift
@@ -416,10 +416,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The newly created shift log comment.
         """
-        self._insert_shift_to_database(
+        unique_id = self._insert_shift_to_database(
             table_details=ShiftLogCommentMapping(), entity=shift_log_comment
         )
-
+        if unique_id:
+            shift_log_comment.id = unique_id.get("id")
         return shift_log_comment
 
     def update_shift_logs_comments(
@@ -664,10 +665,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftComment: The newly created shift comment.
         """
-        self._insert_shift_to_database(
+        unique_id = self._insert_shift_to_database(
             table_details=ShiftCommentMapping(), entity=shift_comment
         )
-
+        if unique_id:
+            shift_comment.id = unique_id.get("id")
         return shift_comment
 
     def get_shift_comments(self, shift_id=None):

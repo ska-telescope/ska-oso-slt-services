@@ -1,0 +1,17 @@
+{
+    "shift_id": "shift-20241112-1",
+    "shift_type": "ODA",
+    "log_info": {
+        "status": "completed",
+        "start_time": "2024-11-12T10:00:00Z",
+        "end_time": "2024-11-12T18:00:00Z",
+        "operator_name": "John Doe",
+        "comments": "Shift completed successfully"
+    },
+    "metadata": {
+        "created_by": "John Doe",
+        "created_on": "2024-11-12T10:00:00Z",
+        "last_modified_by": "John Doe",
+        "last_modified_on": "2024-11-12T18:00:00Z"
+    }
+}
