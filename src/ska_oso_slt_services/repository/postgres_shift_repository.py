@@ -12,9 +12,12 @@ from ska_oso_slt_services.common.constant import (
     ODA_DATA_POLLING_TIME,
     SKUID_ENTITY_TYPE,
     SKUID_URL,
+    TELESCOPE_DICT,
+)
+from ska_oso_slt_services.common.date_utils import (
+    get_datetime_for_timezone,
     set_telescope_type,
 )
-from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import update_metadata
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
@@ -67,20 +70,18 @@ def create_shift_id(
 ) -> str:
     """
     Create a shift ID based on the provided parameters.
-    ##TODO
-    For now telescope_type is hardcoded to 'm'
-    but we have to handle that dynamically through
-    environment variable.
 
     Args:
-        skuid_entity_type (str): The SKUID entity type.
         telescope_type (str): The Telescope type MID or LOW.
+        skuid_entity_type (str): The SKUID entity type.
 
     Returns:
         str: The generated shift ID.
     """
 
-    return f"{skuid.fetch_skuid(skuid_entity_type)}".replace("t", telescope_type)
+    return f"{skuid.fetch_skuid(skuid_entity_type)}".replace(
+        "t", TELESCOPE_DICT[telescope_type]
+    )
 
 
 class PostgresShiftRepository(CRUDShiftRepository):
@@ -246,9 +247,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         if not existing_shift:
             raise NotFoundError(f"No shift found with ID: {existing_shift.shift_id}")
         if shift.shift_end:
-            existing_shift.shift_end = (
-                shift.shift_end
-            )  # get_datetime_for_timezone("UTC")
+            existing_shift.shift_end = shift.shift_end
         if shift.comments:
             existing_shift.comments = shift.comments
         if shift.annotations:

@@ -42,7 +42,7 @@ def test_create_shift(updated_shift_data):
         patch(
             "ska_oso_slt_services.repository.postgres_shift_repository"
             ".skuid.fetch_skuid",
-            return_value="sl-t0001-20241204-00004",
+            return_value="sl-m0001-20241204-00004",
         ),
         patch(
             "ska_oso_slt_services.services.shift_service.Shift", return_value=mock_shift

@@ -12,13 +12,4 @@ SKUID_URL = getenv("SKUID_URL", "http://ska-ser-skuid-test-svc:9870")
 
 SKUID_ENTITY_TYPE = "sl"
 
-
-def set_telescope_type(env_variable: str):
-
-    TELESCOPE_TYPE = getenv(env_variable, "m")
-
-    if "mid" in TELESCOPE_TYPE.lower():
-        return "m"
-    if "low" in TELESCOPE_TYPE.lower():
-        return "l"
-    return "m"
+TELESCOPE_DICT = {"mid": "m", "low": "l"}
