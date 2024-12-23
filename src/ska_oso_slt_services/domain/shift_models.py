@@ -64,6 +64,7 @@ class ShiftLogComment(SLTObject):
      like shift created_on, created_by etc...
     """
 
+    id: Optional[int] = None
     log_comment: Optional[str] = None
     operator_name: Optional[str] = None
     shift_id: Optional[str] = None
@@ -85,6 +86,7 @@ class ShiftComment(SLTObject):
     like shift created_on, created_by etc...
     """
 
+    id: Optional[int] = None
     comment: Optional[str] = None
     operator_name: Optional[str] = None
     shift_id: Optional[str] = None
@@ -144,7 +146,6 @@ class ShiftBaseClass(SLTObject):
     shift_end: Optional[datetime] = None
     shift_operator: Optional[str] = None
     annotations: Optional[str] = None
-    comments: Optional[List[ShiftComment]] = None
 
 
 class Shift(ShiftBaseClass):
@@ -161,6 +162,7 @@ class Shift(ShiftBaseClass):
     shift_logs: Optional[List[ShiftLogs]] = None
     media: Optional[List[Media]] = None
     metadata: Optional[Metadata] = None
+    comments: Optional[List[ShiftComment]] = None
 
 
 class Filter(Enum):
@@ -181,6 +183,16 @@ class SbiEntityStatus(BaseModel):
     """
 
     sbi_status: Optional[SBIStatus] = None
+
+
+class EntityFilter(BaseModel):
+    """
+    Represents a query for filtering shifts based on text.
+    :param text Optional[str]: The text to match against.
+    """
+
+    sbi_id: Optional[str] = None
+    eb_id: Optional[str] = None
 
 
 class MatchType(BaseModel):

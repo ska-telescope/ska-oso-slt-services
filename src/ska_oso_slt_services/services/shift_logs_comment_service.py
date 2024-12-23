@@ -49,7 +49,12 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         Returns:
             ShiftLogComment: The created shift log comment.
         """
-
+        shift = self.crud_shift_repository.get_shift(
+            shift_id=shift_log_comment_data.shift_id
+        )
+        shift = Shift(**shift)
+        if not shift:
+            raise NotFoundError(f"Shift not found {shift_log_comment_data.shift_id}")
         missing_fields = []
         if not shift_log_comment_data.shift_id:
             missing_fields.append("shift_id")

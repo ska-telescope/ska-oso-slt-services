@@ -4,8 +4,12 @@ from datetime import datetime
 from enum import Enum
 
 from psycopg import sql
+from ska_oso_pdm.entity_status_history import SBIStatus
 
-from ska_oso_slt_services.data_access.postgres.mapping import ShiftLogMapping
+from ska_oso_slt_services.data_access.postgres.mapping import (
+    ShiftCommentMapping,
+    ShiftLogMapping,
+)
 from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     build_search_query,
     insert_query,
@@ -15,9 +19,17 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     select_common_query,
     select_latest_query,
     select_latest_shift_query,
+    select_logs_by_status,
     update_query,
 )
-from ska_oso_slt_services.domain.shift_models import Filter, MatchType, Shift, ShiftLogs
+from ska_oso_slt_services.domain.shift_models import (
+    EntityFilter,
+    Filter,
+    MatchType,
+    SbiEntityStatus,
+    Shift,
+    ShiftLogs,
+)
 
 
 class TestShiftQueries(unittest.TestCase):
@@ -25,6 +37,7 @@ class TestShiftQueries(unittest.TestCase):
     def setUp(self):
         # Create a mock TableDetails object
         self.table_details = ShiftLogMapping()
+        self.comment_table_details = ShiftCommentMapping()
         self.entity_id = "test"
 
         # Create a mock Shift object
@@ -556,3 +569,68 @@ class TestShiftQueries(unittest.TestCase):
         self.assertEqual(parsed_json["info"]["eb_id"], "eb-t0001-20241022-00002")
         self.assertEqual(parsed_json["source"], "ODA")
         self.assertIsInstance(parsed_json["comments"], list)
+
+    def test_select_logs_by_status(self):
+        """Test select_logs_by_status returns correct query with various parameters"""
+        # Test case 1: Basic status filter
+        qry_params = SbiEntityStatus(sbi_status=SBIStatus.CREATED)
+        status_column = "status"
+        entity_filter = None
+        match_type = None
+
+        query, params = select_logs_by_status(
+            self.table_details, qry_params, status_column, entity_filter, match_type
+        )
+
+        self.assertEqual(params, ("Created",))
+
+        # Test case 2: With entity filter and match type
+        entity_filter = EntityFilter(sbi_id="SBI001", eb_id="EB123")
+        match_type = MatchType(match_type=Filter.STARTS_WITH)
+
+        query, params = select_logs_by_status(
+            self.table_details, qry_params, status_column, entity_filter, match_type
+        )
+
+        expected_query = """
+            SELECT
+                shift_id,
+                shift_start,
+                shift_end,
+                shift_operator,
+                annotations,
+                shift_logs,
+                created_on,
+                created_by,
+                last_modified_on,
+                last_modified_by,
+                jsonb_agg(
+                    jsonb_build_object(
+                        'info', log->'info',
+                        'source', log->'source',
+                        'log_time', log->'log_time'
+                    ) ORDER BY (log->>'log_time')::timestamp
+                ) FILTER (WHERE log IS NOT NULL) AS shift_logs
+            FROM
+                tab_oda_slt,
+                jsonb_array_elements(shift_logs) AS log
+            WHERE
+                log->>'info' ? 'status'
+                AND (log->'info'->>{status_column!r})::text = %s
+                AND (log->'info'->>'sbi_ref')::text LIKE %s
+                AND (log->'info'->>'eb_id')::text LIKE %s
+            GROUP BY
+                shift_id,
+                shift_start,
+                shift_end,
+                shift_operator,
+                annotations,
+                shift_logs,
+                created_on,
+                created_by,
+                last_modified_on,
+                last_modified_by
+            """
+
+        self.assertEqual(params, ("Created", "SBI001%", "EB123%"))
+        self.assertEqual(" ".join(query.split()), " ".join(expected_query.split()))

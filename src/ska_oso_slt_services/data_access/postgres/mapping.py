@@ -82,7 +82,7 @@ class ShiftLogMapping:
         return TableDetails(
             table_name="tab_oda_slt",
             identifier_field="shift_id",
-            text_base_search_fields="comments",
+            text_base_search_fields="annotations",
             column_map={
                 "shift_id": lambda shift: shift.shift_id,
                 "shift_start": lambda shift: shift.shift_start,

@@ -5,6 +5,7 @@ from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
 from ska_oso_slt_services.domain.shift_models import (
+    EntityFilter,
     MatchType,
     Metadata,
     SbiEntityStatus,
@@ -120,6 +121,7 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         shift: Optional[Shift] = None,
         match_type: Optional[MatchType] = None,
         status: Optional[SbiEntityStatus] = None,
+        entities: Optional[EntityFilter] = None,
     ) -> list[Shift]:
         """
         Retrieve shifts based on the provided query parameters.
@@ -137,7 +139,9 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         Raises:
             NotFoundError: If no shifts are found for the given query.
         """
-        shifts = self.crud_shift_repository.get_shifts(shift, match_type, status)
+        shifts = self.crud_shift_repository.get_shifts(
+            shift, match_type, status, entities
+        )
         if not shifts:
             raise NotFoundError("No shifts found for the given query.")
         LOGGER.info("Shifts: %s", shifts)
@@ -311,7 +315,8 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         shift = self.crud_shift_repository.get_current_shift()
         if shift:
             return self.get_shift(shift_id=shift["shift_id"])
-        return None
+        else:
+            raise NotFoundError("No shift found")
 
     def _create_metadata(self, shift: Dict[Any, Any]) -> Dict[str, str]:
         """

@@ -12,6 +12,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, UploadFile
 
 from ska_oso_slt_services.domain.shift_models import (
+    EntityFilter,
     MatchType,
     SbiEntityStatus,
     Shift,
@@ -177,12 +178,13 @@ def get_shifts(
     shift: ShiftBaseClass = Depends(),
     match_type: MatchType = Depends(),
     status: SbiEntityStatus = Depends(),
+    entities: EntityFilter = Depends(),
 ):
     """
     Retrieve all shifts.
     This endpoint returns a list of all shifts in the system.
     """
-    shifts = shift_service.get_shifts(shift, match_type, status)
+    shifts = shift_service.get_shifts(shift, match_type, status, entities)
     return shifts, HTTPStatus.OK
 
 
