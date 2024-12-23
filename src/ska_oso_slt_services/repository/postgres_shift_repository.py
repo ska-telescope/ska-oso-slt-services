@@ -13,6 +13,7 @@ from ska_oso_slt_services.common.constant import (
     SKUID_ENTITY_TYPE,
     SKUID_URL,
 )
+from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import update_metadata
@@ -210,10 +211,25 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         existing_shift = Shift.model_validate(self.get_shift(shift.shift_id))
 
+        if existing_shift.shift_end:
+
+            return ShiftEndedException(f"Shift Already Ended: {shift.shift_id}")
+
         existing_shift.shift_end = get_datetime_for_timezone("UTC")
         existing_shift.metadata = shift.metadata
-        self._update_shift_in_database(existing_shift)  # pylint: disable=E1120
-        return existing_shift
+        self._update_shift_in_database(
+            entity_id=shift.shift_id,
+            entity=existing_shift,
+            table_details=ShiftLogMapping(),
+        )
+
+        check_shift_data = Shift.model_validate(self.get_shift(shift.shift_id))
+
+        if check_shift_data.shift_end:
+
+            return existing_shift
+
+        return NotFoundError("Shift End time is not updated")
 
     def update_shift(self, shift: Shift) -> Shift:
         """

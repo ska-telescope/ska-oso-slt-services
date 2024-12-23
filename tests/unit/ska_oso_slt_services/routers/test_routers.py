@@ -802,10 +802,6 @@ def test_update_shift_end_time(mock_shift_end_data):
 
     created_shift = response.json()
 
-    print(f"@@@@@@@@@@@@ {created_shift}")
-
-    print(f"!!!!!!!!!!!! {created_shift[0]}")
-
     assert created_shift[0]["operator_name"] == shift_data["operator_name"], (
         f"Expected operator_name to be "
         f"'{shift_data['operator_name']}'"

@@ -200,7 +200,7 @@ class ShiftService(ShiftComments, ShiftLogsComment):
         """
         shift_data.shift_id = shift_id
 
-        metadata = self.postgres_repository.get_latest_metadata(shift_id)
+        metadata = self.crud_shift_repository.get_latest_metadata(shift_id)
 
         if not metadata:
 
@@ -210,7 +210,7 @@ class ShiftService(ShiftComments, ShiftLogsComment):
             shift_data, metadata=metadata, last_modified_by=shift_data.shift_operator
         )
 
-        return self.postgres_repository.update_shift_end_time(shift)
+        return self.crud_shift_repository.update_shift_end_time(shift)
 
     def update_shift(self, shift_id: str, shift_data: Shift) -> Shift:
         """
