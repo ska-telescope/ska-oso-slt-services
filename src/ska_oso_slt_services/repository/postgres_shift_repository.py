@@ -11,7 +11,7 @@ from ska_oso_slt_services.common.constant import (
     ODA_DATA_POLLING_TIME,
     SKUID_ENTITY_TYPE,
     SKUID_URL,
-    TELESCOPE_TYPE,
+    set_telescope_type,
 )
 from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
 from ska_oso_slt_services.common.error_handling import NotFoundError
@@ -55,6 +55,8 @@ from ska_oso_slt_services.utils.s3_bucket import (
 LOGGER = logging.getLogger(__name__)
 
 skuid = SkuidClient(SKUID_URL)
+
+TELESCOPE_TYPE = set_telescope_type("TELESCOPE_TYPE")
 
 
 def create_shift_id(

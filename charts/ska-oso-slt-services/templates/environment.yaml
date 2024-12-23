@@ -12,6 +12,7 @@ metadata:
 data:
   KUBE_NAMESPACE: {{ .Release.Namespace }}
   ODA_BACKEND_TYPE: {{ .Values.rest.oda.backendType }}
+  TELESCOPE_TYPE: {{ .Values.telescope }}
   POSTGRES_HOST: {{ if .Values.rest.oda.postgres.host }} {{ .Values.rest.oda.postgres.host }} {{ else }} {{ .Release.Name }}-postgresql {{ end }}
   ADMIN_POSTGRES_PASSWORD: {{ .Values.rest.oda.postgres.password }}
   {{ if .Values.rest.oda.postgres.port }}
