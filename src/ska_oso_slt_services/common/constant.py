@@ -12,3 +12,4 @@ AWS_BUCKET_URL = "s3.amazonaws.com"
 SKUID_URL = getenv("SKUID_URL", "http://ska-ser-skuid-test-svc:9870")
 
 SKUID_ENTITY_TYPE = "sl"
+TELESCOPE_TYPE = getenv("telescope", "l")
