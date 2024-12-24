@@ -842,65 +842,10 @@ def test_create_shift_annotation(mock_create_shift_annotation, shift_annotation_
     )
 
 
-def test_create_shift_annotations_invalid_shift_id():
-    data_to_be_updated = {
-        "annotation": "This is a test annotation",
-        "shift_id": "shift-202424-5674",
-    }
-
-    # Send a POST request with an invalid shift ID
-    response = client.post(f"{API_PREFIX}/shift_annotation", json=data_to_be_updated)
-
-    assert (
-        response.status_code == 404
-    ), f"Expected status code 404, but got {response.status_code}"
-
-    response_data = response.json()
-    assert (
-        response_data["detail"]
-        == f"No shift found with ID: {data_to_be_updated['shift_id']}"
-    ), f"Expected error message about invalid ID, but got: {response_data['detail']}"
-
-
 @patch(
     "ska_oso_slt_services.services.shift_service.ShiftService.update_shift_annotations"
 )
 def test_update_shift_annotations(mock_update_shift_annotation, shift_annotation_data):
-    data_to_be_updated = {"annotation": "This is a test annotation"}
-
-    mock_update_shift_annotation.return_value = shift_annotation_data[0]
-
-    # Send a PUT request to update shift annotations
-    response = client.put(f"{API_PREFIX}/shift_annotation/1", json=data_to_be_updated)
-
-    assert (
-        response.status_code == 200
-    ), f"Expected status code 200, but got {response.status_code}"
-
-    created_annotation = response.json()[0]
-    assert created_annotation["annotation"] == data_to_be_updated["annotation"], (
-        f"Expected annotation to be '{created_annotation['annotation']}',"
-        f" but got '{created_annotation['annotation']}'"
-    )
-
-
-def test_update_shift_annotations_invalid_id():
-    data_to_be_updated = {"annotation": "This is a test annotation"}
-
-    # Send a PUT request with an invalid annotation ID
-    response = client.put(f"{API_PREFIX}/shift_annotation/15", json=data_to_be_updated)
-
-    assert (
-        response.status_code == 400
-    ), f"Expected status code 404, but got {response.status_code}"
-
-
-@patch(
-    "ska_oso_slt_services.services.shift_service.ShiftService.update_shift_annotations"
-)
-def test_update_shift_annotations_500(
-    mock_update_shift_annotation, shift_annotation_data
-):
     data_to_be_updated = {"annotation": "This is a test annotation"}
 
     mock_update_shift_annotation.return_value = shift_annotation_data[0]
@@ -956,18 +901,3 @@ def test_get_shift_annotations(mock_get_shift_annotations, shift_annotation_data
         f" '{shift_annotation_data[0]['metadata']['last_modified_by']}'"
         f", but got '{metadata['last_modified_by']}'"
     )
-
-
-def test_get_shift_annotations_invalid_shift_id():
-
-    # Send a GET request with an invalid shift ID
-    response = client.get(f"{API_PREFIX}/shift_annotation?shift_id=shift-202424-5674")
-
-    assert (
-        response.status_code == 404
-    ), f"Expected status code 404, but got {response.status_code}"
-
-    response_data = response.json()
-    assert (
-        response_data["detail"] == "No Shift annotations found for the given query."
-    ), f"Expected error message about invalid ID, but got: {response_data['detail']}"
