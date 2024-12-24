@@ -117,13 +117,13 @@ spec:
           {{- end }}
           {{- else }}
           - name: AWS_SERVER_BUCKET_NAME
-            value: "{{ .Values.global.env.aws_server_bucket_name }}"
+            value: "{{ .Values.global.aws_server_bucket_name }}"
           - name : AWS_SERVER_PUBLIC_KEY
-            value: "{{ .Values.global.env.aws_server_public_key }}"
+            value: "{{ .Values.global.aws_server_public_key }}"
           - name: AWS_SERVER_SECRET_KEY
-            value: "{{ .Values.global.env.aws_server_secret_key }}"
+            value: "{{ .Values.global.aws_server_secret_key }}"
           - name: AWS_SERVER_BUCKET_REGION
-            value: "{{ .Values.global.env.aws_server_bucket_region }}"
+            value: "{{ .Values.global.aws_server_bucket_region }}"
           {{- end }}
         volumeMounts:
           {{- if .Values.secretProvider.enabled }}

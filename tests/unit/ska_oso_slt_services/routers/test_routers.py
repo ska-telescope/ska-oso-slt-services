@@ -40,6 +40,11 @@ def test_create_shift(updated_shift_data):
             ".execute_query.PostgresDataAccess.insert"
         ) as mock_insert,
         patch(
+            "ska_oso_slt_services.repository.postgres_shift_repository"
+            ".skuid.fetch_skuid",
+            return_value="sl-t0001-20241204-00004",
+        ),
+        patch(
             "ska_oso_slt_services.services.shift_service.Shift", return_value=mock_shift
         ),
     ):
@@ -768,3 +773,37 @@ def test_add_shift_log_comment_image(
     assert (
         response.status_code == 200
     ), f"Expected status code 200, but got {response.status_code}"
+
+
+@patch("ska_oso_slt_services.routers.shift_router.ShiftService.update_shift_end_time")
+def test_update_shift_end_time(mock_shift_end_data):
+
+    current_time = get_datetime_for_timezone("UTC")
+
+    shift_data = {
+        "operator_name": "Ross",
+        "metadata": {
+            "created_by": "test",
+            "created_on": current_time.isoformat(),
+            "last_modified_by": "Ross",
+            "last_modified_on": current_time.isoformat(),
+        },
+    }
+
+    mock_shift_end_data.return_value = shift_data
+
+    response = client.put(
+        f"{API_PREFIX}/shift/end/sl-t0001-20241204-00004", json=shift_data
+    )
+
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_shift = response.json()
+
+    assert created_shift[0]["operator_name"] == shift_data["operator_name"], (
+        f"Expected operator_name to be "
+        f"'{shift_data['operator_name']}'"
+        f", but got '{created_shift[0]['operator_name']}'"
+    )
