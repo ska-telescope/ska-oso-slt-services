@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from ska_oso_slt_services import create_app  # Import your create_app function
 from ska_oso_slt_services.app import API_PREFIX
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
-from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
+from ska_oso_slt_services.common.utils import get_datetime_for_timezone
 from ska_oso_slt_services.domain.shift_models import Shift
 
 # Create the FastAPI app instance
@@ -42,7 +42,7 @@ def test_create_shift(updated_shift_data):
         patch(
             "ska_oso_slt_services.repository.postgres_shift_repository"
             ".skuid.fetch_skuid",
-            return_value="sl-t0001-20241204-00004",
+            return_value="sl-m0001-20241204-00004",
         ),
         patch(
             "ska_oso_slt_services.services.shift_service.Shift", return_value=mock_shift

@@ -142,3 +142,8 @@ def get_shift_comment_image_data():
     return load_string_from_file(
         f"{json_file_path}/testfile_get_shift_comment_image_data.json"
     )
+
+
+@pytest.fixture
+def set_telescope_type():
+    return "mid"
