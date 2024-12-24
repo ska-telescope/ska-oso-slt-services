@@ -1,17 +1,26 @@
 import logging
-import random
 import threading
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from deepdiff import DeepDiff
-from psycopg import sql
+from psycopg import DatabaseError, DataError, InternalError, sql
+from ska_ser_skuid.client import SkuidClient
 
-from ska_oso_slt_services.common.constant import ODA_DATA_POLLING_TIME
-from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
+from ska_oso_slt_services.common.constant import (
+    ODA_DATA_POLLING_TIME,
+    SKUID_ENTITY_TYPE,
+    SKUID_URL,
+    TELESCOPE_DICT,
+)
+from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import update_metadata
+from ska_oso_slt_services.common.utils import (
+    get_datetime_for_timezone,
+    set_telescope_type,
+)
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
 from ska_oso_slt_services.data_access.postgres.mapping import (
     ShiftAnnotationMapping,
@@ -52,6 +61,36 @@ from ska_oso_slt_services.utils.s3_bucket import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+skuid = SkuidClient(SKUID_URL)
+
+TELESCOPE_TYPE = set_telescope_type("TELESCOPE_TYPE")
+
+
+def create_shift_id(
+    telescope_type: str = TELESCOPE_TYPE,
+    skuid_entity_type: str = SKUID_ENTITY_TYPE,
+) -> str:
+    """
+    Create a shift ID based on the provided parameters.
+
+    ##TODO
+    Instead of replace function we should use regex for replacing
+    `t` to `m` or `l` its more robust and less error prone.
+    This replace functionality maybe be deprecated once SKUID
+    supports the id generation based on Telescope type.
+
+    Args:
+        telescope_type (str): The Telescope type MID or LOW.
+        skuid_entity_type (str): The SKUID entity type.
+
+    Returns:
+        str: The generated shift ID.
+    """
+
+    return f"{skuid.fetch_skuid(skuid_entity_type)}".replace(
+        "t", TELESCOPE_DICT[telescope_type]
+    )
 
 
 class PostgresShiftRepository(CRUDShiftRepository):
@@ -162,9 +201,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             Shift: The prepared shift object.
         """
-        random_number = random.randint(1, 9999)
         shift.shift_start = get_datetime_for_timezone("UTC")
-        shift.shift_id = f"shift-{shift.shift_start.strftime('%Y%m%d')}-{random_number}"
+        shift.shift_id = create_shift_id()
         return shift
 
     def _insert_shift_to_database(
@@ -200,6 +238,40 @@ class PostgresShiftRepository(CRUDShiftRepository):
             Tuple[str, Any]: A tuple containing the query string and its parameters.
         """
         return insert_query(table_details=table_details, entity=entity)
+
+    def update_shift_end_time(self, shift: Shift) -> Shift:
+        """
+        Update the end time of a shift.
+
+        Args:
+            shift (Shift): A shift object for update shift end.
+
+        Returns:
+            Shift: The updated shift object.
+        """
+
+        try:
+
+            existing_shift = Shift.model_validate(self.get_shift(shift.shift_id))
+
+            if existing_shift.shift_end:
+
+                return ShiftEndedException(f"Shift Already Ended: {shift.shift_id}")
+
+            existing_shift.shift_end = get_datetime_for_timezone("UTC")
+            existing_shift.metadata = shift.metadata
+            self._update_shift_in_database(
+                entity_id=shift.shift_id,
+                entity=existing_shift,
+                table_details=ShiftLogMapping(),
+            )
+
+            return existing_shift
+
+        except (DatabaseError, DataError, InternalError) as error_msg:
+
+            LOGGER.info("Error updating shift end time: %s", error_msg)
+            return error_msg
 
     def update_shift(self, shift: Shift) -> Shift:
         """

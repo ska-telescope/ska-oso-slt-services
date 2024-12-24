@@ -145,6 +145,11 @@ def get_shift_comment_image_data():
 
 
 @pytest.fixture
+def set_telescope_type():
+    return "mid"
+
+
+@pytest.fixture
 def shift_annotation_data():
     """Fixture to load and return shift annotation data from a JSON file.
 

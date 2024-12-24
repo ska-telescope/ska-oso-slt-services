@@ -6,7 +6,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 from ska_oso_pdm.entity_status_history import SBIStatus
 
 from ska_oso_slt_services.common.codec import SLTObject
-from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
+from ska_oso_slt_services.common.utils import get_datetime_for_timezone
 
 
 class Metadata(SLTObject):

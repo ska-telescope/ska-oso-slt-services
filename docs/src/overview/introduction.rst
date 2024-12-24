@@ -30,6 +30,12 @@ The Shift Log Tool (SLT) is envisioned as both an “on-line” tool, used in re
     * The current version of the SLT (Shift Log Tool) service retrieves log data from the ODA system. 
     * Shift data is getting saved into ODA.
 
+.. note::
+   * For generating ``shift_id`` SLT is using `SKUID <https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers>`_ the format is ``sl-m0001-20241212-0001``. 
+   * Based on Telescope Type ``shift_id`` is generated for MID and LOW.
+   * For Mid ``sl-m0001-20241212-0001`` and for Low ``sl-l0001-20241212-0001``.
+
+
 
 Architecture Diagram
 

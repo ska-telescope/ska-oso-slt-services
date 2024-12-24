@@ -4,14 +4,13 @@ from unittest.mock import patch
 
 import pytest
 
-from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
-
 # Assuming these are your imports - adjust according to your actual implementation
 from ska_oso_slt_services.common.metadata_mixin import (
     Metadata,
     set_new_metadata,
     update_metadata,
 )
+from ska_oso_slt_services.common.utils import get_datetime_for_timezone
 
 current_time = get_datetime_for_timezone("UTC")
 

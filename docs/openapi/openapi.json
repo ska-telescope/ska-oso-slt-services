@@ -535,6 +535,69 @@
         }
       }
     },
+    "/ska-oso-slt-services/slt/api/v0/shift/end/{shift_id}": {
+      "put": {
+        "tags": [
+          "shifts"
+        ],
+        "summary": "Update end time of existing shift",
+        "description": "Update end time of existing shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift (ShiftUpdate): The updated shift data.\n\nRaises:\n    HTTPException: If the shift is not found.",
+        "operationId": "update_shift_end_time_ska_oso_slt_services_slt_api_v0_shift_update__shift_id__put",
+        "parameters": [
+          {
+            "name": "shift_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shift Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Shift"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": [
+                  {
+                    
+                    "operator_name": "Chandler",
+                    "metadata": {
+                      "created_by": "string",
+                      "created_on": "2024-11-08T11:11:24.549Z",
+                      "last_modified_by": "string",
+                      "last_modified_on": "2024-11-08T11:11:24.549Z"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid Shift Id",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Shift Id"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/ska-oso-slt-services/slt/api/v0/shift_log_comments": {
       "post": {
         "tags": [
