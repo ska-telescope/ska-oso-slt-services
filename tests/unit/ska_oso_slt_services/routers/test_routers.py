@@ -862,3 +862,42 @@ def test_update_shift_annotations(mock_update_shift_annotation, shift_annotation
         f"Expected annotation to be '{created_annotation['annotation']}',"
         f" but got '{created_annotation['annotation']}'"
     )
+
+
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift_annotations")
+def test_get_shift_annotations(mock_get_shift_annotations, shift_annotation_data):
+
+    mock_get_shift_annotations.return_value = shift_annotation_data
+
+    # Send a GET request to get a annotation
+    response = client.get(f"{API_PREFIX}/shift_annotation?shift_id=test-shift-id")
+
+    assert (
+        response.status_code == 200
+    ), f"Expected status code 200, but got {response.status_code}"
+
+    created_annotation = response.json()[0][0]
+    assert created_annotation["annotation"] == shift_annotation_data[0]["annotation"], (
+        f"Expected shift_annotation_data to be "
+        f"'{shift_annotation_data[0]['annotation']}', "
+        f"but got '{created_annotation['annotation']}'"
+    )
+
+    # Add more assertions as needed
+    assert "metadata" in created_annotation, "Metadata is missing in the response"
+    metadata = created_annotation["metadata"]
+    assert (
+        metadata["created_by"] == shift_annotation_data[0]["metadata"]["created_by"]
+    ), (
+        f"Expected created_by to be "
+        f"'{shift_annotation_data[0]['metadata']['created_by']}',"
+        f" but got '{metadata['created_by']}'"
+    )
+    assert (
+        metadata["last_modified_by"]
+        == shift_annotation_data[0]["metadata"]["last_modified_by"]
+    ), (
+        f"Expected last_modified_by to be"
+        f" '{shift_annotation_data[0]['metadata']['last_modified_by']}'"
+        f", but got '{metadata['last_modified_by']}'"
+    )
