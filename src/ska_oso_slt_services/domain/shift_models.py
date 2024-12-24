@@ -163,6 +163,7 @@ class Shift(ShiftBaseClass):
     media: Optional[List[Media]] = None
     metadata: Optional[Metadata] = None
     comments: Optional[List[ShiftComment]] = None
+    annotations: Optional[List[ShiftAnnotation]] = None
 
 
 class Filter(Enum):

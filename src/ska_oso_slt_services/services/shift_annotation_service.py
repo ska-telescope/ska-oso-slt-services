@@ -97,7 +97,7 @@ class ShiftAnnotations(BaseRepositoryService):
 
     def update_shift_annotations(
         self, annotation_id: int, shift_annotation: ShiftAnnotation
-    ):
+    ) -> ShiftAnnotation:
         """
         Update an existing shift annotation with new data.
 
@@ -111,7 +111,7 @@ class ShiftAnnotations(BaseRepositoryService):
         Raises:
             NotFoundError: If no annotation is found with the provided ID.
         """
-        # for getting shift_id to get operator name
+        # for getting annotation_id
         existing_shift_annotation = self.get_shift_annotation(
             annotation_id=annotation_id
         )

@@ -162,7 +162,7 @@ def test_update_shift_after_end():
             "shift_id": "test-id-1",
             "shift_start": "2024-09-14T16:49:54.889Z",
             "shift_operator": "new-operator",
-            "annotations": "updated-annotation",
+            "annotations": [{"annotation": "This is a test annotation"}],
         }
 
         with pytest.raises(ShiftEndedException):
@@ -173,7 +173,7 @@ def test_update_shift_after_end():
 
         valid_update_data = {
             "shift_id": "test-id-1",
-            "annotations": "updated-annotation",
+            "annotations": [{"annotation": "This is a test annotation"}],
             "shift_start": "2024-09-14T16:49:54.889Z",
         }
 

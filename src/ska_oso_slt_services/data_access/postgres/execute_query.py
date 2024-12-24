@@ -36,7 +36,7 @@ class PostgresDataAccess:
         except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
             LOGGER.info("Error executing insert query: %s", e)
-            # conn.rollback()
+            conn.rollback()
             raise e
         except Exception as e:
             # Handle other exceptions

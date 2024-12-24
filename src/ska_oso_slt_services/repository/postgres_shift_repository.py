@@ -694,7 +694,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             shift_comment.id = unique_id.get("id")
         return shift_comment
 
-    def get_shift_comments(self, shift_id: str = None):
+    def get_shift_comments(self, shift_id: str = None) -> ShiftComment:
         """
         Retrieve comments from shift based on shift ID.
 
@@ -710,7 +710,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         comments = self.postgres_data_access.get(query=query, params=params)
         return comments
 
-    def get_shift_comment(self, comment_id: int, table_mapping: Any):
+    def get_shift_comment(self, comment_id: int, table_mapping: Any) -> ShiftComment:
         """
         Retrieve comments from shift based on comment ID.
 
@@ -727,7 +727,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             raise NotFoundError(f"No comment found with ID: {comment_id}")
 
-    def update_shift_comments(self, comment_id: int, shift_comment: ShiftComment):
+    def update_shift_comments(
+        self, comment_id: int, shift_comment: ShiftComment
+    ) -> ShiftComment:
         """
         Update an existing shift comment with new data.
 
@@ -785,15 +787,15 @@ class PostgresShiftRepository(CRUDShiftRepository):
         )
         return shift_comment
 
-    def create_shift_annotation(self, shift_annotation: ShiftAnnotation):
+    def create_shift_annotation(self, shift_annotation: ShiftAnnotation) -> dict:
         """
-        Create a new comment for a shift and save it to the database.
+        Create a new annotation for a shift and save it to the database.
 
         Args:
-            shift_annotation (ShiftAnnotation): The comment data to create.
+            shift_annotation (ShiftAnnotation): The annotation data to create.
 
         Returns:
-            ShiftAnnotation: The newly created shift comment.
+            ShiftAnnotation: The newly created shift annotation.
         """
         self._insert_shift_to_database(
             table_details=ShiftAnnotationMapping(), entity=shift_annotation
@@ -801,7 +803,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         return shift_annotation
 
-    def get_shift_annotations(self, shift_id: str = None):
+    def get_shift_annotations(self, shift_id: str = None) -> ShiftAnnotation:
         """
         Retrieve annotations from shift based on shift ID.
 
@@ -817,7 +819,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         annotations = self.postgres_data_access.get(query=query, params=params)
         return annotations
 
-    def get_shift_annotation(self, annotation_id: int, table_mapping: Any):
+    def get_shift_annotation(
+        self, annotation_id: int, table_mapping: Any
+    ) -> ShiftAnnotation:
         """
         Retrieve annotations from shift based on annotation ID.
 
@@ -838,7 +842,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
     def update_shift_annotations(
         self, annotation_id: int, shift_annotation: ShiftAnnotation
-    ):
+    ) -> ShiftAnnotation:
         """
         Update an existing shift annotation with new data.
 
