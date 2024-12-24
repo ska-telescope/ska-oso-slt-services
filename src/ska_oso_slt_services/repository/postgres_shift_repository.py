@@ -14,12 +14,12 @@ from ska_oso_slt_services.common.constant import (
     SKUID_URL,
     TELESCOPE_DICT,
 )
-from ska_oso_slt_services.common.date_utils import (
+from ska_oso_slt_services.common.error_handling import NotFoundError
+from ska_oso_slt_services.common.metadata_mixin import update_metadata
+from ska_oso_slt_services.common.utils import (
     get_datetime_for_timezone,
     set_telescope_type,
 )
-from ska_oso_slt_services.common.error_handling import NotFoundError
-from ska_oso_slt_services.common.metadata_mixin import update_metadata
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
 from ska_oso_slt_services.data_access.postgres.mapping import (
     ShiftCommentMapping,
@@ -70,6 +70,12 @@ def create_shift_id(
 ) -> str:
     """
     Create a shift ID based on the provided parameters.
+
+    ##TODO
+    Instead of replace function we should use regex for replacing
+    `t` to `m` or `l` its more robust and less error prone.
+    This replace functionality maybe be deprecated once SKUID
+    supports the id generation based on Telescope type.
 
     Args:
         telescope_type (str): The Telescope type MID or LOW.

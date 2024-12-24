@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from ska_oso_slt_services.common.date_utils import set_telescope_type
+from ska_oso_slt_services.common.utils import set_telescope_type
 from ska_oso_slt_services.repository.postgres_shift_repository import create_shift_id
 
 
@@ -11,7 +11,7 @@ def test_set_telescope_type_mid():
     assert telescope_type == "mid"
 
 
-@patch("ska_oso_slt_services.common.date_utils.getenv", return_value="SKA-Low")
+@patch("ska_oso_slt_services.common.utils.getenv", return_value="SKA-Low")
 def test_set_telescope_type_low(mock_getenv):
 
     telescope_type = set_telescope_type("SKA-Low")

@@ -38,10 +38,8 @@ def set_telescope_type(env_variable: str) -> str:
         the current time in the specified timezone
     """
 
-    TELESCOPE_TYPE = getenv(env_variable)
+    TELESCOPE_TYPE = getenv(env_variable, "SKA-mid")
 
-    if TELESCOPE_TYPE is None:
-        return "mid"
     if "mid" in TELESCOPE_TYPE.lower():
         return "mid"
     if "low" in TELESCOPE_TYPE.lower():

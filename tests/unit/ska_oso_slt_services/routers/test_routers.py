@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from ska_oso_slt_services import create_app  # Import your create_app function
 from ska_oso_slt_services.app import API_PREFIX
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
-from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
+from ska_oso_slt_services.common.utils import get_datetime_for_timezone
 from ska_oso_slt_services.domain.shift_models import Shift
 
 # Create the FastAPI app instance
