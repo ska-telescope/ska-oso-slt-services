@@ -23,6 +23,7 @@ from ska_oso_slt_services.common.utils import (
 )
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
 from ska_oso_slt_services.data_access.postgres.mapping import (
+    ShiftAnnotationMapping,
     ShiftCommentMapping,
     ShiftLogCommentMapping,
     ShiftLogMapping,
@@ -33,7 +34,7 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     select_by_date_query,
     select_by_shift_params,
     select_by_text_query,
-    select_comments_query,
+    select_common_query,
     select_latest_query,
     select_latest_shift_query,
     select_logs_by_status,
@@ -48,6 +49,7 @@ from ska_oso_slt_services.domain.shift_models import (
     Metadata,
     SbiEntityStatus,
     Shift,
+    ShiftAnnotation,
     ShiftComment,
     ShiftLogComment,
     ShiftLogs,
@@ -457,7 +459,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             List[Dict]: List of comments associated with the specified filters.
         """
-        query, params = select_comments_query(
+        query, params = select_common_query(
             table_details=ShiftLogCommentMapping(), shift_id=shift_id, eb_id=eb_id
         )
         comments = self.postgres_data_access.get(query=query, params=params)
@@ -473,7 +475,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             Dict: The comment data associated with the specified ID.
         """
-        query, params = select_comments_query(
+        query, params = select_common_query(
             table_details=ShiftLogCommentMapping(), id=comment_id
         )
         comments = self.postgres_data_access.get(query=query, params=params)[0]
@@ -764,7 +766,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             shift_comment.id = unique_id.get("id")
         return shift_comment
 
-    def get_shift_comments(self, shift_id=None):
+    def get_shift_comments(self, shift_id: str = None) -> ShiftComment:
         """
         Retrieve comments from shift based on shift ID.
 
@@ -774,13 +776,13 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             List[Dict]: List of comments associated with the specified filters.
         """
-        query, params = select_comments_query(
+        query, params = select_common_query(
             table_details=ShiftCommentMapping(), shift_id=shift_id
         )
         comments = self.postgres_data_access.get(query=query, params=params)
         return comments
 
-    def get_shift_comment(self, comment_id: int, table_mapping: Any):
+    def get_shift_comment(self, comment_id: int, table_mapping: Any) -> ShiftComment:
         """
         Retrieve comments from shift based on comment ID.
 
@@ -790,16 +792,16 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             List[Dict]: List of comments associated with the specified filters.
         """
-        query, params = select_comments_query(
-            table_details=table_mapping, id=comment_id
-        )
+        query, params = select_common_query(table_details=table_mapping, id=comment_id)
         comment = self.postgres_data_access.get(query=query, params=params)
         if comment:
             return comment[0]
         else:
             raise NotFoundError(f"No comment found with ID: {comment_id}")
 
-    def update_shift_comments(self, comment_id: int, shift_comment: ShiftComment):
+    def update_shift_comments(
+        self, comment_id: int, shift_comment: ShiftComment
+    ) -> ShiftComment:
         """
         Update an existing shift comment with new data.
 
@@ -856,6 +858,94 @@ class PostgresShiftRepository(CRUDShiftRepository):
             table_details=table_mapping, entity=shift_comment
         )
         return shift_comment
+
+    def create_shift_annotation(self, shift_annotation: ShiftAnnotation) -> dict:
+        """
+        Create a new annotation for a shift and save it to the database.
+
+        Args:
+            shift_annotation (ShiftAnnotation): The annotation data to create.
+
+        Returns:
+            ShiftAnnotation: The newly created shift annotation.
+        """
+        self._insert_shift_to_database(
+            table_details=ShiftAnnotationMapping(), entity=shift_annotation
+        )
+
+        return shift_annotation
+
+    def get_shift_annotations(self, shift_id: str = None) -> ShiftAnnotation:
+        """
+        Retrieve annotations from shift based on shift ID.
+
+        Args:
+            shift_id (Optional[str]): The shift ID to filter annotations by.
+
+        Returns:
+            List[Dict]: List of annotations associated with the specified filters.
+        """
+        query, params = select_common_query(
+            table_details=ShiftAnnotationMapping(), shift_id=shift_id
+        )
+        annotations = self.postgres_data_access.get(query=query, params=params)
+        return annotations
+
+    def get_shift_annotation(
+        self, annotation_id: int, table_mapping: Any
+    ) -> ShiftAnnotation:
+        """
+        Retrieve annotations from shift based on annotation ID.
+
+        Args:
+            annotation_id (Optional[int]): The annotation ID to filter annotations by.
+
+        Returns:
+            List[Dict]: List of annotations associated with the specified filters.
+        """
+        query, params = select_common_query(
+            table_details=table_mapping, id=annotation_id
+        )
+        annotation = self.postgres_data_access.get(query=query, params=params)
+        if annotation:
+            return annotation[0]
+        else:
+            raise NotFoundError(f"No annotation found with ID: {annotation_id}")
+
+    def update_shift_annotations(
+        self, annotation_id: int, shift_annotation: ShiftAnnotation
+    ) -> ShiftAnnotation:
+        """
+        Update an existing shift annotation with new data.
+
+        Args:
+            annotation_id: Id of annotation which needs to update.
+            shift_annotation (ShiftAnnotation): The updated annotation data.
+
+        Returns:
+            ShiftAnnotation: The updated shift annotation.
+        """
+        existing_shift_annotation = ShiftAnnotation.model_validate(
+            self.get_shift_annotation(
+                annotation_id=annotation_id, table_mapping=ShiftAnnotationMapping()
+            )
+        )
+        if shift_annotation.annotation:
+            existing_shift_annotation.annotation = shift_annotation.annotation
+        if shift_annotation.operator_name:
+            existing_shift_annotation.operator_name = shift_annotation.operator_name
+        if shift_annotation.shift_id:
+            existing_shift_annotation.shift_id = shift_annotation.shift_id
+        if shift_annotation.operator_name:
+            existing_shift_annotation.operator_name = shift_annotation.operator_name
+        existing_shift_annotation.metadata = shift_annotation.metadata
+        self._update_shift_in_database(
+            entity_id=annotation_id,
+            entity=existing_shift_annotation,
+            table_details=ShiftAnnotationMapping(),
+        )
+
+        return existing_shift_annotation
 
 
 class ShiftLogUpdater:

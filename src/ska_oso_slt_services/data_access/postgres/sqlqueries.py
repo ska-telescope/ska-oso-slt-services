@@ -101,7 +101,7 @@ def select_latest_query(
     table_details: TableDetails, shift_id: str
 ) -> QueryAndParameters:
     """
-    Creates a query and parameters to find the latestversion of
+    Creates a query and parameters to find the latest version of
     the given entity in the table, returning the row if found.
 
     Args:
@@ -539,23 +539,24 @@ def select_logs_by_status(
     return query_str, tuple(params)
 
 
-def select_comments_query(
+def select_common_query(
     table_details: TableDetails,
     id: Optional[int] = None,  # pylint: disable=W0622
     shift_id: Optional[str] = None,
     eb_id: Optional[str] = None,
 ) -> QueryAndParameters:
     """
-    Creates a query to select comments based on various criteria:
-    - If `id` is provided, fetch the comment with that `id`.
-    - If `shift_id` is provided, fetch all comments for that shift.
+    Creates a query to select comments / annotation based on various criteria:
+    - If `id` is provided, fetch the comment / annotation with that `id`.
+    - If `shift_id` is provided, fetch all comments / annotation for that shift.
     - If both `shift_id` and `eb_id` are provided, fetch comments matching both.
-    - If nothing is passed, fetch all comments.
+    - If nothing is passed, fetch all comments / annotation.
 
     Args:
         table_details (TableDetails): The information about the table to query.
-        id (Optional[int]): The ID of the comment.
-        shift_id (Optional[str]): The ID of the shift to retrieve comments for.
+        id (Optional[int]): The ID of the comment / annotation
+        shift_id (Optional[str]): The ID of the shift to retrieve comments
+        / annotation for.
         eb_id (Optional[str]): The EB ID to filter comments for a specific shift.
 
     Returns:

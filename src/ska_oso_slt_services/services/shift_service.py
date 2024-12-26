@@ -7,18 +7,21 @@ from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_
 from ska_oso_slt_services.domain.shift_models import (
     EntityFilter,
     MatchType,
+    Metadata,
     SbiEntityStatus,
     Shift,
+    ShiftAnnotation,
     ShiftComment,
     ShiftLogComment,
 )
+from ska_oso_slt_services.services.shift_annotation_service import ShiftAnnotations
 from ska_oso_slt_services.services.shift_comments_service import ShiftComments
-from ska_oso_slt_services.services.shiftlogs_comment_service import ShiftLogsComment
+from ska_oso_slt_services.services.shift_logs_comment_service import ShiftLogsComment
 
 LOGGER = logging.getLogger(__name__)
 
 
-class ShiftService(ShiftComments, ShiftLogsComment):
+class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
 
     def merge_comments(self, shifts: List[dict]) -> Shift:
         """
@@ -84,7 +87,9 @@ class ShiftService(ShiftComments, ShiftLogsComment):
             if shift.get("comments"):
                 for comment in shift["comments"]:
                     prepare_comment_with_metadata.append(
-                        self._prepare_shift_comment_with_metadata(comment)
+                        self._prepare_shift_common_with_metadata(
+                            comment, shift_model=ShiftComment
+                        )
                     )
 
             per_eb_comment_metadata = []
@@ -152,7 +157,9 @@ class ShiftService(ShiftComments, ShiftLogsComment):
             if shift.get("comments"):
                 for comment in shift["comments"]:
                     prepare_comment_with_metadata.append(
-                        self._prepare_shift_comment_with_metadata(comment)
+                        self._prepare_shift_common_with_metadata(
+                            comment, shift_model=ShiftComment
+                        )
                     )
             per_eb_comment_metadata = []
             if shift.get("shift_logs"):
@@ -275,21 +282,25 @@ class ShiftService(ShiftComments, ShiftLogsComment):
 
         return shift_load
 
-    def _prepare_shift_comment_with_metadata(
-        self, shift_comment: Dict[Any, Any]
-    ) -> ShiftComment:
+    def _prepare_shift_common_with_metadata(
+        self, shift_data: Dict[Any, Any], shift_model: ShiftComment | ShiftAnnotation
+    ) -> ShiftComment | ShiftAnnotation:
         """
-        Prepare a shift comment object with metadata.
+        Prepare a shift data object with metadata.
 
         Args:
-            shift_comment (Dict[Any, Any]): Raw shift comment data from the database.
+            shift_data (Dict[Any, Any]): Raw shift comment or annotation data from
+            the database.
 
         Returns:
             ShiftComment: A ShiftComment object with metadata included.
+            ShiftAnnotation: A ShiftAnnotation object with metadata included.
         """
-        shift_comment_load = ShiftComment.model_validate(shift_comment)
-        shift_comment_load = set_new_metadata(shift_comment_load)
-        return shift_comment_load
+        shift_data_load = shift_model.model_validate(shift_data)
+        metadata_dict = self._create_metadata(shift_data)
+        shift_data_load.metadata = Metadata.model_validate(metadata_dict)
+
+        return shift_data_load
 
     def _prepare_shift_log_comment_with_metadata(
         self, shift_log_comment: Dict[Any, Any]
@@ -331,6 +342,23 @@ class ShiftService(ShiftComments, ShiftLogsComment):
             return self.get_shift(shift_id=shift["shift_id"])
         else:
             raise NotFoundError("No shift found")
+
+    def _create_metadata(self, shift: Dict[Any, Any]) -> Dict[str, str]:
+        """
+        Create metadata dictionary from shift data.
+
+        Args:
+            shift (Dict[Any, Any]): The shift data.
+
+        Returns:
+            Dict[str, str]: A dictionary containing metadata information.
+        """
+        return {
+            "created_by": shift["created_by"],
+            "created_on": shift["created_on"],
+            "last_modified_on": shift["last_modified_on"],
+            "last_modified_by": shift["last_modified_by"],
+        }
 
     def updated_shift_log_info(self, current_shift_id: str) -> Union[Shift, str]:
         """

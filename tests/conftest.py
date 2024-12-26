@@ -19,6 +19,11 @@ json_file_path = "unit/ska_oso_slt_services/routers/test_data_files"
 
 
 @pytest.fixture
+def set_telescope_type():
+    return "mid"
+
+
+@pytest.fixture
 def existing_shift_data():
     """Fixture to load and return existing shift data from a JSON file.
 
@@ -145,5 +150,12 @@ def get_shift_comment_image_data():
 
 
 @pytest.fixture
-def set_telescope_type():
-    return "mid"
+def shift_annotation_data():
+    """Fixture to load and return shift annotation data from a JSON file.
+
+    Returns contents of the JSON file containing shift annotation data
+    loaded as a string.
+    """
+    return load_string_from_file(
+        f"{json_file_path}/testfile_shift_annotation_data.json"
+    )

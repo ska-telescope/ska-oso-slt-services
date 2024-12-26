@@ -16,6 +16,7 @@ from ska_oso_slt_services.domain.shift_models import (
     MatchType,
     SbiEntityStatus,
     Shift,
+    ShiftAnnotation,
     ShiftBaseClass,
     ShiftComment,
     ShiftLogComment,
@@ -53,7 +54,7 @@ router = APIRouter()
 
 @router.get(
     "/shift",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Get a shift",
     responses={
         200: {
@@ -116,7 +117,7 @@ def get_shift(shift_id: Optional[str] = None):
 
 @router.get(
     "/shifts",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Retrieve shift data based on shift attributes like shift_id,"
     "match type and entity status",
     responses={
@@ -189,7 +190,7 @@ def get_shifts(
 
 @router.post(
     "/shifts/create",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Create a new shift",
     responses={
         201: {
@@ -256,7 +257,7 @@ def create_shift(shift: Shift):
 
 @router.put(
     "/shifts/update/{shift_id}",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Update an existing shift",
     responses={
         200: {
@@ -648,7 +649,7 @@ def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(
 
 @router.get(
     "/current_shift",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Get Current Shift",
     responses={
         200: {
@@ -727,7 +728,7 @@ def get_current_shift():
 
 @router.patch(
     "/shifts/patch/update_shift_log_info/{shift_id}",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Update Shift Log info",
     responses={
         200: {
@@ -1316,3 +1317,188 @@ def get_media_for_comment(comment_id: Optional[int]):
         comment_id, shift_model=ShiftComment
     )
     return image_response, HTTPStatus.OK
+
+
+@router.post(
+    "/shift_annotation",
+    tags=["Shift Annotations"],
+    summary="Create a new shift annotation",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_annotation.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Invalid Shift Id",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def create_shift_annotation(shift_annotation: ShiftAnnotation):
+    """
+    Create a new annotation.
+
+    Args:
+        shift_annotation (ShiftAnnotation): The shift annotation to create.
+
+    Returns:
+        ShiftAnnotation: The created shift annotation.
+    """
+    shift_annotation_obj = shift_service.create_shift_annotation(shift_annotation)
+    return shift_annotation_obj, HTTPStatus.CREATED
+
+
+@router.get(
+    "/shift_annotation",
+    tags=["Shift Annotations"],
+    summary="Get Shift annotation",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_annotation.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Invalid Shift Id",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "No shifts annotation found for the given query."
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def get_shift_annotation(shift_id: str):
+    """
+    Get Annotation based on shift_id.
+
+    Args:
+        shift_id (str): The shift id to get.
+
+    Returns:
+        ShiftAnnotation: The shift annotation.
+    """
+    shift_annotations_obj = shift_service.get_shift_annotations(shift_id)
+    return shift_annotations_obj, HTTPStatus.OK
+
+
+@router.put(
+    "/shift_annotation/{annotation_id}",
+    tags=["Shift Annotations"],
+    summary="Update an existing shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_annotation.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Invalid Annotation ID",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Annotation Id"}}
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def update_shift_annotations(annotation_id: str, shift_annotation: ShiftAnnotation):
+    """
+    Update an existing shift annotation.
+
+    Args:
+        annotation_id (str): The unique identifier of the shift to update.
+        shift_annotation (ShiftAnnotation): The updated shift annotation data.
+
+    Raises:
+        HTTPException: If the shift is not found.
+    """
+
+    shift_annotations = shift_service.update_shift_annotations(
+        annotation_id=annotation_id, shift_annotation=shift_annotation
+    )
+    return shift_annotations, HTTPStatus.OK
