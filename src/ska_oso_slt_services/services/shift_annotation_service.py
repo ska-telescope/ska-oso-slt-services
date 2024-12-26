@@ -128,8 +128,6 @@ class ShiftAnnotations(BaseRepositoryService):
         metadata = self.crud_shift_repository.get_latest_metadata(
             entity_id=annotation_id, table_details=ShiftAnnotationMapping()
         )
-        if not metadata:
-            raise NotFoundError(f"No annotation found with ID: {annotation_id}")
 
         shift_log_annotation_with_metadata = update_metadata(
             entity=shift_annotation,
