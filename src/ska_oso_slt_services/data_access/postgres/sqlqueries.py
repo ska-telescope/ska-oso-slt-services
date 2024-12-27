@@ -13,6 +13,7 @@ from psycopg import sql
 
 from ska_oso_slt_services.data_access.postgres.mapping import TableDetails
 from ska_oso_slt_services.domain.shift_models import (
+    EntityFilter,
     MatchType,
     SbiEntityStatus,
     Shift,
@@ -57,7 +58,9 @@ def insert_query(
     return query, params
 
 
-def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
+def update_query(
+    entity_id: str | int, table_details: TableDetails, entity: Any
+) -> QueryAndParameters:
     """
     Creates a query and parameters to update the given entity in the table,
     overwriting values in the existing row and returning the row ID.
@@ -66,6 +69,7 @@ def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
     then no update is performed.
 
     Args:
+        entity_id: The entity_id contais id of shift or comment
         table_details (TableDetails): The information about the table
         to perform the update on.
         entity: The entity which will be persisted.
@@ -78,8 +82,6 @@ def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
     params = table_details.get_params_with_metadata(entity)
 
     # Add the identifier value (e.g., shift_id or comment_id) to the end of params
-    identifier_value = getattr(entity, table_details.table_details.identifier_field)
-
     query = sql.SQL(
         """
         UPDATE {table} SET ({fields}) = ({values})
@@ -92,14 +94,14 @@ def update_query(table_details: TableDetails, entity) -> QueryAndParameters:
         fields=sql.SQL(",").join(map(sql.Identifier, columns)),
         values=sql.SQL(",").join(sql.Placeholder() * len(params)),
     )
-    return query, params + (identifier_value,)
+    return query, params + (entity_id,)
 
 
 def select_latest_query(
     table_details: TableDetails, shift_id: str
 ) -> QueryAndParameters:
     """
-    Creates a query and parameters to find the latestversion of
+    Creates a query and parameters to find the latest version of
     the given entity in the table, returning the row if found.
 
     Args:
@@ -112,7 +114,7 @@ def select_latest_query(
         which psycopg will safely combine.
     """
     columns = table_details.get_columns_with_metadata()
-    where_clause = sql.SQL("WHERE {identifier_field} = %s ORDER BY id").format(
+    where_clause = sql.SQL("WHERE {identifier_field} = %s ORDER BY id DESC").format(
         identifier_field=sql.Identifier(table_details.table_details.identifier_field),
     )
     params = (shift_id,)
@@ -143,6 +145,7 @@ def select_metadata_query(
     Creates a query to select all columns for all shifts.
 
     Args:
+        entity_id: id of shift of comment.
         table_details (TableDetails): The information about the table to query.
 
     Returns:
@@ -218,6 +221,7 @@ def select_by_shift_params(
             ),
         )
         + where_clause
+        + sql.SQL(" ORDER BY id DESC")
     )
 
     return query, tuple(params)
@@ -275,6 +279,7 @@ def select_by_date_query(
             ),
         )
         + where_clause
+        + sql.SQL(" ORDER BY id DESC")
     )
 
     return query, params
@@ -436,71 +441,131 @@ def build_like_query(
 
 
 def select_logs_by_status(
-    table_details: TableDetails, qry_params: SbiEntityStatus, status_column: str
+    table_details: TableDetails,
+    qry_params: SbiEntityStatus = None,
+    status_column: str = None,
+    entity_filter: EntityFilter = None,
+    match_type: MatchType = None,
 ) -> Tuple[str, Tuple[str]]:
     """
-    Creates a query to select logs based on the status of the shift.
+    Creates an optimized query to select logs based on the
+    status of the shift or entity IDs.
 
     Args:
+        match_type(MatchType): The type of matching to perform.
         table_details (TableDetails): The information about the table to query.
         qry_params (SbiEntityStatus): The JSON-based query parameters.
         status_column (str): The column to search within
+        entity_filter (EntityFilter): Filter for sbi_id and eb_id search
 
     Returns:
         QueryAndParameters: A tuple of the query and parameters.
     """
-    # Get the dynamic columns
+    # Use list comprehension for better performance
     dynamic_columns = table_details.get_columns_with_metadata()
-    column_selection = ", ".join(dynamic_columns)
 
-    # Build the dynamic column selection part of the query_
-    query_str = f"""
+    # Pre-allocate conditions and params lists with estimated size
+    conditions = []
+    params = []
+
+    # Add status condition if applicable
+    if qry_params and status_column:
+        conditions.append(
+            f"log->>'info' ? {status_column!r}"
+            " AND (log->'info'->>{status_column!r})::text = %s"
+        )
+        params.append(qry_params.sbi_status.value)
+
+    # Process entity filter conditions
+    if entity_filter:
+        match_type_value = match_type.dict()["match_type"].value if match_type else None
+
+        # Helper function to determine operator and value
+        def get_operator_and_value(id_value: str) -> Tuple[str, str]:
+            if match_type_value in ["starts_with", "contains"]:
+                operator = "LIKE"
+                value = (
+                    f"{id_value}%"
+                    if match_type_value == "starts_with"
+                    else f"%{id_value}%"
+                )
+            else:
+                operator = "="
+                value = id_value
+            return operator, value
+
+        # Add SBI ID condition
+        if entity_filter.sbi_id:
+            operator, value = get_operator_and_value(entity_filter.sbi_id)
+            conditions.append(f"(log->'info'->>'sbi_ref')::text {operator} %s")
+            params.append(value)
+
+        # Add EB ID condition
+        if entity_filter.eb_id:
+            operator, value = get_operator_and_value(entity_filter.eb_id)
+            conditions.append(f"(log->'info'->>'eb_id')::text {operator} %s")
+            params.append(value)
+
+    # Build the WHERE clause once
+    where_clause = " AND ".join(conditions) if conditions else "TRUE"
+
+    # Use a pre-built template string for better performance
+    query_template = """
         SELECT
-            {column_selection},
+            {columns},
             jsonb_agg(
                 jsonb_build_object(
                     'info', log->'info',
                     'source', log->'source',
                     'log_time', log->'log_time'
-                )
-            ) shift_logs
+                ) ORDER BY (log->>'log_time')::timestamp
+            ) FILTER (WHERE log IS NOT NULL) AS shift_logs
         FROM
-            {table_details.table_details.table_name},
+            {table_name},
             jsonb_array_elements(shift_logs) AS log
         WHERE
-            log->'info'->>{status_column!r} = %s
+            {where_clause}
         GROUP BY
-            {column_selection}
+            {columns}
     """
-    params = (qry_params.sbi_status.value,)
 
-    return query_str, params
+    # Format the query with all components
+    query_str = query_template.format(
+        columns=", ".join(dynamic_columns),
+        table_name=table_details.table_details.table_name,
+        where_clause=where_clause,
+    )
+
+    return query_str, tuple(params)
 
 
-def select_comments_query(
+def select_common_query(
     table_details: TableDetails,
     id: Optional[int] = None,  # pylint: disable=W0622
     shift_id: Optional[str] = None,
     eb_id: Optional[str] = None,
 ) -> QueryAndParameters:
     """
-    Creates a query to select comments based on various criteria:
-    - If `id` is provided, fetch the comment with that `id`.
-    - If `shift_id` is provided, fetch all comments for that shift.
+    Creates a query to select comments / annotation based on various criteria:
+    - If `id` is provided, fetch the comment / annotation with that `id`.
+    - If `shift_id` is provided, fetch all comments / annotation for that shift.
     - If both `shift_id` and `eb_id` are provided, fetch comments matching both.
-    - If nothing is passed, fetch all comments.
+    - If nothing is passed, fetch all comments / annotation.
 
     Args:
         table_details (TableDetails): The information about the table to query.
-        id (Optional[int]): The ID of the comment.
-        shift_id (Optional[str]): The ID of the shift to retrieve comments for.
+        id (Optional[int]): The ID of the comment / annotation
+        shift_id (Optional[str]): The ID of the shift to retrieve comments
+        / annotation for.
         eb_id (Optional[str]): The EB ID to filter comments for a specific shift.
 
     Returns:
         QueryAndParameters: A tuple of the query and parameters.
     """
     # Get the columns for the select statement
-    columns = table_details.get_columns_with_metadata()
+    column_list = list(table_details.get_columns_with_metadata())
+    column_list.append("id")
+    columns = tuple(column_list)
 
     # Start building the base SQL query
     base_query = sql.SQL(
@@ -547,26 +612,6 @@ def select_comments_query(
     return query, tuple(params)
 
 
-def select_last_serial_id(table_details: TableDetails) -> QueryAndParameters:
-    """
-    Creates a query to select the last serial ID from the table.
-
-    Args:
-        table_details (TableDetails): The information about the table to query.
-
-    Returns:
-        QueryAndParameters: A tuple of the query and parameters.
-    """
-    query = sql.SQL(
-        """
-        SELECT MAX(id) FROM {table}
-        """
-    ).format(
-        table=sql.Identifier(table_details.table_details.table_name),
-    )
-    return query, ()
-
-
 def select_latest_shift_query(table_details: TableDetails) -> QueryAndParameters:
     """
     Creates a query and parameters to find the latest shift in the table,
@@ -584,7 +629,7 @@ def select_latest_shift_query(table_details: TableDetails) -> QueryAndParameters
         SELECT shift_id
         FROM {table}
         WHERE shift_end IS NULL
-        ORDER BY created_on DESC LIMIT 1
+        ORDER BY id DESC LIMIT 1
         """
     ).format(table=sql.Identifier(table_details.table_details.table_name))
 

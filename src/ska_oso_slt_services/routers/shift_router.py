@@ -11,20 +11,15 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, UploadFile
 
-from ska_oso_slt_services.data_access.postgres.mapping import (
-    ShiftCommentMapping,
-    ShiftLogCommentMapping,
-)
 from ska_oso_slt_services.domain.shift_models import (
+    EntityFilter,
     MatchType,
     SbiEntityStatus,
     Shift,
+    ShiftAnnotation,
     ShiftBaseClass,
     ShiftComment,
     ShiftLogComment,
-)
-from ska_oso_slt_services.repository.postgres_shift_repository import (
-    PostgresShiftRepository,
 )
 from ska_oso_slt_services.services.shift_service import ShiftService
 
@@ -40,7 +35,7 @@ class ShiftServiceSingleton:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            cls._instance = ShiftService([PostgresShiftRepository])
+            cls._instance = ShiftService()
         return cls._instance
 
 
@@ -53,15 +48,13 @@ def get_shift_service() -> ShiftService:
 
 
 shift_service = get_shift_service()
-# shift_log_updater = ShiftLogUpdater()
-
 
 router = APIRouter()
 
 
 @router.get(
     "/shift",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Get a shift",
     responses={
         200: {
@@ -124,7 +117,7 @@ def get_shift(shift_id: Optional[str] = None):
 
 @router.get(
     "/shifts",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Retrieve shift data based on shift attributes like shift_id,"
     "match type and entity status",
     responses={
@@ -185,18 +178,19 @@ def get_shifts(
     shift: ShiftBaseClass = Depends(),
     match_type: MatchType = Depends(),
     status: SbiEntityStatus = Depends(),
+    entities: EntityFilter = Depends(),
 ):
     """
     Retrieve all shifts.
     This endpoint returns a list of all shifts in the system.
     """
-    shifts = shift_service.get_shifts(shift, match_type, status)
+    shifts = shift_service.get_shifts(shift, match_type, status, entities)
     return shifts, HTTPStatus.OK
 
 
 @router.post(
     "/shifts/create",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Create a new shift",
     responses={
         201: {
@@ -263,7 +257,7 @@ def create_shift(shift: Shift):
 
 @router.put(
     "/shifts/update/{shift_id}",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Update an existing shift",
     responses={
         200: {
@@ -322,6 +316,70 @@ def update_shift(shift_id: str, shift: Shift):
         HTTPException: If the shift is not found.
     """
     shifts = shift_service.update_shift(shift_id, shift)
+    return shifts, HTTPStatus.OK
+
+
+@router.put(
+    "/shift/end/{shift_id}",
+    tags=["shifts"],
+    summary="Update an existing shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_response.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Shift Not Found"}}
+            },
+        },
+        422: {
+            "description": "Invalid Shift Id",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def update_shift_end_time(shift_id: str, shift: Shift):
+    """
+    Update an existing shift end time.
+
+    Args:
+        shift_id (str): The unique identifier of the shift to update.
+        shift (Shift): The updated shift data.
+
+    Raises:
+        HTTPException: If the shift is not found.
+    """
+    shifts = shift_service.update_shift_end_time(shift_id, shift)
     return shifts, HTTPStatus.OK
 
 
@@ -583,18 +641,15 @@ def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(
          shift_log_comment (ShiftLogComment): The updated shift log comment  data.
     """
 
-    media = shift_service.add_media(
-        comment_id=comment_id,
-        files=files,
-        shift_model=ShiftLogComment,
-        table_mapping=ShiftLogCommentMapping(),
+    media = shift_service.update_shift_log_with_image(
+        comment_id=comment_id, files=files, shift_model=ShiftLogComment
     )
     return media, HTTPStatus.OK
 
 
 @router.get(
     "/current_shift",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Get Current Shift",
     responses={
         200: {
@@ -673,7 +728,7 @@ def get_current_shift():
 
 @router.patch(
     "/shifts/patch/update_shift_log_info/{shift_id}",
-    tags=["shifts"],
+    tags=["Shifts"],
     summary="Update Shift Log info",
     responses={
         200: {
@@ -958,7 +1013,7 @@ def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
         },
     },
 )
-def post_shift_log_media(
+def create_shift_log_media(
     shift_id: str, shift_operator: str, eb_id: str, file: UploadFile = File(...)
 ):
     """
@@ -978,12 +1033,11 @@ def post_shift_log_media(
             - image_response: The media (image) data associated with the comment.
             - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.
     """
-    media = shift_service.post_media(
+    media = shift_service.create_shift_log_media(
         shift_id=shift_id,
         shift_operator=shift_operator,
         file=file,
         shift_model=ShiftLogComment,
-        table_mapping=ShiftLogCommentMapping(),
         eb_id=eb_id,
     )
     return media, HTTPStatus.OK
@@ -1051,9 +1105,7 @@ def get_shift_log_media(comment_id: Optional[int]):
             - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval
     """
 
-    image_response = shift_service.get_media(
-        comment_id, shift_model=ShiftLogComment, table_mapping=ShiftLogCommentMapping()
-    )
+    image_response = shift_service.get_shift_log_media(comment_id)
     return image_response, HTTPStatus.OK
 
 
@@ -1100,7 +1152,9 @@ def get_shift_log_media(comment_id: Optional[int]):
         },
     },
 )
-def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...)):
+def create_media_for_comment(
+    shift_id: str, shift_operator: str, file: UploadFile = File(...)
+):
     """
     Create a new shift.
 
@@ -1112,12 +1166,11 @@ def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...))
     Returns:
         ShiftLogComment: The created shift log comment.
     """
-    media = shift_service.post_media(
+    media = shift_service.create_media_for_comment(
         shift_id=shift_id,
         shift_operator=shift_operator,
         file=file,
         shift_model=ShiftComment,
-        table_mapping=ShiftCommentMapping(),
     )
     return media, HTTPStatus.OK
 
@@ -1171,7 +1224,9 @@ def post_media(shift_id: str, shift_operator: str, file: UploadFile = File(...))
         },
     },
 )
-def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
+def add_media_to_comment(
+    comment_id: Optional[str], files: list[UploadFile] = File(...)
+):
     """
     Upload one or more image files for a specific shift.
 
@@ -1190,8 +1245,8 @@ def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
             - image_response: The media (image) data associated with the comment.
             - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.
     """
-    media = shift_service.add_media(
-        comment_id, files, shift_model=ShiftComment, table_mapping=ShiftCommentMapping()
+    media = shift_service.add_media_to_comment(
+        comment_id, files, shift_model=ShiftComment
     )
     return media, HTTPStatus.OK
 
@@ -1245,7 +1300,7 @@ def add_media(comment_id: Optional[str], files: list[UploadFile] = File(...)):
         },
     },
 )
-def get_media(comment_id: Optional[int]):
+def get_media_for_comment(comment_id: Optional[int]):
     """Retrieve media associated with a shift comment.
 
     Args:
@@ -1258,7 +1313,192 @@ def get_media(comment_id: Optional[int]):
             - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval
     """
 
-    image_response = shift_service.get_media(
-        comment_id, shift_model=ShiftComment, table_mapping=ShiftCommentMapping()
+    image_response = shift_service.get_media_for_comment(
+        comment_id, shift_model=ShiftComment
     )
     return image_response, HTTPStatus.OK
+
+
+@router.post(
+    "/shift_annotation",
+    tags=["Shift Annotations"],
+    summary="Create a new shift annotation",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_annotation.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Invalid Shift Id",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def create_shift_annotation(shift_annotation: ShiftAnnotation):
+    """
+    Create a new annotation.
+
+    Args:
+        shift_annotation (ShiftAnnotation): The shift annotation to create.
+
+    Returns:
+        ShiftAnnotation: The created shift annotation.
+    """
+    shift_annotation_obj = shift_service.create_shift_annotation(shift_annotation)
+    return shift_annotation_obj, HTTPStatus.CREATED
+
+
+@router.get(
+    "/shift_annotation",
+    tags=["Shift Annotations"],
+    summary="Get Shift annotation",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_annotation.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Invalid Shift Id",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "No shifts annotation found for the given query."
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def get_shift_annotation(shift_id: str):
+    """
+    Get Annotation based on shift_id.
+
+    Args:
+        shift_id (str): The shift id to get.
+
+    Returns:
+        ShiftAnnotation: The shift annotation.
+    """
+    shift_annotations_obj = shift_service.get_shift_annotations(shift_id)
+    return shift_annotations_obj, HTTPStatus.OK
+
+
+@router.put(
+    "/shift_annotation/{annotation_id}",
+    tags=["Shift Annotations"],
+    summary="Update an existing shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_annotation.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Invalid Annotation ID",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Annotation Id"}}
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def update_shift_annotations(annotation_id: str, shift_annotation: ShiftAnnotation):
+    """
+    Update an existing shift annotation.
+
+    Args:
+        annotation_id (str): The unique identifier of the shift to update.
+        shift_annotation (ShiftAnnotation): The updated shift annotation data.
+
+    Raises:
+        HTTPException: If the shift is not found.
+    """
+
+    shift_annotations = shift_service.update_shift_annotations(
+        annotation_id=annotation_id, shift_annotation=shift_annotation
+    )
+    return shift_annotations, HTTPStatus.OK

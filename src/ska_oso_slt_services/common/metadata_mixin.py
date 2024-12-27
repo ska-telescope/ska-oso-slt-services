@@ -1,7 +1,7 @@
 import logging
 from typing import Optional, TypeVar
 
-from ska_oso_slt_services.common.date_utils import get_datetime_for_timezone
+from ska_oso_slt_services.common.utils import get_datetime_for_timezone
 from ska_oso_slt_services.domain.shift_models import Metadata
 
 LOGGER = logging.getLogger(__name__)
