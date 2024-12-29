@@ -1,5 +1,4 @@
 import logging
-from ska_oso_slt_services.data_access.postgres.mapping_factory import TableMappingFactory, MappingType
 import threading
 import time
 from datetime import datetime, timedelta, timezone

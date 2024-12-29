@@ -148,6 +148,6 @@ class DBCrud:
         
     def _get_table_details(self, entity):
         mapping_type = self._get_mapping_type(entity)
-        TableMappingFactory.create_mapping(mapping_type)
+        #TableMappingFactory.create_mapping(mapping_type)
         mapping = TableMappingFactory.get_mapping_class(mapping_type)
-        return mapping()
+        return mapping
