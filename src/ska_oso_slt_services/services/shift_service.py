@@ -33,7 +33,7 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         Returns:
             List[dict]: List of shift data with merged comments in shift logs.
         """
-        
+
         for shift in shifts:
             shift_log_comments_dict = (
                 self.crud_shift_repository.get_shift_logs_comments(

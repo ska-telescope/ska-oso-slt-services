@@ -188,7 +188,4 @@ class ShiftComments(MediaService, BaseRepositoryService):
         shift_comment = shift_model(shift_id=shift_id, operator_name=shift_operator)
 
         shift_comment = set_new_metadata(shift_comment, shift_operator)
-        return self.post_media(
-            file=file,
-            shift_comment=shift_comment
-        )
+        return self.post_media(file=file, shift_comment=shift_comment)

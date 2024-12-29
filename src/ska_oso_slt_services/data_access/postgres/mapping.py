@@ -9,13 +9,13 @@ import json
 from datetime import datetime
 from typing import Dict, Optional, Tuple, Union
 
+from ska_oso_slt_services.data_access.postgres.base_mapping import (
+    BaseMapping,
+    TableDetails,
+)
 from ska_oso_slt_services.domain.shift_models import Shift
-from ska_oso_slt_services.data_access.postgres.base_mapping import BaseMapping, TableDetails
 
 SqlTypes = Union[str, int, datetime]
-
-
-
 
 
 def _field_json_dump(shift: Shift, field: str) -> Optional[str]:

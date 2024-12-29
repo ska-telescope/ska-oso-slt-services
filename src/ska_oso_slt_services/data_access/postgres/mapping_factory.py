@@ -1,7 +1,15 @@
 """Factory class for creating table mappings."""
+
 from enum import Enum, auto
 from typing import Type, Union
 
+from ska_oso_slt_services.data_access.postgres.base_mapping import BaseMapping
+from ska_oso_slt_services.data_access.postgres.mapping import (
+    ShiftAnnotationMapping,
+    ShiftCommentMapping,
+    ShiftLogCommentMapping,
+    ShiftLogMapping,
+)
 from ska_oso_slt_services.domain.shift_models import (
     EntityFilter,
     MatchType,
@@ -10,22 +18,16 @@ from ska_oso_slt_services.domain.shift_models import (
     SbiEntityStatus,
     Shift,
     ShiftAnnotation,
+    ShiftBaseClass,
     ShiftComment,
     ShiftLogComment,
     ShiftLogs,
-    ShiftBaseClass
-)
-from ska_oso_slt_services.data_access.postgres.base_mapping import BaseMapping
-from ska_oso_slt_services.data_access.postgres.mapping import (
-    ShiftLogMapping,
-    ShiftLogCommentMapping,
-    ShiftCommentMapping,
-    ShiftAnnotationMapping
 )
 
 
 class MappingType(Enum):
     """Enum for different types of mappings."""
+
     SHIFT = auto()
     SHIFT_BASE_CLASS = auto()
     SHIFT_LOG_COMMENT = auto()
@@ -37,7 +39,9 @@ class TableMappingFactory:
     """Factory class for creating table mappings."""
 
     @staticmethod
-    def _get_mapping_type(entity: Union[Shift, ShiftLogComment, ShiftComment, ShiftAnnotation]) -> MappingType:
+    def _get_mapping_type(
+        entity: Union[Shift, ShiftLogComment, ShiftComment, ShiftAnnotation],
+    ) -> MappingType:
         """Get the mapping type for an entity.
 
         Args:
@@ -80,10 +84,10 @@ class TableMappingFactory:
             MappingType.SHIFT_BASE_CLASS: ShiftLogMapping(),
             MappingType.SHIFT_LOG_COMMENT: ShiftLogCommentMapping(),
             MappingType.SHIFT_COMMENT: ShiftCommentMapping(),
-            MappingType.SHIFT_ANNOTATION: ShiftAnnotationMapping()
+            MappingType.SHIFT_ANNOTATION: ShiftAnnotationMapping(),
         }
-        
+
         if mapping_type not in mapping_classes:
             raise ValueError(f"Unsupported mapping type: {mapping_type}")
-        
+
         return mapping_classes[mapping_type]

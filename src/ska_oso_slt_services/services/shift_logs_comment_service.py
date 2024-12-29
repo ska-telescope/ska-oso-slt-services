@@ -13,7 +13,6 @@ LOGGER = logging.getLogger(__name__)
 
 class ShiftLogsComment(MediaService, BaseRepositoryService):
 
-
     def create_shift_logs_comment(self, shift_log_comment_data) -> ShiftLogComment:
         """
         Create a new comment for a shift log with metadata.
@@ -65,7 +64,7 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
             NotFoundError: If no comments are found for the given filters.
         """
         shift_log_comments = self.crud_shift_repository.get_shift_logs_comments(
-            ShiftLogComment(),shift_id=shift_id, eb_id=eb_id
+            ShiftLogComment(), shift_id=shift_id, eb_id=eb_id
         )
         if not shift_log_comments:
             raise NotFoundError("No shifts log comments found for the given query.")
@@ -135,10 +134,7 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         shift_comment.eb_id = eb_id
         shift_comment = set_new_metadata(shift_comment, shift_operator)
 
-        return self.post_media(
-            file=file,
-            shift_comment=shift_comment
-        )
+        return self.post_media(file=file, shift_comment=shift_comment)
 
     def get_shift_log_media(self, comment_id):
         """

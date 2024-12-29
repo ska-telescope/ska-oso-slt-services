@@ -97,47 +97,6 @@ def update_query(
     return query, params + (entity_id,)
 
 
-# def select_latest_query(
-#     table_details: TableDetails, shift_id: str
-# ) -> QueryAndParameters:
-#     """
-#     Creates a query and parameters to find the latest version of
-#     the given entity in the table, returning the row if found.
-
-#     Args:
-#         table_details (TableDetails): The information about
-#         the table to perform the query on.
-#         shift_id (str): The identifier of the shift to search for.
-
-#     Returns:
-#         QueryAndParameters: A tuple of the query and parameters,
-#         which psycopg will safely combine.
-#     """
-#     columns = table_details.get_columns_with_metadata()
-#     where_clause = sql.SQL("WHERE {identifier_field} = %s ORDER BY id DESC").format(
-#         identifier_field=sql.Identifier(table_details.table_details.identifier_field),
-#     )
-#     params = (shift_id,)
-
-#     query = (
-#         sql.SQL(
-#             """
-#         SELECT {fields}
-#         FROM {table}
-#         """
-#         ).format(
-#             fields=sql.SQL(",").join(map(sql.Identifier, columns)),
-#             table=sql.Identifier(table_details.table_details.table_name),
-#             identifier_field=sql.Identifier(
-#                 table_details.table_details.identifier_field
-#             ),
-#         )
-#         + where_clause
-#     )
-
-#     return query, params
-
-
 def select_metadata_query(
     table_details: TableDetails, entity_id: str | int
 ) -> QueryAndParameters:
@@ -580,7 +539,11 @@ def select_latest_query(
         QueryAndParameters: A tuple of the query and parameters.
     """
     # Get the columns for the select statement
-    id, shift_id, eb_id = filters.get("id"),filters.get("shift_id"),filters.get("eb_id")
+    id, shift_id, eb_id = (
+        filters.get("id"),
+        filters.get("shift_id"),
+        filters.get("eb_id"),
+    )
 
     column_list = list(table_details.get_columns_with_metadata())
     column_list.append("id")

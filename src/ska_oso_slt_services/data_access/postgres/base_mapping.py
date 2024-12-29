@@ -1,12 +1,15 @@
 """Base mapping class for database operations."""
-from typing import Tuple, TypeVar, Generic, Union,  Dict, Optional, Callable
-from ska_oso_slt_services.domain.shift_models import Shift, ShiftComment, ShiftLogComment
 
-
-from types import MappingProxyType
 from dataclasses import dataclass
-
 from datetime import datetime
+from types import MappingProxyType
+from typing import Callable, Dict, Generic, Optional, Tuple, TypeVar, Union
+
+from ska_oso_slt_services.domain.shift_models import (
+    Shift,
+    ShiftComment,
+    ShiftLogComment,
+)
 
 SqlTypes = Union[str, int, datetime]
 
@@ -29,7 +32,9 @@ class TableDetails:
     identifier_field: str
     column_map: dict
     text_base_search_fields: Optional[str] = None
-    metadata_map: Dict[str, Callable[[Shift,ShiftComment, ShiftLogComment], SqlTypes]] = MappingProxyType(
+    metadata_map: Dict[
+        str, Callable[[Shift, ShiftComment, ShiftLogComment], SqlTypes]
+    ] = MappingProxyType(
         {
             "created_on": lambda shift: shift.metadata.created_on,
             "created_by": lambda shift: shift.metadata.created_by,
@@ -38,7 +43,9 @@ class TableDetails:
         }
     )
 
-T = TypeVar('T')
+
+T = TypeVar("T")
+
 
 class BaseMapping(Generic[T]):
     """
@@ -47,7 +54,7 @@ class BaseMapping(Generic[T]):
     """
 
     @property
-    def table_details(self)->TableDetails:
+    def table_details(self) -> TableDetails:
         """
         Get the table details. Must be implemented by subclasses.
 
@@ -56,7 +63,7 @@ class BaseMapping(Generic[T]):
             identifier field, and column mappings.
         """
         raise NotImplementedError
-    
+
     def get_columns_with_metadata(self) -> Tuple[str]:
         """
         Get a tuple of column names including metadata fields.
@@ -89,9 +96,7 @@ class BaseMapping(Generic[T]):
             Tuple[SqlTypes]: A tuple containing parameter values
             for all metadata fields.
         """
-        return tuple(
-            map_fn(obj) for map_fn in self.table_details.metadata_map.values()
-        )
+        return tuple(map_fn(obj) for map_fn in self.table_details.metadata_map.values())
 
     def get_params_with_metadata(self, obj: T) -> Tuple[SqlTypes]:
         """
