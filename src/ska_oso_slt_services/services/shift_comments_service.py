@@ -144,7 +144,6 @@ class ShiftComments(MediaService, BaseRepositoryService):
         Returns:
             Shift: The updated comment with the added media.
         """
-        import pdb;pdb.set_trace()
         return self.add_media(
             comment_id=comment_id,
             files=files,
