@@ -56,7 +56,7 @@ class BaseMapping(Generic[T]):
             identifier field, and column mappings.
         """
         raise NotImplementedError
-
+    
     def get_columns_with_metadata(self) -> Tuple[str]:
         """
         Get a tuple of column names including metadata fields.

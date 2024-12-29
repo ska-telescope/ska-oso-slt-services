@@ -33,10 +33,11 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         Returns:
             List[dict]: List of shift data with merged comments in shift logs.
         """
+        
         for shift in shifts:
             shift_log_comments_dict = (
                 self.crud_shift_repository.get_shift_logs_comments(
-                    shift_id=shift["shift_id"]
+                    ShiftLogComment(), shift_id=shift["shift_id"]
                 )
             )
             if shift.get("shift_logs"):
@@ -58,8 +59,8 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
             List[dict]: List of shift data with merged shift comments.
         """
         for shift in shifts:
-            shift_comment_dict = self.crud_shift_repository.get_shift_comments(
-                shift_id=shift["shift_id"]
+            shift_comment_dict = self.crud_shift_repository.get_shift_logs_comments(
+                ShiftComment(), shift_id=shift["shift_id"]
             )
             shift["comments"] = shift_comment_dict
 
@@ -145,7 +146,6 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         if not shifts:
             raise NotFoundError("No shifts found for the given query.")
         LOGGER.info("Shifts: %s", shifts)
-
         prepared_shifts = []
         for shift in shifts:
             shifts_with_log_comments = self.merge_comments([shift])[0]

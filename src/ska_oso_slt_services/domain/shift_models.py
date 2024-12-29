@@ -141,6 +141,7 @@ class ShiftBaseClass(SLTObject):
     :param annotations Optional[str]: Annotations for the shift.
     :param comments Optional[List[ShiftComment]]: List of comments for the shift.
     """
+    id: Optional[int] = None
     shift_id: Optional[str] = None
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None

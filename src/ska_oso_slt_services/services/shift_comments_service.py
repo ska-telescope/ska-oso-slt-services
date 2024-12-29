@@ -59,8 +59,8 @@ class ShiftComments(MediaService, BaseRepositoryService):
 
         shift_comments_obj_with_metadata = []
         for shift_comment in shift_comments:
-            shift_comment_with_metadata = self._prepare_shift_comment_with_metadata(
-                shift_comment
+            shift_comment_with_metadata = self._prepare_shift_common_with_metadata(
+                shift_comment, ShiftComment()
             )
             shift_comments_obj_with_metadata.append(shift_comment_with_metadata)
 
@@ -80,14 +80,14 @@ class ShiftComments(MediaService, BaseRepositoryService):
             NotFoundError: If no comments are found for the given filters.
         """
         shift_comment = self.crud_shift_repository.get_shift_comment(
-            comment_id=comment_id, table_mapping=ShiftCommentMapping()
+            comment_id=comment_id
         )
         if not shift_comment:
             raise NotFoundError("No shift comment found for the given query.")
         LOGGER.info("Shift log comments : %s", shift_comment)
 
-        shift_comment_with_metadata = self._prepare_shift_comment_with_metadata(
-            shift_comment
+        shift_comment_with_metadata = self._prepare_shift_common_with_metadata(
+            shift_comment, ShiftComment()
         )
 
         return shift_comment_with_metadata
@@ -144,6 +144,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
         Returns:
             Shift: The updated comment with the added media.
         """
+        import pdb;pdb.set_trace()
         return self.add_media(
             comment_id=comment_id,
             files=files,
@@ -188,9 +189,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
         shift_comment = shift_model(shift_id=shift_id, operator_name=shift_operator)
 
         shift_comment = set_new_metadata(shift_comment, shift_operator)
-
         return self.post_media(
             file=file,
-            shift_comment=shift_comment,
-            table_mapping=ShiftCommentMapping(),
+            shift_comment=shift_comment
         )

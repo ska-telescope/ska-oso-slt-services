@@ -97,45 +97,45 @@ def update_query(
     return query, params + (entity_id,)
 
 
-def select_latest_query(
-    table_details: TableDetails, shift_id: str
-) -> QueryAndParameters:
-    """
-    Creates a query and parameters to find the latest version of
-    the given entity in the table, returning the row if found.
+# def select_latest_query(
+#     table_details: TableDetails, shift_id: str
+# ) -> QueryAndParameters:
+#     """
+#     Creates a query and parameters to find the latest version of
+#     the given entity in the table, returning the row if found.
 
-    Args:
-        table_details (TableDetails): The information about
-        the table to perform the query on.
-        shift_id (str): The identifier of the shift to search for.
+#     Args:
+#         table_details (TableDetails): The information about
+#         the table to perform the query on.
+#         shift_id (str): The identifier of the shift to search for.
 
-    Returns:
-        QueryAndParameters: A tuple of the query and parameters,
-        which psycopg will safely combine.
-    """
-    columns = table_details.get_columns_with_metadata()
-    where_clause = sql.SQL("WHERE {identifier_field} = %s ORDER BY id DESC").format(
-        identifier_field=sql.Identifier(table_details.table_details.identifier_field),
-    )
-    params = (shift_id,)
+#     Returns:
+#         QueryAndParameters: A tuple of the query and parameters,
+#         which psycopg will safely combine.
+#     """
+#     columns = table_details.get_columns_with_metadata()
+#     where_clause = sql.SQL("WHERE {identifier_field} = %s ORDER BY id DESC").format(
+#         identifier_field=sql.Identifier(table_details.table_details.identifier_field),
+#     )
+#     params = (shift_id,)
 
-    query = (
-        sql.SQL(
-            """
-        SELECT {fields}
-        FROM {table}
-        """
-        ).format(
-            fields=sql.SQL(",").join(map(sql.Identifier, columns)),
-            table=sql.Identifier(table_details.table_details.table_name),
-            identifier_field=sql.Identifier(
-                table_details.table_details.identifier_field
-            ),
-        )
-        + where_clause
-    )
+#     query = (
+#         sql.SQL(
+#             """
+#         SELECT {fields}
+#         FROM {table}
+#         """
+#         ).format(
+#             fields=sql.SQL(",").join(map(sql.Identifier, columns)),
+#             table=sql.Identifier(table_details.table_details.table_name),
+#             identifier_field=sql.Identifier(
+#                 table_details.table_details.identifier_field
+#             ),
+#         )
+#         + where_clause
+#     )
 
-    return query, params
+#     return query, params
 
 
 def select_metadata_query(
@@ -244,7 +244,7 @@ def select_by_date_query(
         ValueError: If an unsupported query type is provided.
     """
     columns = table_details.get_columns_with_metadata()
-    mapping_columns = [key for key in table_details.table_details.metadata_map.keys()]
+    mapping_columns = [key for key in table_details.metadata_map.keys()]
     columns = list(columns) + mapping_columns
     if qry_params.shift_start:
         if qry_params.shift_end:
@@ -470,11 +470,30 @@ def select_logs_by_status(
 
     # Add status condition if applicable
     if qry_params and status_column:
-        conditions.append(
-            f"log->>'info' ? {status_column!r}"
-            " AND (log->'info'->>{status_column!r})::text = %s"
-        )
-        params.append(qry_params.sbi_status.value)
+        dynamic_columns = table_details.get_columns_with_metadata()
+        column_selection = ", ".join(dynamic_columns)
+
+        # Build the dynamic column selection part of the query_
+        query_str = f"""
+            SELECT
+                {column_selection},
+                jsonb_agg(
+                    jsonb_build_object(
+                        'info', log->'info',
+                        'source', log->'source',
+                        'log_time', log->'log_time'
+                    )
+                ) shift_logs
+            FROM
+                {table_details.table_name},
+                jsonb_array_elements(shift_logs) AS log
+            WHERE
+                log->'info'->>{status_column!r} = %s
+            GROUP BY
+                {column_selection}
+        """
+        params = (qry_params.sbi_status.value,)
+        return query_str, params
 
     # Process entity filter conditions
     if entity_filter:
@@ -539,11 +558,9 @@ def select_logs_by_status(
     return query_str, tuple(params)
 
 
-def select_common_query(
+def select_latest_query(
     table_details: TableDetails,
-    id: Optional[int] = None,  # pylint: disable=W0622
-    shift_id: Optional[str] = None,
-    eb_id: Optional[str] = None,
+    filters,
 ) -> QueryAndParameters:
     """
     Creates a query to select comments / annotation based on various criteria:
@@ -563,6 +580,8 @@ def select_common_query(
         QueryAndParameters: A tuple of the query and parameters.
     """
     # Get the columns for the select statement
+    id, shift_id, eb_id = filters.get("id"),filters.get("shift_id"),filters.get("eb_id")
+
     column_list = list(table_details.get_columns_with_metadata())
     column_list.append("id")
     columns = tuple(column_list)

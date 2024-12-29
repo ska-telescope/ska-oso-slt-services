@@ -46,7 +46,7 @@ class MediaService(BaseRepositoryService):
         )
         return result.image
 
-    def post_media(self, file: Any, shift_comment: Any, table_mapping: Any) -> Media:
+    def post_media(self, file: Any, shift_comment: Any) -> Media:
         """
         Create a new comment for a shift log with metadata.
 
@@ -63,7 +63,7 @@ class MediaService(BaseRepositoryService):
             shift_comment = Media.model_validate(shift_comment)
 
         result = self.crud_shift_repository.insert_shift_image(
-            file=file, shift_comment=shift_comment, table_mapping=table_mapping
+            file=file, shift_comment=shift_comment
         )
         return result
 

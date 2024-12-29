@@ -56,13 +56,11 @@ class ShiftLogMapping(BaseMapping["Shift"]):
         return TableDetails(
             table_name="tab_oda_slt",
             identifier_field="shift_id",
-            text_base_search_fields="annotations",
             column_map={
                 "shift_id": lambda shift: shift.shift_id,
                 "shift_start": lambda shift: shift.shift_start,
                 "shift_end": lambda shift: shift.shift_end,
                 "shift_operator": lambda shift: shift.shift_operator,
-                "annotations": lambda shift: shift.annotations,
                 "shift_logs": lambda shift: _field_json_dump(shift, "shift_logs"),
             },
         )
