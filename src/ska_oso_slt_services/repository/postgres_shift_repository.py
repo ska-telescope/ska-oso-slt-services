@@ -21,15 +21,10 @@ from ska_oso_slt_services.common.utils import (
     get_datetime_for_timezone,
     set_telescope_type,
 )
-from ska_oso_slt_services.data_access.postgres.crud import DBCrud
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
-from ska_oso_slt_services.data_access.postgres.mapping import (
-    ShiftAnnotationMapping,
-    ShiftLogMapping,
-)
+from ska_oso_slt_services.data_access.postgres.mapping import ShiftLogMapping
+from ska_oso_slt_services.data_access.postgres.shift_crud import DBCrud
 from ska_oso_slt_services.data_access.postgres.sqlqueries import (
-    select_latest_shift_query,
-    select_metadata_query,
     shift_logs_patch_query,
 )
 from ska_oso_slt_services.domain.shift_models import (
@@ -222,12 +217,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
             existing_shift.shift_end = get_datetime_for_timezone("UTC")
             existing_shift.metadata = shift.metadata
-            self._update_shift_in_database(
+            self.crud.update_entity(
                 entity_id=shift.shift_id,
                 entity=existing_shift,
-                table_details=ShiftLogMapping(),
+                db=self.postgres_data_access,
             )
-
             return existing_shift
 
         except (DatabaseError, DataError, InternalError) as error_msg:
@@ -237,40 +231,33 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
     def update_shift(self, shift: Shift) -> Shift:
         """
-        Update an existing shift.
+        Update an existing shift with the provided fields.
+        Only non-None fields in the shift object will be updated.
 
         Args:
-            shift (Shift): The shift object with updated information.
+            shift (Shift): The shift object containing fields to update.
+                Only non-None fields will be updated.
 
         Returns:
             Shift: The updated shift object.
 
         Raises:
+            NotFoundError: If no shift exists with the provided ID.
             ValueError: If there's an error in updating the shift.
         """
-        existing_shift = Shift.model_validate(self.get_shift(shift.shift_id))
-        if not existing_shift:
-            raise NotFoundError(f"No shift found with ID: {existing_shift.shift_id}")
-        if shift.shift_end:
-            existing_shift.shift_end = shift.shift_end
-        if shift.comments:
-            existing_shift.comments = shift.comments
-        if shift.annotations:
-            existing_shift.annotations = shift.annotations
-        if shift.media:
-            existing_shift.media = shift.media
-        if shift.shift_operator:
-            existing_shift.shift_operator = shift.shift_operator
-        existing_shift.metadata = shift.metadata
+        # Update will fail if shift doesn't exist due to WHERE clause in update_query
         self.crud.update_entity(
             entity_id=shift.shift_id,
-            entity=existing_shift,
+            entity=shift,
             db=self.postgres_data_access,
         )
-        return existing_shift
 
-    def get_latest_metadata(
-        self, entity_id: str | int, table_details=ShiftLogMapping()
+        # Fetch and return the updated shift
+        updated_shift = self.get_shift(shift.shift_id)
+        return updated_shift
+
+    def get_entity_metadata(
+        self, entity_id: str | int, model=Shift()
     ) -> Optional[Metadata]:
         """
         Get the latest metadata for a given  entity.
@@ -285,17 +272,15 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Raises:
             NotFoundError: If no metadata is found for the entity.
         """
-
-        query, params = select_metadata_query(
-            table_details=table_details,
-            entity_id=entity_id,
+        filter = {"entity_id": entity_id}
+        meta_data = self.crud.get_entity(
+            entity=model, db=self.postgres_data_access, metadata=True, filters=filter
         )
-        meta_data = self.postgres_data_access.get_one(query, params)
         if not meta_data:
             raise NotFoundError(f"No entity found with ID: {entity_id}")
         return Metadata.model_validate(meta_data)
 
-    def get_media(self, comment_id: int, table_model: Any, table_mapping: Any) -> Media:
+    def get_media(self, comment_id: int, table_model: Any) -> Media:
         """
         Get a media file from a shift.
 
@@ -307,7 +292,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             file: The requested media file.
         """
-        comment = table_model.model_validate(self.get_shift_log_comment(comment_id))
+        comment = table_model.model_validate(
+            self.get_shift_logs_comment(comment_id=comment_id, entity=table_model)
+        )
 
         if not comment.image:
             raise NotFoundError(f"No media found for comment with ID: {comment_id}")
@@ -332,7 +319,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
         shift_comment: ShiftComment,
         files: Any,
         shift_model: Any,
-        table_mapping: Any,
     ) -> Media:
         """
         Add media files associated with a shift comment.
@@ -356,7 +342,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             media_list.append(media)
 
         current_shift_comment = shift_model.model_validate(
-            self.get_shift_log_comment(comment_id=comment_id)
+            self.get_shift_logs_comment(comment_id=comment_id, entity=shift_comment)
         )
 
         current_shift_comment.metadata = shift_comment.metadata
@@ -412,9 +398,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
             entity=shift, db=self.postgres_data_access, filters=filters
         )
 
-    def get_shift_logs_comment(self, comment_id) -> dict:
+    def get_shift_logs_comment(self, comment_id, entity=ShiftLogComment()) -> dict:
         return self.crud.get_entity(
-            entity=ShiftLogComment(),
+            entity=entity,
             db=self.postgres_data_access,
             filters={"comment_id": comment_id},
         )
@@ -449,27 +435,16 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftLogComment: The updated shift log comment.
         """
-        existing_shift_log_comment = ShiftLogComment.model_validate(
-            self.get_shift_logs_comment(comment_id=comment_id)
-        )
-
-        # Update fields if provided
-        if shift_log_comment.log_comment:
-            existing_shift_log_comment.log_comment = shift_log_comment.log_comment
-        if shift_log_comment.eb_id:
-            existing_shift_log_comment.eb_id = shift_log_comment.eb_id
-        if shift_log_comment.operator_name:
-            existing_shift_log_comment.operator_name = shift_log_comment.operator_name
-
-        existing_shift_log_comment.metadata = shift_log_comment.metadata
-
         self.crud.update_entity(
             entity_id=comment_id,
-            entity=existing_shift_log_comment,
+            entity=shift_log_comment,
             db=self.postgres_data_access,
         )
 
-        return existing_shift_log_comment
+        updated_log_comment = self.get_shift_logs_comment(
+            comment_id, entity=shift_log_comment
+        )
+        return ShiftLogComment(**updated_log_comment)
 
     def get_current_shift(self) -> Shift:
         """
@@ -483,9 +458,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
 
         """
-        query, params = select_latest_shift_query(self.table_details)
-        shift = self.postgres_data_access.get_one(query, params)
-        return shift
+
+        return self.crud.get_latest_entity(entity=Shift(), db=self.postgres_data_access)
 
     def get_oda_data(self, filter_date):
         """Retrieve and process ODA data for the given filter date.
@@ -603,7 +577,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
             NotFoundError: Error in updating shift.
         """
         if shift and shift.shift_logs:
-            query, params = shift_logs_patch_query(self.table_details, shift)
+            # TODO planning to remove patch method along along with this
+            # below code also get removed
+            query, params = shift_logs_patch_query(ShiftLogMapping(), shift)
             self.postgres_data_access.update(query, params)
             return {"details": "Shift updated successfully"}
         else:
@@ -736,7 +712,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         return self.crud.get_entity(
             entity=ShiftComment(),
             db=self.postgres_data_access,
-            filters={"comment_id": comment_id},
+            filters={"id": comment_id},
         )
 
     def update_shift_comments(
@@ -752,25 +728,14 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftComment: The updated shift comment.
         """
-        existing_shift_comment = ShiftComment.model_validate(
-            self.get_shift_comment(comment_id=comment_id)
-        )
-        if shift_comment.comment:
-            existing_shift_comment.comment = shift_comment.comment
-        if shift_comment.operator_name:
-            existing_shift_comment.operator_name = shift_comment.operator_name
-        if shift_comment.shift_id:
-            existing_shift_comment.shift_id = shift_comment.shift_id
-        if shift_comment.operator_name:
-            existing_shift_comment.operator_name = shift_comment.operator_name
-        existing_shift_comment.metadata = shift_comment.metadata
         self.crud.update_entity(
             entity_id=comment_id,
-            entity=existing_shift_comment,
+            entity=shift_comment,
             db=self.postgres_data_access,
         )
 
-        return existing_shift_comment
+        updated_comment = self.get_shift_comment(comment_id)
+        return updated_comment
 
     def insert_shift_image(self, file: Any, shift_comment: ShiftComment) -> Media:
         """
@@ -817,15 +782,13 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             List[Dict]: List of annotations associated with the specified filters.
         """
-        query, params = select_common_query(
-            table_details=ShiftAnnotationMapping(), shift_id=shift_id
+        return self.crud.get_entities(
+            entity=ShiftAnnotation(),
+            db=self.postgres_data_access,
+            filters={"shift_id": shift_id},
         )
-        annotations = self.postgres_data_access.get(query=query, params=params)
-        return annotations
 
-    def get_shift_annotation(
-        self, annotation_id: int, table_mapping: Any
-    ) -> ShiftAnnotation:
+    def get_shift_annotation(self, annotation_id: int) -> ShiftAnnotation:
         """
         Retrieve annotations from shift based on annotation ID.
 
@@ -835,12 +798,14 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             List[Dict]: List of annotations associated with the specified filters.
         """
-        query, params = select_common_query(
-            table_details=table_mapping, id=annotation_id
+        annotation = self.crud.get_entity(
+            entity=ShiftAnnotation(),
+            db=self.postgres_data_access,
+            filters={"annotation_id": annotation_id},
         )
-        annotation = self.postgres_data_access.get(query=query, params=params)
+        print(annotation)
         if annotation:
-            return annotation[0]
+            return annotation
         else:
             raise NotFoundError(f"No annotation found with ID: {annotation_id}")
 
@@ -857,27 +822,15 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftAnnotation: The updated shift annotation.
         """
-        existing_shift_annotation = ShiftAnnotation.model_validate(
-            self.get_shift_annotation(
-                annotation_id=annotation_id, table_mapping=ShiftAnnotationMapping()
-            )
-        )
-        if shift_annotation.annotation:
-            existing_shift_annotation.annotation = shift_annotation.annotation
-        if shift_annotation.operator_name:
-            existing_shift_annotation.operator_name = shift_annotation.operator_name
-        if shift_annotation.shift_id:
-            existing_shift_annotation.shift_id = shift_annotation.shift_id
-        if shift_annotation.operator_name:
-            existing_shift_annotation.operator_name = shift_annotation.operator_name
-        existing_shift_annotation.metadata = shift_annotation.metadata
-        self._update_shift_in_database(
+
+        self.crud.update_entity(
             entity_id=annotation_id,
-            entity=existing_shift_annotation,
-            table_details=ShiftAnnotationMapping(),
+            entity=shift_annotation,
+            db=self.postgres_data_access,
         )
 
-        return existing_shift_annotation
+        updated_comment = self.get_shift_annotation(annotation_id)
+        return updated_comment
 
 
 class ShiftLogUpdater:

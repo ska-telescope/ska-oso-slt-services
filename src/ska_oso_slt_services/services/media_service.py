@@ -23,7 +23,7 @@ class MediaService(BaseRepositoryService):
         Returns:
             Shift: The updated comment with the added media.
         """
-        latest_metadata = self.crud_shift_repository.get_latest_metadata(
+        latest_metadata = self.crud_shift_repository.get_entity_metadata(
             entity_id=comment_id, table_details=table_mapping
         )
 
@@ -42,7 +42,6 @@ class MediaService(BaseRepositoryService):
             shift_comment=shift,
             files=files,
             shift_model=shift_model,
-            table_mapping=table_mapping,
         )
         return result.image
 

@@ -63,13 +63,10 @@ def update_query(
 ) -> QueryAndParameters:
     """
     Creates a query and parameters to update the given entity in the table,
-    overwriting values in the existing row and returning the row ID.
-
-    If there is not an existing row for the identifier
-    then no update is performed.
+    directly setting the provided fields without first fetching the existing row.
 
     Args:
-        entity_id: The entity_id contais id of shift or comment
+        entity_id: The entity_id contains id of shift or comment
         table_details (TableDetails): The information about the table
         to perform the update on.
         entity: The entity which will be persisted.
@@ -78,21 +75,44 @@ def update_query(
         QueryAndParameters: A tuple of the query and parameters,
         which psycopg will safely combine.
     """
-    columns = table_details.get_columns_with_metadata()
-    params = table_details.get_params_with_metadata(entity)
+    # Get only non-None fields to update
+    columns_and_params = [
+        (col, param)
+        for col, param in zip(
+            table_details.get_columns_with_metadata(),
+            table_details.get_params_with_metadata(entity),
+        )
+        if param is not None
+    ]
 
-    # Add the identifier value (e.g., shift_id or comment_id) to the end of params
+    if not columns_and_params:
+        # If no fields to update, return a query that just verifies the record exists
+        query = sql.SQL("SELECT id FROM {table} WHERE {identifier_field}=%s").format(
+            table=sql.Identifier(table_details.table_details.table_name),
+            identifier_field=sql.Identifier(
+                table_details.table_details.identifier_field
+            ),
+        )
+        return query, (entity_id,)
+
+    columns, params = zip(*columns_and_params)
+
+    # Build SET clause for only non-None fields
+    set_pairs = sql.SQL(",").join(
+        sql.SQL("{} = {}").format(sql.Identifier(col), sql.Placeholder())
+        for col in columns
+    )
+
     query = sql.SQL(
         """
-        UPDATE {table} SET ({fields}) = ({values})
-        WHERE id=(SELECT id FROM {table} WHERE {identifier_field}=%s)
+        UPDATE {table} SET {set_pairs}
+        WHERE {identifier_field}=%s
         RETURNING id;
         """
     ).format(
-        identifier_field=sql.Identifier(table_details.table_details.identifier_field),
         table=sql.Identifier(table_details.table_details.table_name),
-        fields=sql.SQL(",").join(map(sql.Identifier, columns)),
-        values=sql.SQL(",").join(sql.Placeholder() * len(params)),
+        set_pairs=set_pairs,
+        identifier_field=sql.Identifier(table_details.table_details.identifier_field),
     )
     return query, params + (entity_id,)
 
@@ -203,7 +223,7 @@ def select_by_date_query(
         ValueError: If an unsupported query type is provided.
     """
     columns = table_details.get_columns_with_metadata()
-    mapping_columns = [key for key in table_details.metadata_map.keys()]
+    mapping_columns = [key for key in table_details.table_details.metadata_map.keys()]
     columns = list(columns) + mapping_columns
     if qry_params.shift_start:
         if qry_params.shift_end:
@@ -444,7 +464,7 @@ def select_logs_by_status(
                     )
                 ) shift_logs
             FROM
-                {table_details.table_name},
+                {table_details.table_details.table_name},
                 jsonb_array_elements(shift_logs) AS log
             WHERE
                 log->'info'->>{status_column!r} = %s

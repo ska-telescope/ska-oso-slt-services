@@ -53,15 +53,15 @@ class TableMappingFactory:
         Raises:
             ValueError: If the entity type is not supported.
         """
-        if isinstance(entity, Shift):
+        if isinstance(entity, Shift) or entity == Shift:
             return MappingType.SHIFT
-        if isinstance(entity, Shift):
+        if isinstance(entity, ShiftBaseClass) or entity == ShiftBaseClass:
             return MappingType.SHIFT_BASE_CLASS
-        elif isinstance(entity, ShiftLogComment):
+        elif isinstance(entity, ShiftLogComment) or entity == ShiftLogComment:
             return MappingType.SHIFT_LOG_COMMENT
-        elif isinstance(entity, ShiftComment):
+        elif isinstance(entity, ShiftComment) or entity == ShiftComment:
             return MappingType.SHIFT_COMMENT
-        elif isinstance(entity, ShiftAnnotation):
+        elif isinstance(entity, ShiftAnnotation) or entity == ShiftAnnotation:
             return MappingType.SHIFT_ANNOTATION
         else:
             raise ValueError(f"Unsupported entity type: {type(entity)}")

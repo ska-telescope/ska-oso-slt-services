@@ -2,7 +2,11 @@ import logging
 from typing import Any, List
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
-from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
+from ska_oso_slt_services.common.metadata_mixin import (
+    get_latest_metadata,
+    set_new_metadata,
+    update_metadata,
+)
 from ska_oso_slt_services.data_access.postgres.mapping import ShiftCommentMapping
 from ska_oso_slt_services.domain.shift_models import Media, ShiftComment
 from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
@@ -59,8 +63,8 @@ class ShiftComments(MediaService, BaseRepositoryService):
 
         shift_comments_obj_with_metadata = []
         for shift_comment in shift_comments:
-            shift_comment_with_metadata = self._prepare_shift_common_with_metadata(
-                shift_comment, ShiftComment()
+            shift_comment_with_metadata = self._prepare_entity_with_metadata(
+                entity=shift_comment, model=ShiftComment
             )
             shift_comments_obj_with_metadata.append(shift_comment_with_metadata)
 
@@ -86,7 +90,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
             raise NotFoundError("No shift comment found for the given query.")
         LOGGER.info("Shift log comments : %s", shift_comment)
 
-        shift_comment_with_metadata = self._prepare_shift_common_with_metadata(
+        shift_comment_with_metadata = self._prepare_entity_with_metadata(
             shift_comment, ShiftComment()
         )
 
@@ -116,7 +120,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
         if not shift:
             raise NotFoundError(f"No shift found with id: {shift_comment['shift_id']}")
 
-        metadata = self.crud_shift_repository.get_latest_metadata(
+        metadata = self.crud_shift_repository.get_entity_metadata(
             entity_id=comment_id, table_details=ShiftCommentMapping()
         )
         if not metadata:
@@ -127,10 +131,10 @@ class ShiftComments(MediaService, BaseRepositoryService):
             metadata=metadata,
             last_modified_by=shift.shift_operator,
         )
-
-        return self.crud_shift_repository.update_shift_comments(
+        updated_comment = self.crud_shift_repository.update_shift_comments(
             comment_id, shift_log_comment_with_metadata
         )
+        return self._prepare_entity_with_metadata(updated_comment, ShiftComment())
 
     def add_media_to_comment(self, comment_id: id, files: Any, shift_model: Any):
         """
@@ -162,9 +166,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
         Returns:
             file: The requested media file.
         """
-        return self.crud_shift_repository.get_media(
-            comment_id, shift_model, table_mapping=ShiftCommentMapping()
-        )
+        return self.crud_shift_repository.get_media(comment_id, shift_model)
 
     def create_media_for_comment(
         self, shift_id: int, shift_operator: str, file: Any, shift_model: Any

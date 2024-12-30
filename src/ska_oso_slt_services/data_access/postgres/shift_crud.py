@@ -3,11 +3,13 @@
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     insert_query,
     select_by_date_query,
     select_by_shift_params,
     select_latest_query,
+    select_latest_shift_query,
     select_logs_by_status,
     select_metadata_query,
     update_query,
@@ -68,12 +70,30 @@ class DBCrud:
         if metadata is True:
             query, params = select_metadata_query(
                 table_details=table_details,
-                filters=filters,
+                filters=filters["entity_id"],
             )
         else:
             query, params = select_latest_query(
                 table_details=table_details, filters=filters
             )
+        results = db.get_one(query=query, params=params)
+
+        return results
+
+    def get_latest_entity(self, entity: Any, db, filters=None) -> Any:
+        """Get the latest entity from the database.
+
+        Args:
+            entity_type: Type of entity to retrieve
+            **filters: Filter conditions for the query
+
+        Returns:
+            The retrieved entity
+        """
+
+        table_details = self._get_table_details(entity)
+
+        query, params = select_latest_shift_query(table_details=table_details)
         results = db.get_one(query=query, params=params)
 
         return results
@@ -96,33 +116,41 @@ class DBCrud:
         Returns:
             The retrieved entities
         """
-        table_details = self._get_table_details(entity)
-        if (
-            hasattr(entity, "shift_start")
-            and entity.shift_start
-            and hasattr(entity, "shift_end")
-            and entity.shift_end
-        ):
-            query, params = select_by_date_query(table_details, entity)
+        try:
+            table_details = self._get_table_details(entity)
+            if (
+                hasattr(entity, "shift_start")
+                and entity.shift_start
+                and hasattr(entity, "shift_end")
+                and entity.shift_end
+            ):
+                query, params = select_by_date_query(table_details, entity)
 
-        elif entity_status and entity_status.sbi_status:
-            query, params = select_logs_by_status(
-                table_details, entity_status, "sbi_status"
-            )
-        elif oda_entities and (oda_entities.sbi_id or oda_entities.eb_id):
-            query, params = select_logs_by_status(
-                table_details, entity_filter=oda_entities, match_type=match_type
-            )
-        elif (
-            (hasattr(entity, "shift_id") and entity.shift_id)
-            or (hasattr(entity, "shift_operator") and entity.shift_operator)
-            and match_type.dict()["match_type"]
-        ):
-            query, params = select_by_shift_params(table_details, entity, match_type)
-        else:
-            query, params = select_latest_query(table_details, filters)
-        results = db.get(query=query, params=params)
-        return results
+            elif entity_status and entity_status.sbi_status:
+                query, params = select_logs_by_status(
+                    table_details, entity_status, "sbi_status"
+                )
+            elif oda_entities and (oda_entities.sbi_id or oda_entities.eb_id):
+                query, params = select_logs_by_status(
+                    table_details, entity_filter=oda_entities, match_type=match_type
+                )
+            elif (
+                (hasattr(entity, "shift_id") and entity.shift_id)
+                or (hasattr(entity, "shift_operator") and entity.shift_operator)
+                and match_type.dict()["match_type"]
+            ):
+                query, params = select_by_shift_params(
+                    table_details, entity, match_type
+                )
+            else:
+                query, params = select_latest_query(table_details, filters)
+            results = db.get(query=query, params=params)
+            return results
+        except Exception as e:
+            logger.error(e)
+            raise NotFoundError(
+                "Select match_type for shift_operator,shift_id, sbi_id, eb_id, annotations"
+            ) from e
 
     def _get_table_details(self, entity):
         mapping_type = TableMappingFactory._get_mapping_type(entity)

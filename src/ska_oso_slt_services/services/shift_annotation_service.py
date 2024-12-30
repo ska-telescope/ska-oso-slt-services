@@ -62,8 +62,8 @@ class ShiftAnnotations(BaseRepositoryService):
 
         shift_annotations_obj_with_metadata = []
         for shift_annotation in shift_annotations:
-            shift_annotation_with_metadata = self._prepare_shift_common_with_metadata(
-                shift_data=shift_annotation, shift_model=ShiftAnnotation
+            shift_annotation_with_metadata = self._prepare_entity_with_metadata(
+                entity=shift_annotation, model=ShiftAnnotation
             )
             shift_annotations_obj_with_metadata.append(shift_annotation_with_metadata)
 
@@ -83,14 +83,14 @@ class ShiftAnnotations(BaseRepositoryService):
             NotFoundError: If no annotations are found for the given filters.
         """
         shift_annotation = self.crud_shift_repository.get_shift_annotation(
-            annotation_id=annotation_id, table_mapping=ShiftAnnotationMapping()
+            annotation_id=annotation_id
         )
         if not shift_annotation:
             raise NotFoundError("No Shift annotation found for the given query.")
         LOGGER.info("Shift annotations : %s", shift_annotation)
 
-        shift_annotation_with_metadata = self._prepare_shift_common_with_metadata(
-            shift_annotation, shift_model=ShiftAnnotation
+        shift_annotation_with_metadata = self._prepare_entity_with_metadata(
+            entity=shift_annotation, model=ShiftAnnotation
         )
 
         return shift_annotation_with_metadata
@@ -125,7 +125,7 @@ class ShiftAnnotations(BaseRepositoryService):
                 f"No shift found with id: {shift_annotation['shift_id']}"
             )
 
-        metadata = self.crud_shift_repository.get_latest_metadata(
+        metadata = self.crud_shift_repository.get_entity_metadata(
             entity_id=annotation_id, table_details=ShiftAnnotationMapping()
         )
 
@@ -135,6 +135,11 @@ class ShiftAnnotations(BaseRepositoryService):
             last_modified_by=shift.shift_operator,
         )
 
-        return self.crud_shift_repository.update_shift_annotations(
+        annotations = self.crud_shift_repository.update_shift_annotations(
             annotation_id, shift_log_annotation_with_metadata
         )
+
+        annotations_with_metadata = self._prepare_entity_with_metadata(
+            entity=annotations, model=ShiftAnnotation
+        )
+        return annotations_with_metadata

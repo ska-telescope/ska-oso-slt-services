@@ -2,7 +2,11 @@ import logging
 from typing import List
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
-from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
+from ska_oso_slt_services.common.metadata_mixin import (
+    get_latest_metadata,
+    set_new_metadata,
+    update_metadata,
+)
 from ska_oso_slt_services.data_access.postgres.mapping import ShiftLogCommentMapping
 from ska_oso_slt_services.domain.shift_models import Shift, ShiftLogComment
 from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
@@ -11,7 +15,7 @@ from ska_oso_slt_services.services.media_service import MediaService
 LOGGER = logging.getLogger(__name__)
 
 
-class ShiftLogsComment(MediaService, BaseRepositoryService):
+class ShiftLogsComments(MediaService, BaseRepositoryService):
 
     def create_shift_logs_comment(self, shift_log_comment_data) -> ShiftLogComment:
         """
@@ -72,8 +76,8 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
 
         shift_log_comments_obj_with_metadata = []
         for shift_log_comment in shift_log_comments:
-            shift_log_comment_with_metadata = (
-                self._prepare_shift_log_comment_with_metadata(shift_log_comment)
+            shift_log_comment_with_metadata = get_latest_metadata(
+                entity=shift_log_comment, model=ShiftLogComment
             )
             shift_log_comments_obj_with_metadata.append(shift_log_comment_with_metadata)
 
@@ -93,7 +97,7 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         Raises:
             NotFoundError: If no comment is found with the provided ID.
         """
-        metadata = self.crud_shift_repository.get_latest_metadata(
+        metadata = self.crud_shift_repository.get_entity_metadata(
             entity_id=comment_id, table_details=ShiftLogCommentMapping()
         )
         if not metadata:
@@ -149,7 +153,6 @@ class ShiftLogsComment(MediaService, BaseRepositoryService):
         return self.crud_shift_repository.get_media(
             comment_id,
             table_model=ShiftLogComment,
-            table_mapping=ShiftLogCommentMapping(),
         )
 
     def update_shift_log_with_image(self, comment_id, files, shift_model):
