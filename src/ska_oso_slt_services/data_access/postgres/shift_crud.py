@@ -235,6 +235,4 @@ class DBCrud:
         Returns:
             BaseMapping: The mapping class for the entity's table
         """
-        mapping_type = TableMappingFactory._get_mapping_type(entity)
-        mapping = TableMappingFactory._get_mapping_class(mapping_type)
-        return mapping
+        return TableMappingFactory.create_mapping(entity)

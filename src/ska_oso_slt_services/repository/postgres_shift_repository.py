@@ -425,6 +425,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Raises:
             NotFoundError: If no comment is found with the given ID.
         """
+
         return self.crud.get_entity(
             entity=entity,
             db=self.postgres_data_access,

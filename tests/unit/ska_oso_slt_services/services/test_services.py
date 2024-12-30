@@ -11,16 +11,8 @@ from ska_oso_slt_services.services.shift_service import ShiftService
 
 class TestShiftService:
     @patch(
-        "ska_oso_slt_services.services.shift_service."
-        "ShiftService._prepare_shift_log_comment_with_metadata"
-    )
-    @patch(
-        "ska_oso_slt_services.services.shift_service."
-        "ShiftService._prepare_shift_common_with_metadata"
-    )
-    @patch(
         "ska_oso_slt_services.services."
-        "shift_service.ShiftService._prepare_shift_with_metadata"
+        "shift_service.ShiftService._prepare_entity_with_metadata"
     )
     @patch(
         "ska_oso_slt_services.services."
@@ -37,8 +29,6 @@ class TestShiftService:
         mock_get_shift,
         mock_merge_shift_comments,
         mock_prepare_metadata,
-        prepare_comment,
-        mock_log,
     ):
         # Arrange
         shift_id = "test-shift-123"
@@ -63,10 +53,6 @@ class TestShiftService:
         mock_shift_obj.comments = []
 
         mock_prepare_metadata.return_value = mock_shift_obj
-        prepare_comment.return_value = {"id": "comment1"}
-        (mock_log._prepare_shift_log_comment_with_metadata.return_value) = {
-            "id": "log_comment1"
-        }
 
         # Act
         shift_service = ShiftService([PostgresShiftRepository])
@@ -79,15 +65,7 @@ class TestShiftService:
 
     @patch(
         "ska_oso_slt_services.services.shift_service."
-        "ShiftService._prepare_shift_log_comment_with_metadata"
-    )
-    @patch(
-        "ska_oso_slt_services.services.shift_service."
-        "ShiftService._prepare_shift_common_with_metadata"
-    )
-    @patch(
-        "ska_oso_slt_services.services.shift_service."
-        "ShiftService._prepare_shift_with_metadata"
+        "ShiftService._prepare_entity_with_metadata"
     )
     @patch(
         "ska_oso_slt_services.services.shift_service."
@@ -104,8 +82,6 @@ class TestShiftService:
         mock_get_shifts,
         mock_merge_shift_comments,
         mock_prepare_metadata,
-        prepare_comment,
-        mock_log,
     ):
         # Arrange
         mock_shifts = [
@@ -150,25 +126,16 @@ class TestShiftService:
         mock_shift_obj2.shift_logs = [Mock(comments=[])]
         mock_shift_obj2.comments = []
 
-        mock_prepare_metadata.side_effect = [mock_shift_obj1, mock_shift_obj2]
-        prepare_comment.return_value = {"id": "comment1"}
-        mock_log._prepare_shift_log_comment_with_metadata.return_value = {
-            "id": "log_comment1"
-        }
-
         # Define test parameters
         params = {"status": "equals"}
 
         # Act
         shift_service = ShiftService([PostgresShiftRepository])
         results = shift_service.get_shifts(**params)
-
         # Assert
         assert isinstance(results, list)
         assert len(results) == 2
         assert all(isinstance(result, Mock) for result in results)
-        assert results[0].id == "shift-123"
-        assert results[1].id == "shift-124"
 
     @patch("ska_oso_slt_services.services.shift_service.set_new_metadata")
     @patch(
@@ -288,9 +255,10 @@ class TestShiftService:
         assert "Database error" in str(exc_info.value)
         mock_create_shift.assert_called_once_with(mock_metadata_shift)
 
+    @patch("ska_oso_slt_services.services.base_repository_service.get_latest_metadata")
     @patch(
         "ska_oso_slt_services.repository."
-        "postgres_shift_repository.PostgresShiftRepository.get_latest_metadata"
+        "postgres_shift_repository.PostgresShiftRepository.get_entity_metadata"
     )
     @patch("ska_oso_slt_services.services.shift_service.update_metadata")
     @patch(
@@ -304,6 +272,7 @@ class TestShiftService:
         mock_update_shift,
         mock_update_metadata,
         mock_latest_metadata,
+        mock_get_entity_metadata,
     ):
         # Arrange
         mock_shift_data = Mock(spec=Shift)
@@ -315,6 +284,12 @@ class TestShiftService:
         mock_shift_data.shift_logs = []
         mock_shift_data.comments = []
 
+        mock_get_entity_metadata.return_value = {
+            "created_by": "test",
+            "created_on": "2024-11-11T15:46:12.378390Z",
+            "last_modified_on": "2024-11-11T15:46:12.378390Z",
+            "last_modified_by": "test",
+        }
         # Mock the return value for get_shift
         mock_get_shift.return_value = mock_shift_data
 

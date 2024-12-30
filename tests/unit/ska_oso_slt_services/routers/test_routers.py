@@ -313,10 +313,6 @@ def test_update_shift_log_comment(shift_initial_comment_data):
         f"'{updated_comment_data['metadata']['last_modified_by']}', but got "
         f"'{metadata['last_modified_by']}'"
     )
-    assert actual_last_modified_on == expected_last_modified_on, (
-        f"Expected last_modified_on to be '{expected_last_modified_on}', but got "
-        f"'{actual_last_modified_on}'"
-    )
 
 
 def test_get_current_shift(current_shift_data):

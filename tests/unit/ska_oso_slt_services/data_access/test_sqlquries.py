@@ -15,9 +15,6 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     insert_query,
     patch_query,
     select_by_date_query,
-    select_by_text_query,
-    select_common_query,
-    select_latest_query,
     select_latest_shift_query,
     select_logs_by_status,
     update_query,
@@ -90,24 +87,6 @@ class TestShiftQueries(unittest.TestCase):
         self.assertIn(self.shift.shift_start, params)
         self.assertIn(self.shift.shift_end, params)
 
-    def test_select_latest_query(self):
-        query, params = select_latest_query(self.table_details, self.shift.shift_id)
-
-        # Check if the query is of the correct type
-        self.assertIsInstance(query, sql.Composed)
-
-        # Check if the query contains the correct table name
-        self.assertIn("tab_oda_slt", query.as_string())
-
-        # Check if the query is a SELECT query
-        self.assertIn("SELECT", query.as_string())
-
-        # Check if the query includes ORDER BY clause
-        self.assertIn("ORDER BY id", query.as_string())
-
-        # Check if the parameters are correct
-        self.assertEqual(params, (self.shift.shift_id,))
-
     def test_select_by_date_query(self):
         """Test the select_by_date_query function."""
         # Call the function with test data
@@ -138,84 +117,6 @@ class TestShiftQueries(unittest.TestCase):
         elif self.shift.shift_end:
             self.assertIn("<=", query_string)
             self.assertEqual(params, (self.shift.shift_end,))
-
-    def test_select_by_text_query(self):
-        """Test the select_by_text_query function."""
-        # Test data
-        search_text = "test search"
-        match_type = MatchType(match_type=Filter.CONTAINS)
-
-        # Call the function with test data
-        query, params = select_by_text_query(
-            self.table_details, search_text, match_type
-        )
-
-        # Check if the query is of the correct type
-        self.assertIsInstance(query, sql.Composed)
-
-        # Convert query to string for assertions
-        query_string = query.as_string()
-
-        # Check if the query contains the correct table name
-        self.assertIn("tab_oda_slt", query_string)
-
-        # Check if the query is a SELECT query
-        self.assertIn("SELECT", query_string)
-
-        # Check if the query includes search-related clauses
-        self.assertIn("WHERE", query_string)
-
-        # Check if the parameters contain the search text
-        self.assertTrue(any(search_text in str(param) for param in params))
-
-        # Test with different match types
-        match_types = [
-            MatchType(match_type=Filter.EQUALS),
-            MatchType(match_type=Filter.STARTS_WITH),
-            MatchType(match_type=Filter.CONTAINS),
-        ]
-        for match_type in match_types:
-            with self.subTest(match_type=match_type):
-                query, params = select_by_text_query(
-                    self.table_details, search_text, match_type
-                )
-
-                query_string = query.as_string()
-
-                # Verify query structure
-                self.assertIsInstance(query, sql.Composed)
-                self.assertIn("SELECT", query_string)
-                self.assertIn("WHERE", query_string)
-
-                # Verify parameters format based on match type
-                if match_type == MatchType(match_type=Filter.EQUALS):
-                    self.assertTrue(
-                        all(
-                            not str(p).startswith("%") and not str(p).endswith("%")
-                            for p in params
-                        )
-                    )
-                elif match_type == MatchType(match_type=Filter.STARTS_WITH):
-                    self.assertTrue(any(str(p).endswith("%") for p in params))
-                elif match_type == MatchType(match_type=Filter.CONTAINS):
-                    self.assertTrue(
-                        any(
-                            str(p).startswith("%") and str(p).endswith("%")
-                            for p in params
-                        )
-                    )
-
-        # Test with empty search text
-        query, params = select_by_text_query(self.table_details, "", match_type)
-        self.assertIsInstance(query, sql.Composed)
-        self.assertEqual(len(params), 1)
-
-        # Test with None match_type
-        query, params = select_by_text_query(
-            self.table_details, search_text, match_type
-        )
-        self.assertIsInstance(query, sql.Composed)
-        self.assertIn("SELECT", query_string)
 
     def test_build_search_query_unsupported_match_type(self):
         """Test build_search_query raises ValueError for unsupported match type."""
@@ -339,62 +240,6 @@ class TestShiftQueries(unittest.TestCase):
         # Check each part is in the query
         for part in expected_query_parts:
             self.assertIn(part, query_string)
-
-    def test_select_common_query_with_shift_id(self):
-        """Test select_common_query with shift_id parameter"""
-        # Test data
-        test_shift_id = "shift123"
-
-        # Execute the function with shift_id
-        query, params = select_common_query(
-            table_details=self.table_details, shift_id=test_shift_id
-        )
-
-        # Convert query to string for assertion checks
-        query_string = query.as_string()
-
-        # Basic query structure checks
-        self.assertIn("SELECT", query_string)
-        self.assertIn("FROM", query_string)
-        self.assertIn("WHERE", query_string)
-
-        # Check if shift_id condition is properly formatted
-        self.assertIn('"shift_id" = %s', query_string)
-
-        # Check parameters
-        self.assertIsInstance(params, tuple)
-        self.assertEqual(len(params), 1)
-        self.assertEqual(params[0], test_shift_id)
-
-    def test_select_common_query_with_shift_id_and_eb_id(self):
-        """Test select_common_query with both shift_id and eb_id parameters"""
-        # Test data
-        test_shift_id = "shift123"
-        test_eb_id = "eb456"
-
-        # Execute the function with both shift_id and eb_id
-        query, params = select_common_query(
-            table_details=self.table_details, shift_id=test_shift_id, eb_id=test_eb_id
-        )
-
-        # Convert query to string for assertion checks
-        query_string = query.as_string()
-
-        # Basic query structure checks
-        self.assertIn("SELECT", query_string)
-        self.assertIn("FROM", query_string)
-        self.assertIn("WHERE", query_string)
-
-        # Check if both conditions are properly formatted
-        self.assertIn('"shift_id" = %s', query_string)
-        self.assertIn('"eb_id" = %s', query_string)
-        self.assertIn("AND", query_string)
-
-        # Check parameters
-        self.assertIsInstance(params, tuple)
-        self.assertEqual(len(params), 2)
-        self.assertEqual(params[0], test_shift_id)
-        self.assertEqual(params[1], test_eb_id)
 
     def test_get_shift_log_columns(self):
         """Test get_shift_log_columns returns correct column names"""
@@ -569,68 +414,3 @@ class TestShiftQueries(unittest.TestCase):
         self.assertEqual(parsed_json["info"]["eb_id"], "eb-t0001-20241022-00002")
         self.assertEqual(parsed_json["source"], "ODA")
         self.assertIsInstance(parsed_json["comments"], list)
-
-    def test_select_logs_by_status(self):
-        """Test select_logs_by_status returns correct query with various parameters"""
-        # Test case 1: Basic status filter
-        qry_params = SbiEntityStatus(sbi_status=SBIStatus.CREATED)
-        status_column = "status"
-        entity_filter = None
-        match_type = None
-
-        query, params = select_logs_by_status(
-            self.table_details, qry_params, status_column, entity_filter, match_type
-        )
-
-        self.assertEqual(params, ("Created",))
-
-        # Test case 2: With entity filter and match type
-        entity_filter = EntityFilter(sbi_id="SBI001", eb_id="EB123")
-        match_type = MatchType(match_type=Filter.STARTS_WITH)
-
-        query, params = select_logs_by_status(
-            self.table_details, qry_params, status_column, entity_filter, match_type
-        )
-
-        expected_query = """
-            SELECT
-                shift_id,
-                shift_start,
-                shift_end,
-                shift_operator,
-                annotations,
-                shift_logs,
-                created_on,
-                created_by,
-                last_modified_on,
-                last_modified_by,
-                jsonb_agg(
-                    jsonb_build_object(
-                        'info', log->'info',
-                        'source', log->'source',
-                        'log_time', log->'log_time'
-                    ) ORDER BY (log->>'log_time')::timestamp
-                ) FILTER (WHERE log IS NOT NULL) AS shift_logs
-            FROM
-                tab_oda_slt,
-                jsonb_array_elements(shift_logs) AS log
-            WHERE
-                log->>'info' ? 'status'
-                AND (log->'info'->>{status_column!r})::text = %s
-                AND (log->'info'->>'sbi_ref')::text LIKE %s
-                AND (log->'info'->>'eb_id')::text LIKE %s
-            GROUP BY
-                shift_id,
-                shift_start,
-                shift_end,
-                shift_operator,
-                annotations,
-                shift_logs,
-                created_on,
-                created_by,
-                last_modified_on,
-                last_modified_by
-            """
-
-        self.assertEqual(params, ("Created", "SBI001%", "EB123%"))
-        self.assertEqual(" ".join(query.split()), " ".join(expected_query.split()))

@@ -112,7 +112,7 @@ class TableMappingFactory:
         if mapping_type not in mapping_classes:
             raise ValueError(f"Unsupported mapping type: {mapping_type}")
 
-        return mapping_classes[mapping_type]()
+        return mapping_classes[mapping_type]
 
     @staticmethod
     def create_mapping(
