@@ -1,4 +1,9 @@
-"""Factory class for creating table mappings."""
+"""Factory module for creating database table mappings.
+
+This module provides functionality for mapping between domain entities and database tables
+through the TableMappingFactory class. It handles various types of shift-related entities
+and their corresponding database mappings.
+"""
 
 from enum import Enum, auto
 from typing import Type, Union
@@ -11,22 +16,20 @@ from ska_oso_slt_services.data_access.postgres.mapping import (
     ShiftLogMapping,
 )
 from ska_oso_slt_services.domain.shift_models import (
-    EntityFilter,
-    MatchType,
-    Media,
-    Metadata,
-    SbiEntityStatus,
     Shift,
     ShiftAnnotation,
     ShiftBaseClass,
     ShiftComment,
     ShiftLogComment,
-    ShiftLogs,
 )
 
 
 class MappingType(Enum):
-    """Enum for different types of mappings."""
+    """Enumeration of supported mapping types for different shift-related entities.
+
+    This enum defines the various types of mappings that can be created by the factory,
+    corresponding to different types of shift-related database tables.
+    """
 
     SHIFT = auto()
     SHIFT_BASE_CLASS = auto()
@@ -36,58 +39,113 @@ class MappingType(Enum):
 
 
 class TableMappingFactory:
-    """Factory class for creating table mappings."""
+    """Factory class for creating database table mappings.
+
+    This class provides methods to create appropriate mapping objects for different
+    types of shift-related entities. It handles the mapping between domain entities
+    and their database table representations.
+    """
 
     @staticmethod
     def _get_mapping_type(
-        entity: Union[Shift, ShiftLogComment, ShiftComment, ShiftAnnotation],
+        entity: Union[
+            Type[
+                Union[
+                    Shift,
+                    ShiftBaseClass,
+                    ShiftLogComment,
+                    ShiftComment,
+                    ShiftAnnotation,
+                ]
+            ],
+            Union[
+                Shift, ShiftBaseClass, ShiftLogComment, ShiftComment, ShiftAnnotation
+            ],
+        ],
     ) -> MappingType:
-        """Get the mapping type for an entity.
+        """Determine the mapping type for a given entity.
 
         Args:
-            entity: Entity to get mapping type for.
+            entity: Either a class type or instance of a shift-related entity.
 
         Returns:
-            MappingType: The mapping type for the entity.
+            MappingType: The appropriate mapping type for the entity.
 
         Raises:
             ValueError: If the entity type is not supported.
         """
-        if isinstance(entity, Shift) or entity == Shift:
-            return MappingType.SHIFT
-        if isinstance(entity, ShiftBaseClass) or entity == ShiftBaseClass:
-            return MappingType.SHIFT_BASE_CLASS
-        elif isinstance(entity, ShiftLogComment) or entity == ShiftLogComment:
-            return MappingType.SHIFT_LOG_COMMENT
-        elif isinstance(entity, ShiftComment) or entity == ShiftComment:
-            return MappingType.SHIFT_COMMENT
-        elif isinstance(entity, ShiftAnnotation) or entity == ShiftAnnotation:
-            return MappingType.SHIFT_ANNOTATION
-        else:
-            raise ValueError(f"Unsupported entity type: {type(entity)}")
+        mapping_types = {
+            Shift: MappingType.SHIFT,
+            ShiftBaseClass: MappingType.SHIFT_BASE_CLASS,
+            ShiftLogComment: MappingType.SHIFT_LOG_COMMENT,
+            ShiftComment: MappingType.SHIFT_COMMENT,
+            ShiftAnnotation: MappingType.SHIFT_ANNOTATION,
+        }
+
+        entity_type = entity if isinstance(entity, type) else type(entity)
+        if entity_type in mapping_types:
+            return mapping_types[entity_type]
+
+        raise ValueError(f"Unsupported entity type: {entity_type.__name__}")
 
     @staticmethod
-    def get_mapping_class(mapping_type: MappingType) -> Type[BaseMapping]:
-        """Get the mapping class for a mapping type.
+    def _get_mapping_class(mapping_type: MappingType) -> Type[BaseMapping]:
+        """Get the mapping class for a given mapping type.
 
         Args:
-            mapping_type: Type of mapping to get class for.
+            mapping_type: The type of mapping for which to get the class.
 
         Returns:
-            Type[BaseMapping]: The mapping class.
+            Type[BaseMapping]: The appropriate mapping class.
 
         Raises:
             ValueError: If the mapping type is not supported.
         """
         mapping_classes = {
-            MappingType.SHIFT: ShiftLogMapping(),
-            MappingType.SHIFT_BASE_CLASS: ShiftLogMapping(),
-            MappingType.SHIFT_LOG_COMMENT: ShiftLogCommentMapping(),
-            MappingType.SHIFT_COMMENT: ShiftCommentMapping(),
-            MappingType.SHIFT_ANNOTATION: ShiftAnnotationMapping(),
+            MappingType.SHIFT: ShiftLogMapping,
+            MappingType.SHIFT_BASE_CLASS: ShiftLogMapping,  # Uses same mapping as SHIFT
+            MappingType.SHIFT_LOG_COMMENT: ShiftLogCommentMapping,
+            MappingType.SHIFT_COMMENT: ShiftCommentMapping,
+            MappingType.SHIFT_ANNOTATION: ShiftAnnotationMapping,
         }
 
         if mapping_type not in mapping_classes:
             raise ValueError(f"Unsupported mapping type: {mapping_type}")
 
-        return mapping_classes[mapping_type]
+        return mapping_classes[mapping_type]()
+
+    @staticmethod
+    def create_mapping(
+        entity: Union[
+            Type[
+                Union[
+                    Shift,
+                    ShiftBaseClass,
+                    ShiftLogComment,
+                    ShiftComment,
+                    ShiftAnnotation,
+                ]
+            ],
+            Union[
+                Shift, ShiftBaseClass, ShiftLogComment, ShiftComment, ShiftAnnotation
+            ],
+        ],
+    ) -> BaseMapping:
+        """Create a mapping instance for the given entity.
+
+        This method determines the appropriate mapping type for the given entity and creates
+        an instance of the corresponding mapping class.
+
+        Args:
+            entity: Either a class type or instance of a shift-related entity
+                   for which to create a mapping.
+
+        Returns:
+            BaseMapping: An instance of the appropriate mapping class for the entity.
+
+        Raises:
+            ValueError: If the entity type is not supported.
+        """
+        mapping_type = TableMappingFactory._get_mapping_type(entity)
+        mapping_class = TableMappingFactory._get_mapping_class(mapping_type)
+        return mapping_class()

@@ -98,7 +98,7 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
             NotFoundError: If no comment is found with the provided ID.
         """
         metadata = self.crud_shift_repository.get_entity_metadata(
-            entity_id=comment_id, table_details=ShiftLogCommentMapping()
+            entity_id=comment_id, model=shift_log_comment
         )
         if not metadata:
             raise NotFoundError(f"No Comment found with ID: {comment_id}")

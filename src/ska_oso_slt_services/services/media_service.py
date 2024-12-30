@@ -24,7 +24,7 @@ class MediaService(BaseRepositoryService):
             Shift: The updated comment with the added media.
         """
         latest_metadata = self.crud_shift_repository.get_entity_metadata(
-            entity_id=comment_id, table_details=table_mapping
+            entity_id=comment_id, model=shift_model
         )
 
         if isinstance(shift_model, dict):

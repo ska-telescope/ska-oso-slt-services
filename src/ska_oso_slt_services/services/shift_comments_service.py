@@ -121,7 +121,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
             raise NotFoundError(f"No shift found with id: {shift_comment['shift_id']}")
 
         metadata = self.crud_shift_repository.get_entity_metadata(
-            entity_id=comment_id, table_details=ShiftCommentMapping()
+            entity_id=comment_id, model=shift_comment
         )
         if not metadata:
             raise NotFoundError(f"No Comment found with ID: {comment_id}")
