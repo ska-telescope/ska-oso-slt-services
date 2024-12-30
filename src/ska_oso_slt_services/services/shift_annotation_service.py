@@ -3,7 +3,6 @@ from typing import List
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
-from ska_oso_slt_services.data_access.postgres.mapping import ShiftAnnotationMapping
 from ska_oso_slt_services.domain.shift_models import ShiftAnnotation
 from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
 
@@ -126,7 +125,7 @@ class ShiftAnnotations(BaseRepositoryService):
             )
 
         metadata = self.crud_shift_repository.get_entity_metadata(
-            entity_id=annotation_id, table_details=ShiftAnnotationMapping()
+            entity_id=annotation_id, model=shift_annotation
         )
 
         shift_log_annotation_with_metadata = update_metadata(
