@@ -2,12 +2,7 @@ import logging
 from typing import Any, List
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
-from ska_oso_slt_services.common.metadata_mixin import (
-    get_latest_metadata,
-    set_new_metadata,
-    update_metadata,
-)
-from ska_oso_slt_services.data_access.postgres.mapping import ShiftCommentMapping
+from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_metadata
 from ska_oso_slt_services.domain.shift_models import Media, ShiftComment
 from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
 from ska_oso_slt_services.services.media_service import MediaService
@@ -152,7 +147,6 @@ class ShiftComments(MediaService, BaseRepositoryService):
             comment_id=comment_id,
             files=files,
             shift_model=shift_model,
-            table_mapping=ShiftCommentMapping(),
         )
 
     def get_media_for_comment(self, comment_id: int, shift_model: Any) -> list[Media]:

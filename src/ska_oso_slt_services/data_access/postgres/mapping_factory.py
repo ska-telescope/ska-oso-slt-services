@@ -1,7 +1,9 @@
 """Factory module for creating database table mappings.
 
-This module provides functionality for mapping between domain entities and database tables
-through the TableMappingFactory class. It handles various types of shift-related entities
+This module provides functionality for mapping between
+domain entities and database tables
+through the TableMappingFactory class.
+It handles various types of shift-related entities
 and their corresponding database mappings.
 """
 
@@ -133,8 +135,9 @@ class TableMappingFactory:
     ) -> BaseMapping:
         """Create a mapping instance for the given entity.
 
-        This method determines the appropriate mapping type for the given entity and creates
-        an instance of the corresponding mapping class.
+        This method determines the appropriate mapping
+        type for the given entity
+        and creates an instance of the corresponding mapping class.
 
         Args:
             entity: Either a class type or instance of a shift-related entity

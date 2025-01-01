@@ -4,7 +4,6 @@ from datetime import datetime
 from enum import Enum
 
 from psycopg import sql
-from ska_oso_pdm.entity_status_history import SBIStatus
 
 from ska_oso_slt_services.data_access.postgres.mapping import (
     ShiftCommentMapping,
@@ -15,18 +14,11 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     insert_query,
     patch_query,
     select_by_date_query,
+    select_by_shift_params,
     select_latest_shift_query,
-    select_logs_by_status,
     update_query,
 )
-from ska_oso_slt_services.domain.shift_models import (
-    EntityFilter,
-    Filter,
-    MatchType,
-    SbiEntityStatus,
-    Shift,
-    ShiftLogs,
-)
+from ska_oso_slt_services.domain.shift_models import Filter, MatchType, Shift, ShiftLogs
 
 
 class TestShiftQueries(unittest.TestCase):
@@ -52,6 +44,24 @@ class TestShiftQueries(unittest.TestCase):
                 "last_modified_on": "2024-10-15T12:03:50.680859+05:30",
             },
         )
+
+    def test_select_by_shift_params_equals(self):
+        """Test select_by_shift_params with equals match type"""
+        # Arrange
+        qry_params = MatchType(match_type=Filter.EQUALS)
+
+        # Act
+        query, params = select_by_shift_params(
+            self.table_details, self.shift, qry_params
+        )
+
+        # Assert
+        self.assertIsInstance(query, sql.Composed)
+        self.assertEqual(
+            len(params), 5
+        )  # shift_id, shift_type, shift_operator, status, shift_start, shift_end
+        self.assertIn("LIKE", query.as_string())
+        self.assertEqual(params[0], "123")  # Exact match for shift_id
 
     def test_insert_query(self):
         query, params = insert_query(self.table_details, self.shift)
@@ -264,12 +274,37 @@ class TestShiftQueries(unittest.TestCase):
     def test_get_shift_log_params(self):
         """Test get_shift_log_params returns correct parameter values"""
         # Create mock shift logs
-        # shift_logs = ShiftLogs(
-        #     info={"message": "Test log"},
-        #     source="operator",
-        #     log_time=datetime(2024, 1, 1, 12, 0),
-        #     comments=[],
-        # )
+
+    def test_build_full_text_search_query(self):
+        """Test build_full_text_search_query builds correct query."""
+        from ska_oso_slt_services.data_access.postgres.sqlqueries import (
+            build_full_text_search_query,
+        )
+
+        # Arrange
+        columns = ["column1", "column2"]
+        search_columns = ["column1", "column2"]
+        search_text = "test search"
+
+        # Act
+        query, params = build_full_text_search_query(
+            self.table_details, columns, search_columns, search_text
+        )
+
+        # Assert
+        # Check that params are correct
+        self.assertEqual(params, (search_text, search_text))
+
+        # Convert query to string for assertion
+        query_str = query.as_string(None)
+
+        # Verify query structure
+        self.assertIn("SELECT", query_str)
+        self.assertIn("column1", query_str)
+        self.assertIn("column2", query_str)
+        self.assertIn("to_tsvector('english'", query_str)
+        self.assertIn("plainto_tsquery('english'", query_str)
+        self.assertIn("ORDER BY search_rank DESC", query_str)
 
         shift_logs_dict = [
             {

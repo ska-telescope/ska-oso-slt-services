@@ -1,17 +1,12 @@
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type
 
 from pydantic import BaseModel, Field
 
 from ska_oso_slt_services.common.metadata_mixin import get_latest_metadata
 from ska_oso_slt_services.domain.shift_models import (
-    EntityFilter,
-    MatchType,
     Metadata,
-    SbiEntityStatus,
-    Shift,
     ShiftAnnotation,
     ShiftComment,
-    ShiftLogComment,
 )
 from ska_oso_slt_services.repository.postgres_shift_repository import (
     CRUDShiftRepository,

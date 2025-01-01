@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from ska_oso_slt_services.domain.shift_models import Shift
+from ska_oso_slt_services.domain.shift_models import Shift, ShiftAnnotation
 from ska_oso_slt_services.repository.postgres_shift_repository import (
     PostgresShiftRepository,
 )
@@ -314,3 +314,220 @@ class TestShiftService:
 
         # Verify method calls
         mock_get_shift.assert_called_once_with(shift_id=mock_shift_data.shift_id)
+
+
+class TestCreateShiftAnnotations:
+
+    @patch(
+        "ska_oso_slt_services.repository.postgres_shift_repository."
+        "PostgresShiftRepository._insert_shift_to_database"
+    )
+    def test_create_shift_annotations_successful(self, mock_insert_shift_to_database):
+        # Arrange
+        mock_shift_annotations = ShiftAnnotation(id=1, annotation="Annotation 1")
+
+        # Act
+        mock_insert_shift_to_database.return_value = {"id": 10}
+        repository = PostgresShiftRepository()
+        # Mock dependencies
+        repository.postgres_data_access = Mock()
+        repository.crud = Mock()
+
+        # Mock get_shift to return our test shift
+        test_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+        repository.get_shift = Mock(return_value=test_shift)
+        result = repository.create_shift_annotation(mock_shift_annotations)
+
+        # Assert
+        assert result.id == 10
+
+    @patch("ska_oso_slt_services.services.base_repository_service.get_latest_metadata")
+    @patch(
+        "ska_oso_slt_services.repository."
+        "postgres_shift_repository.PostgresShiftRepository.get_entity_metadata"
+    )
+    @patch("ska_oso_slt_services.services.shift_service.update_metadata")
+    @patch(
+        "ska_oso_slt_services.repository."
+        "postgres_shift_repository.PostgresShiftRepository.update_shift"
+    )
+    @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
+    @patch(
+        "ska_oso_slt_services.repository.postgres_shift_repository."
+        "PostgresShiftRepository._insert_shift_to_database"
+    )
+    def test_create_annotations(
+        self,
+        mock_insert_shift_to_database,
+        mock_get_shift,
+        mock_update_shift,
+        mock_update_metadata,
+        mock_latest_metadata,
+        mock_get_entity_metadata,
+    ):
+        # Arrange
+        mock_shift_data = Mock(spec=Shift)
+        mock_shift_data.id = "XXXXXXXXX"
+        mock_shift_data.shift_operator = "test-operator"
+        mock_insert_shift_to_database.return_value = {"id": 10}
+        mock_get_entity_metadata.return_value = {
+            "created_by": "test",
+            "created_on": "2024-11-11T15:46:12.378390Z",
+            "last_modified_on": "2024-11-11T15:46:12.378390Z",
+            "last_modified_by": "test",
+        }
+        # Mock the return value for get_shift
+        mock_get_shift.return_value = mock_shift_data
+
+        # Mock the return value for update_metadata
+        mock_metadata_shift = Mock(spec=Shift)
+        mock_metadata_shift.shift_id = "XXXXXXXXX"
+        mock_latest_metadata.return_value = mock_metadata_shift
+        mock_update_metadata.return_value = mock_metadata_shift
+
+        # Mock the return value for update_shift
+        mock_update_shift.return_value = mock_metadata_shift
+        mock_shift_annotations = ShiftAnnotation(
+            id=1, shift_id="1-test", annotation="Annotation 1"
+        )
+        # Act
+        shift_service = ShiftService([PostgresShiftRepository])
+        shift_service.crud_shift_repository.create_shift_annotation
+        result = shift_service.create_shift_annotation(mock_shift_annotations)
+
+        # Assert
+        assert result.id == 10
+
+    @patch("ska_oso_slt_services.services.base_repository_service.get_latest_metadata")
+    @patch(
+        "ska_oso_slt_services.repository."
+        "postgres_shift_repository.PostgresShiftRepository.get_entity_metadata"
+    )
+    @patch(
+        "ska_oso_slt_services.services.base_repository_service."
+        "BaseRepositoryService._prepare_entity_with_metadata"
+    )
+    @patch("ska_oso_slt_services.data_access.postgres.shift_crud.DBCrud.get_entity")
+    @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
+    @patch(
+        "ska_oso_slt_services.repository.postgres_shift_repository"
+        ".PostgresShiftRepository._insert_shift_to_database"
+    )
+    def test_get_shift_annotation(
+        self,
+        mock_insert_shift_to_database,
+        mock_get_shift,
+        get_annotation,
+        mock_entity_metadata,
+        mock_latest_metadata,
+        mock_get_entity_metadata,
+    ):
+        # Arrange
+        mock_shift_data = Mock(spec=Shift)
+        mock_shift_data.id = "XXXXXXXXX"
+        mock_shift_data.shift_operator = "test-operator"
+        mock_insert_shift_to_database.return_value = {"id": 10}
+        mock_get_entity_metadata.return_value = {
+            "created_by": "test",
+            "created_on": "2024-11-11T15:46:12.378390Z",
+            "last_modified_on": "2024-11-11T15:46:12.378390Z",
+            "last_modified_by": "test",
+        }
+        # Mock the return value for get_shift
+        mock_get_shift.return_value = mock_shift_data
+
+        # Mock the return value for update_metadata
+        mock_annotatios = Mock(spec=ShiftAnnotation)
+        mock_annotatios.id = "10"
+        # Mock the return value for update_shift
+        get_annotation.return_value = mock_annotatios
+        mock_shift_annotations = ShiftAnnotation(
+            id=1, shift_id="1-test", annotation="Annotation 1"
+        )
+        # Act
+        mock_entity_metadata.return_value = mock_shift_annotations
+        shift_service = ShiftService([PostgresShiftRepository])
+
+        shift_service.crud_shift_repository.create_shift_annotation
+        result = shift_service.get_shift_annotation(annotation_id=10)
+
+        # Assert
+        assert result.id == 1
+
+    @patch("ska_oso_slt_services.data_access.postgres.shift_crud.DBCrud.get_entities")
+    def test_get_shift_annotations(
+        self,
+        mock_entity_metadata,
+    ):
+        # Arrange
+        mock_shift_data = Mock(spec=Shift)
+        mock_shift_data.id = "XXXXXXXXX"
+        mock_shift_data.shift_operator = "test-operator"
+
+        # Mock the return value for get_shift
+
+        # Mock the return value for update_metadata
+        # Mock the return value for update_shift
+        mock_shift_annotations = {
+            "id": 1,
+            "shift_id": "1-test",
+            "annotation": "Annotation 1",
+            "created_by": "test",
+            "last_modified_by": "test",
+            "created_on": "2024-11-11T15:46:12.378390Z",
+            "last_modified_on": "2024-11-11T15:46:12.378390Z",
+        }
+        # Act
+        mock_entity_metadata.return_value = [mock_shift_annotations]
+        shift_service = ShiftService([PostgresShiftRepository])
+
+        shift_service.crud_shift_repository.create_shift_annotation
+        result = shift_service.get_shift_annotations(shift_id="1-test")
+
+        # Assert
+        assert result[0].id == 1
+
+    @patch(
+        "ska_oso_slt_services.repository.postgres_shift_repository."
+        "PostgresShiftRepository._insert_shift_to_database"
+    )
+    def test_error_to_create_shift_annotations(self, mock_insert_shift_to_database):
+        # Arrange
+        mock_shift_annotations = ShiftAnnotation(id=1, annotation="Annotation 1")
+
+        # Act
+        mock_insert_shift_to_database.return_value = {"id": 10}
+        repository = PostgresShiftRepository()
+        # Mock dependencies
+        repository.postgres_data_access = Mock()
+        repository.crud = Mock()
+
+        # Mock get_shift to return our test shift
+        test_shift = Shift(
+            shift="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+        repository.get_shift = Mock(return_value=test_shift)
+        result = repository.create_shift_annotation(mock_shift_annotations)
+
+        # Assert
+        assert result.id == 10
+
+    def test_get_shift_annotations_successful(self):
+        # Arrange
+        mock_shift_annotations = {"id": 1, "annotation": "Annotation 1"}
+        # Act
+        repository = PostgresShiftRepository()
+        # Mock dependencies
+        repository.postgres_data_access = Mock()
+        repository.crud.get_entities = Mock(return_value=[mock_shift_annotations])
+
+        # Mock get_shift to return our test shift
+        test_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+        repository.get_shift = Mock(return_value=test_shift)
+        result = repository.get_shift_annotations(1)
+        # Assert
+        assert result[0]["annotation"] == "Annotation 1"

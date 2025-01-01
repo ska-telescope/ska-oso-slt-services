@@ -7,7 +7,7 @@ entity objects and SQL queries, focusing on shift-related data.
 
 import json
 from datetime import datetime
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 from ska_oso_slt_services.data_access.postgres.base_mapping import (
     BaseMapping,

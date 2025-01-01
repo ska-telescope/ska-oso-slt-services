@@ -7,7 +7,7 @@ selecting, and querying shifts.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from psycopg import sql
 
@@ -559,7 +559,7 @@ def select_latest_query(
         QueryAndParameters: A tuple of the query and parameters.
     """
     # Get the columns for the select statement
-    id, shift_id, eb_id = (
+    tid, shift_id, eb_id = (
         filters.get("id"),
         filters.get("shift_id"),
         filters.get("eb_id"),
@@ -585,7 +585,7 @@ def select_latest_query(
     params = []
 
     # Add conditions based on the parameters provided
-    if id is not None:
+    if tid is not None:
         where_clauses.append(sql.SQL("{field} = %s").format(field=sql.Identifier("id")))
         params.append(id)
 

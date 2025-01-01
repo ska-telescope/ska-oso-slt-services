@@ -7,7 +7,6 @@ from ska_oso_slt_services.common.metadata_mixin import (
     set_new_metadata,
     update_metadata,
 )
-from ska_oso_slt_services.data_access.postgres.mapping import ShiftLogCommentMapping
 from ska_oso_slt_services.domain.shift_models import Shift, ShiftLogComment
 from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
 from ska_oso_slt_services.services.media_service import MediaService
@@ -77,7 +76,7 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
         shift_log_comments_obj_with_metadata = []
         for shift_log_comment in shift_log_comments:
             shift_log_comment_with_metadata = get_latest_metadata(
-                entity=shift_log_comment, model=ShiftLogComment
+                entity=shift_log_comment
             )
             shift_log_comments_obj_with_metadata.append(shift_log_comment_with_metadata)
 
@@ -171,5 +170,4 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
             comment_id=comment_id,
             files=files,
             shift_model=shift_model,
-            table_mapping=ShiftLogCommentMapping(),
         )

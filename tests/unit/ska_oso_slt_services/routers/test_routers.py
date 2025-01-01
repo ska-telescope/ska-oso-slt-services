@@ -1,4 +1,3 @@
-from datetime import datetime
 from http import HTTPStatus
 from unittest.mock import MagicMock, Mock, patch
 
@@ -296,14 +295,6 @@ def test_update_shift_log_comment(shift_initial_comment_data):
     # Verify metadata, inlining the normalization
     assert "metadata" in updated_comment_response, "Metadata is missing in the response"
     metadata = updated_comment_response["metadata"]
-
-    # Inline normalization for datetime format comparison
-    expected_last_modified_on = datetime.fromisoformat(
-        updated_comment_data["metadata"]["last_modified_on"].replace("Z", "+00:00")
-    ).isoformat()
-    actual_last_modified_on = datetime.fromisoformat(
-        metadata["last_modified_on"].replace("Z", "+00:00")
-    ).isoformat()
 
     assert (
         metadata["last_modified_by"]

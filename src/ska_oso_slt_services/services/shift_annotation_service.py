@@ -26,7 +26,6 @@ class ShiftAnnotations(BaseRepositoryService):
 
         if not shift_annotation_data.shift_id:
             raise ValueError("Shift id is required")
-
         shift = self.get_shift(shift_annotation_data.shift_id)
         if not shift:
             raise NotFoundError(
@@ -58,7 +57,6 @@ class ShiftAnnotations(BaseRepositoryService):
         if not shift_annotations:
             raise NotFoundError("No Shift annotations found for the given query.")
         LOGGER.info("Shift annotations : %s", shift_annotations)
-
         shift_annotations_obj_with_metadata = []
         for shift_annotation in shift_annotations:
             shift_annotation_with_metadata = self._prepare_entity_with_metadata(

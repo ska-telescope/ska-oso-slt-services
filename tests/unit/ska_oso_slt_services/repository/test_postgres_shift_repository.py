@@ -2,10 +2,9 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, Mock, patch
 
-from psycopg import DatabaseError, DataError, InternalError
+from psycopg import DatabaseError
 
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
-from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.domain.shift_models import Media, Shift, ShiftLogComment
 from ska_oso_slt_services.repository.postgres_shift_repository import (
     PostgresShiftRepository,
@@ -251,7 +250,8 @@ class TestPostgressShiftRepository(unittest.TestCase):
 
         # Mock the get_file_object_from_s3 function
         with patch(
-            "ska_oso_slt_services.repository.postgres_shift_repository.get_file_object_from_s3"
+            "ska_oso_slt_services.repository.postgres_shift_repository."
+            "get_file_object_from_s3"
         ) as mock_s3:
             mock_s3.return_value = ("test_file_key", "base64_content", "image/jpeg")
 

@@ -7,6 +7,7 @@ for shift-related entities including creation, retrieval, and updates.
 import logging
 from typing import Any, List, Optional, TypeVar
 
+from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.data_access.postgres.base_mapping import BaseMapping
 from ska_oso_slt_services.data_access.postgres.execute_query import PostgresDataAccess
 from ska_oso_slt_services.data_access.postgres.mapping_factory import (
@@ -26,24 +27,6 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
-
-
-from ska_oso_slt_services.common.error_handling import NotFoundError
-from ska_oso_slt_services.data_access.postgres.sqlqueries import (
-    insert_query,
-    select_by_date_query,
-    select_by_shift_params,
-    select_latest_query,
-    select_latest_shift_query,
-    select_logs_by_status,
-    select_metadata_query,
-    update_query,
-)
-
-from .execute_query import PostgresDataAccess
-from .mapping_factory import TableMappingFactory
-
-logger = logging.getLogger(__name__)
 
 
 class DBCrud:
@@ -121,9 +104,7 @@ class DBCrud:
 
         return db.get_one(query=query, params=params)
 
-    def get_latest_entity(
-        self, entity: T, db: Any, filters: Optional[dict] = None
-    ) -> Optional[T]:
+    def get_latest_entity(self, entity: T, db: Any) -> Optional[T]:
         """Get the latest entity from the database.
 
         Args:
@@ -173,10 +154,10 @@ class DBCrud:
             )
             return db.get(query=query, params=params)
         except Exception as e:
-            logger.error(f"Error retrieving entities: {str(e)}")
-            raise NotFoundError(
-                "Select match_type for shift_operator, shift_id, sbi_id, eb_id, annotations"
-            ) from e
+            logger.error(  # pylint: disable=W1203
+                f"Error retrieving entities: {str(e)}"
+            )  # pylint: disable=I0021
+            raise NotFoundError("Select match_type for required selection types") from e
 
     def _build_entities_query(
         self,
@@ -186,7 +167,8 @@ class DBCrud:
         match_type: Optional[Any],
         filters: Optional[dict],
     ) -> tuple[str, list]:
-        """Build the appropriate query for retrieving entities based on provided criteria.
+        """Build the appropriate query for retrieving
+            entities based on provided criteria.
 
         Args:
             entity: The entity type to query for

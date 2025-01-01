@@ -1,19 +1,7 @@
-from enum import Enum
-
-import pytest
-
-from ska_oso_slt_services.data_access.postgres.mapping import (
-    ShiftAnnotationMapping,
-    ShiftCommentMapping,
-    ShiftLogCommentMapping,
-    ShiftLogMapping,
-)
 from ska_oso_slt_services.data_access.postgres.mapping_factory import (
-    MappingType,
     TableMappingFactory,
 )
 from ska_oso_slt_services.domain.shift_models import (
-    Shift,
     ShiftAnnotation,
     ShiftBaseClass,
     ShiftComment,

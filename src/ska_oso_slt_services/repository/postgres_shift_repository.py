@@ -2,7 +2,7 @@ import logging
 import threading
 import time
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 from deepdiff import DeepDiff
 from psycopg import DatabaseError, DataError, InternalError, sql
@@ -139,9 +139,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             NotFoundError: If no shift is found with the given ID.
             Exception: For any other unexpected errors.
         """
-        filter = {"shift_id": shift_id}
         shift = self.crud.get_entity(
-            entity=Shift(), db=self.postgres_data_access, filters=filter
+            entity=Shift(), db=self.postgres_data_access, filters={"shift_id": shift_id}
         )
         return shift
 
@@ -262,7 +261,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         Args:
             entity_id (Union[str, int]): ID of the entity to fetch metadata for.
-            model (Shift, optional): The model class to use for the entity. Defaults to Shift().
+            model (Shift, optional): The model class to use for the entity.
+            Defaults to Shift().
 
         Returns:
             Optional[Metadata]: Metadata for the specified entity if available.
@@ -270,9 +270,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Raises:
             NotFoundError: If no metadata is found for the entity.
         """
-        filter = {"entity_id": entity_id}
         meta_data = self.crud.get_entity(
-            entity=model, db=self.postgres_data_access, metadata=True, filters=filter
+            entity=model,
+            db=self.postgres_data_access,
+            metadata=True,
+            filters={"entity_id": entity_id},
         )
         if not meta_data:
             raise NotFoundError(f"No entity found with ID: {entity_id}")
@@ -286,10 +288,12 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         Args:
             comment_id (int): The ID of the comment to get the media from.
-            table_model (Union[ShiftLogComment, ShiftComment]): The model class for the comment.
+            table_model (Union[ShiftLogComment, ShiftComment]):
+            The model class for the comment.
 
         Returns:
-            List[Dict[str, str]]: List of dictionaries containing file information with keys:
+            List[Dict[str, str]]: List of dictionaries containing file information
+            with keys:
                 - file_key: The unique identifier of the file
                 - media_content: The base64 encoded content
                 - content_type: The MIME type of the file
@@ -330,12 +334,15 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         Args:
             comment_id (int): ID of comment or shift log comment.
-            shift_comment (ShiftComment): The shift comment object to associate the media with.
+            shift_comment (ShiftComment): The shift comment object
+            to associate the media with.
             files : List of files to be uploaded.
-            shift_model (Union[ShiftLogComment, ShiftComment]): The model class for the comment.
+            shift_model (Union[ShiftLogComment, ShiftComment]):
+            The model class for the comment.
 
         Returns:
-            Union[ShiftLogComment, ShiftComment]: The updated comment object with added media information.
+            Union[ShiftLogComment, ShiftComment]: The updated comment
+            object with added media information.
 
         Raises:
             ValueError: If files cannot be processed or uploaded.
@@ -393,12 +400,16 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         Args:
             shift (ShiftLogComment): The shift log comment model to use.
-            shift_id (Optional[str], optional): The shift ID to filter comments by. Defaults to None.
-            eb_id (Optional[str], optional): The EB ID to filter comments by. Defaults to None.
+            shift_id (Optional[str], optional): The shift ID to
+            filter comments by. Defaults to None.
+            eb_id (Optional[str], optional): The EB ID to filter comments by.
+            Defaults to None.
 
         Returns:
-            List[Dict[str, Any]]: List of comments associated with the specified filters,
-                where each comment is a dictionary matching the ShiftLogComment model structure.
+            List[Dict[str, Any]]: List of comments associated
+            with the specified filters,
+                where each comment is a dictionary matching
+                the ShiftLogComment model structure.
         """
         filters = {}
         if shift_id:
@@ -417,7 +428,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         Args:
             comment_id (int): The ID of the comment to retrieve.
-            entity (ShiftLogComment, optional): The entity model to use. Defaults to ShiftLogComment().
+            entity (ShiftLogComment, optional): The entity model to use.
+            Defaults to ShiftLogComment().
 
         Returns:
             Dict[str, Any]: Dictionary containing the comment data.
@@ -596,21 +608,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
         shift: Optional[Shift] = None,
     ) -> Dict[str, Any]:
         """
-        Patch a shift with selective updates.
-
-        Args:
-            shift (Optional[Shift], optional): Shift object containing fields to update.
-                Defaults to None.
-
-        Returns:
-            Dict[str, Any]: Dictionary containing the result of the patch operation
-                with status and any relevant messages.
-
-        Raises:
-            ValueError: If the patch data is invalid.
-            DatabaseError: If there's an error updating the shift in the database.
-        """
-        """
         Patch a specific column of a shift.
 
         Args:
@@ -757,7 +754,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             comment_id (int): The ID of the comment to retrieve.
 
         Returns:
-            Optional[ShiftComment]: The requested shift comment if found, None otherwise.
+            Optional[ShiftComment]: The requested shift comment if found,
+            None otherwise.
 
         Raises:
             NotFoundError: If no comment is found with the given ID.
@@ -779,7 +777,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             shift_comment (ShiftComment): The updated comment data.
 
         Returns:
-            Optional[ShiftComment]: The updated shift comment if found, None otherwise.
+            Optional[ShiftComment]: The updated shift comment if found,
+            None otherwise.
 
         Raises:
             NotFoundError: If no comment exists with the given ID.
@@ -857,7 +856,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             annotation_id (int): The ID of the annotation to retrieve.
 
         Returns:
-            Optional[ShiftAnnotation]: The requested annotation if found, None otherwise.
+            Optional[ShiftAnnotation]: The requested annotation if found,
+            None otherwise.
 
         Raises:
             NotFoundError: If no annotation is found with the given ID.
@@ -867,7 +867,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
             db=self.postgres_data_access,
             filters={"annotation_id": annotation_id},
         )
-        print(annotation)
         if annotation:
             return annotation
         else:
@@ -884,7 +883,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             shift_annotation (ShiftAnnotation): The updated annotation data.
 
         Returns:
-            Optional[ShiftAnnotation]: The updated shift annotation if found, None otherwise.
+            Optional[ShiftAnnotation]: The updated shift annotation if found,
+            None otherwise.
 
         Raises:
             NotFoundError: If no annotation exists with the given ID.
@@ -913,8 +913,10 @@ class ShiftLogUpdater:
         """
         Background task that continuously monitors and updates shift logs.
 
-        This method runs in a separate thread and processes shifts in the queue,
-        updating their ODA logs as needed. It runs indefinitely until the program exits.
+        This method runs in a separate thread and
+        processes shifts in the queue,
+        updating their ODA logs as needed.
+        It runs indefinitely until the program exits.
         """
         while True:
             with self.lock:

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional, Union
 
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.common.error_handling import NotFoundError
