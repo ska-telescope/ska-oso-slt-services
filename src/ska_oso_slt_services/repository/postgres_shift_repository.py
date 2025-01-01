@@ -172,10 +172,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             Shift: The prepared shift object.
         """
         shift.shift_start = get_datetime_for_timezone("UTC")
-        # shift.shift_id = create_shift_id()
-        import random
-
-        shift.shift_id = "slt-" + str(random.randint(1, 1000000))
+        shift.shift_id = create_shift_id()
         return shift
 
     def _insert_shift_to_database(self, entity: Shift) -> Dict[str, int]:
