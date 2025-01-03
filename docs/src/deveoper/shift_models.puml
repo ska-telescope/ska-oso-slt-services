@@ -1,0 +1,90 @@
+@startuml Shift Models
+
+class Metadata {
+    +created_on: str
+    +created_by: str
+    +last_modified_by: datetime
+    +last_modified_on: datetime
+}
+
+class Operator {
+    +name: str
+}
+
+class Media {
+    +path: str
+    +unique_id: str
+    +timestamp: str
+}
+
+class ShiftLogComment {
+    +id: str
+    +log_comment: str
+    +operator_name: str
+    +shift_id: str
+    +image: List[Media]
+    +eb_id: str
+    +metadata: Metadata
+}
+
+class ShiftComment {
+    +id: str
+    +comment: str
+    +operator_name: str
+    +shift_id: str
+    +image: List[Media]
+    +metadata: Metadata
+}
+
+class ShiftAnnotation {
+    +id: str
+    +annotation: str
+    +operator_name: str
+    +shift_id: str
+    +image: List[Media]
+    +metadata: Metadata
+}
+
+class ShiftLogs {
+    +info: dict
+    +source: str
+    +log_time: datetime
+    +comments: List[ShiftLogComment]
+}
+
+class ShiftBaseClass {
+    +id: str
+    +shift_id: str
+    +shift_start: datetime
+    +shift_end: datetime
+    +shift_operator: str
+}
+
+class Shift {
+    +operator: Operator
+    +logs: ShiftLogs
+    +comments: List[ShiftComment]
+}
+
+ShiftBaseClass <|-- Shift
+ShiftLogComment "1" *-- "1" Operator
+ShiftLogComment "1" *-- "*" Media
+ShiftLogComment "1" *-- "1" Metadata
+
+ShiftComment "1" *-- "1" Operator
+ShiftComment "1" *-- "*" Media
+ShiftComment "1" *-- "1" Metadata
+
+ShiftAnnotation "1" *-- "1" Operator
+ShiftAnnotation "1" *-- "1" Metadata
+
+ShiftLogs "1" *-- "*" ShiftLogComment
+
+
+Shift "1" *-- "1" Operator
+Shift "1" *-- "1" ShiftLogs
+Shift "1" *-- "*" ShiftComment
+Shift "1" *-- "*" ShiftAnnotation
+Media "1" *-- "1" Metadata
+
+@enduml

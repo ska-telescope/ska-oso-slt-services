@@ -1,0 +1,127 @@
+@startuml SLT_class_diagram
+
+' Core domain models
+package "Domain Models" {
+    class Shift {
+        + id: int
+        + shift_id: str
+        + shift_start: datetime
+        + shift_end: datetime
+        + shift_operator: str
+        + comments: datetime
+        + annotations: datetime
+        + created_by: str
+        + created_on: datetime
+        + last_modified_by: str
+        + last_modified_on: datetime
+    }
+}
+
+' Abstract layer
+package "Repositories"{
+    abstract ShiftRepository{
+        + get_shifts()
+        + get_shift()
+    }
+}
+
+
+' Repository layer
+package "Repositories" {
+    class CrudShiftRepository {
+        + get_shift()
+        + get_shifts()
+        + create_shift()
+        + update_shift()
+        + delete_shift()
+    }
+    
+    class LogDbShiftRepository {
+        + get_shifts()
+        + get_shift()
+    }
+    
+    class EdaShiftRepository {
+        + get_shifts()
+        + get_shift()
+    }
+
+    class PostgresShiftRepository{
+        + get_shifts()
+        + get_shift()
+        + update_shift()
+        + delete_shift()
+        + create_shift()
+    }
+}
+
+' Rest API
+package "Models" {
+    class RestAPI{
+    + get_shift()
+    + get_shifts()
+    + create_shift()
+    + update_shift()
+    + delete_shifs()
+    }
+}
+
+' Services layer
+package "Services" {
+    class ShiftService {
+        + get_shift()
+        + create_shift()
+        + update_shift()
+        + delete_shift()
+    }
+}
+
+' Infrastructure
+package "Infrastructure" {
+    class PostgresDataAccess {
+        + executeQuery()
+    }
+    class PostgresConnection {
+        + getConnection
+    }
+    class LogDbConnection {
+        + getConnection
+    }
+    class LogDbDataAccess {
+        + executeQuery()
+    }
+    
+    class EdaConnection {
+        + getConnection
+    }
+    class EdaDataAccess {
+        + executeQuery()
+    }
+}
+
+' Relationships
+RestAPI --> ShiftService
+ShiftService --> ShiftRepository
+ShiftService --> CrudShiftRepository
+CrudShiftRepository --> ShiftRepository
+PostgresShiftRepository --> CrudShiftRepository
+EdaShiftRepository --> ShiftRepository
+LogDbShiftRepository --> ShiftRepository
+
+EdaShiftRepository --> EdaDataAccess
+LogDbShiftRepository --> LogDbDataAccess
+PostgresShiftRepository --> PostgresDataAccess
+
+ShiftRepository <|.. PostgresShiftRepository
+ShiftRepository <|.. LogDbShiftRepository
+ShiftRepository <|.. EdaShiftRepository
+
+PostgresShiftRepository --> PostgresConnection
+LogDbShiftRepository --> LogDbConnection
+EdaShiftRepository --> EdaConnection
+
+PostgresDataAccess --> PostgresConnection
+LogDbDataAccess --> LogDbConnection
+EdaDataAccess --> EdaConnection
+
+@enduml
