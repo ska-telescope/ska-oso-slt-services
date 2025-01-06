@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 from psycopg import DatabaseError
 
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
@@ -20,6 +21,16 @@ def mocked_postgres_repository():
 
 
 class TestPostgressShiftRepository(unittest.TestCase):
+
+    @pytest.fixture(autouse=True)
+    def shift_fixture(self, shift_data):
+        self.shift = shift_data
+
+    @pytest.fixture(autouse=True)
+    def existing_shift_fixture(self):
+        self.existing_shift_data = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
 
     def test_get_oda_data(self):
         """
