@@ -2058,7 +2058,7 @@
                   {
                     "id": 0,
                     "annotation": "string",
-                    "operator_name": "string",
+                    "user_name": "string",
                     "shift_id": "string",
                     "metadata": {
                       "created_by": "string",
@@ -2138,7 +2138,7 @@
                   {
                     "id": 0,
                     "annotation": "string",
-                    "operator_name": "string",
+                    "user_name": "string",
                     "shift_id": "string",
                     "metadata": {
                       "created_by": "string",
@@ -2233,7 +2233,7 @@
                   {
                     "id": 0,
                     "comment": "string",
-                    "operator_name": "string",
+                    "user_name": "string",
                     "shift_id": "string",
                     "metadata": {
                       "created_by": "string",
@@ -2816,7 +2816,7 @@
             ],
             "title": "Comment"
           },
-          "operator_name": {
+          "user_name": {
             "anyOf": [
               {
                 "type": "string"
@@ -2851,7 +2851,7 @@
         },
         "type": "object",
         "title": "ShiftAnnotation",
-        "description": "Represents a annotation associated with a shift in the Shift.\n\n:param id Optional[int]: The unique identifier of the annotation.\n:param annotation Optional[str]: The text of the annotation.\n:param operator_name Optional[str]: The name of the operator who made the annotation.\n:param shift_id Optional[str]: The unique identifier of the shift the annotation\n belongs to.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
+        "description": "Represents a annotation associated with a shift in the Shift.\n\n:param id Optional[int]: The unique identifier of the annotation.\n:param annotation Optional[str]: The text of the annotation.\n:param user_name Optional[str]: The name of the user who made the annotation.\n:param shift_id Optional[str]: The unique identifier of the shift the annotation\n belongs to.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
       },
       "ValidationError": {
         "properties": {

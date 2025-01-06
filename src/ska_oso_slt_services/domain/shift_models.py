@@ -109,7 +109,7 @@ class ShiftAnnotation(SLTObject):
 
     id: Optional[int] = None
     annotation: Optional[str] = None
-    operator_name: Optional[str] = None
+    user_name: Optional[str] = None
     shift_id: Optional[str] = None
     metadata: Optional[Metadata] = None
 

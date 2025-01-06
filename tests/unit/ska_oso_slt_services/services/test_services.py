@@ -76,11 +76,16 @@ class TestShiftService:
         "postgres_shift_repository.PostgresShiftRepository.get_shifts"
     )
     @patch("ska_oso_slt_services.services." "shift_service.ShiftService.merge_comments")
+    @patch(
+        "ska_oso_slt_services.services."
+        "shift_service.ShiftService.merge_shift_annotations"
+    )
     def test_get_shifts_successful(
         self,
         mock_merge_comments,
         mock_get_shifts,
         mock_merge_shift_comments,
+        mock_merge_shift_annotations,
         mock_prepare_metadata,
     ):
         # Arrange
@@ -88,6 +93,7 @@ class TestShiftService:
             {
                 "id": "shift-123",
                 "comments": [{"id": "comment1", "comment": "Test comment"}],
+                "annotations": [{"id": "annotation1", "annotation": "Test annotation"}],
                 "shift_logs": [
                     {
                         "id": "log1",
@@ -100,6 +106,7 @@ class TestShiftService:
             {
                 "id": "shift-124",
                 "comments": [{"id": "comment2", "comment": "Test comment 2"}],
+                "annotations": [{"id": "annotation1", "annotation": "Test annotation"}],
                 "shift_logs": [
                     {
                         "id": "log2",
@@ -115,16 +122,19 @@ class TestShiftService:
         mock_merge_comments.return_value = mock_shifts
         mock_get_shifts.return_value = mock_shifts
         mock_merge_shift_comments.return_value = mock_shifts
+        mock_merge_shift_annotations.return_value = mock_shifts
 
         mock_shift_obj1 = Mock(spec=Shift)
         mock_shift_obj1.id = "shift-123"
         mock_shift_obj1.shift_logs = [Mock(comments=[])]
         mock_shift_obj1.comments = []
+        mock_shift_obj1.annotations = []
 
         mock_shift_obj2 = Mock(spec=Shift)
         mock_shift_obj2.id = "shift-124"
         mock_shift_obj2.shift_logs = [Mock(comments=[])]
         mock_shift_obj2.comments = []
+        mock_shift_obj2.annotations = []
 
         # Define test parameters
         params = {"status": "equals"}

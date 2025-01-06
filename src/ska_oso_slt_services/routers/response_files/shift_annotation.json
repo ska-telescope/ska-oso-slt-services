@@ -1,6 +1,6 @@
 {
     "annotation": "string",
-    "operator_name": "string",
+    "user_name": "string",
     "shift_id": "string",
     "metadata": {
       "created_by": "string",
