@@ -585,12 +585,42 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid Shift ID",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Invalid Shift Id",
             "content": {
               "application/json": {
                 "example": {
                   "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -604,7 +634,7 @@
           "Shift Log Comments"
         ],
         "summary": "Create a new shift log comment",
-        "description": "Create a new shift.\n\nArgs:\n    shift (ShiftCreate): The shift data to create.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
+        "description": "Create a new shift log comment.\n\nArgs:\n    shift (ShiftCreate): The shift data to create.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
         "operationId": "create_shift_log_comments_ska_oso_slt_services_slt_api_v0_shift_log_comments_post",
         "requestBody": {
           "required": true,
@@ -696,7 +726,7 @@
           "Shift Log Comments"
         ],
         "summary": "Retrieve shift log comments based on shift ID and EB ID",
-        "description": "Retrieve all shifts.\nThis endpoint returns a list of all shifts in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n    eb_id(optional): EB ID\n\nReturns:\n    ShiftLogComment: Shift Log Comments match found",
+        "description": "Retrieve shifts data based on Shift ID and EB ID.\nThis endpoint returns a list of all shifts in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n    eb_id(optional): EB ID\n\nReturns:\n    ShiftLogComment: Shift Log Comments match found",
         "operationId": "get_shift_log_comments_ska_oso_slt_services_slt_api_v0_shift_log_comments_get",
         "parameters": [
           {
@@ -1258,6 +1288,16 @@
               }
             }
           },
+          "404": {
+            "description": "Invalid Shift ID",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Content",
             "content": {
@@ -1287,7 +1327,7 @@
           "Shift Comments"
         ],
         "summary": "Create a new shift comment",
-        "description": "Create a new shift.\n\nArgs:\n    shift_comment (ShiftComment): The shift comment to create.\n\nReturns:\n    ShiftComment: The created shift comment.",
+        "description": "Create a new shift comment.\n\nArgs:\n    shift_comment (ShiftComment): The shift comment to create.\n\nReturns:\n    ShiftComment: The created shift comment.",
         "operationId": "create_shift_comments_ska_oso_slt_services_slt_api_v0_shift_comment_post",
         "requestBody": {
           "required": true,
@@ -1382,8 +1422,8 @@
         "tags": [
           "Shift Comments"
         ],
-        "summary": "Retrieve shift comments based on shift ID and EB ID,",
-        "description": "Retrieve all shifts.\nThis endpoint returns a list of all shifts in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n\nReturns:\n    ShiftComment: Shift Comments match found",
+        "summary": "Retrieve shift comments based on shift ID",
+        "description": "Retrieve shift comments based on shift ID.\nThis endpoint returns a list of all shifts in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n\nReturns:\n    ShiftComment: Shift Comments match found",
         "operationId": "get_shift_comments_ska_oso_slt_services_slt_api_v0_shift_comment_get",
         "parameters": [
           {
@@ -1658,6 +1698,16 @@
               }
             }
           },
+          "404": {
+            "description": "Invalid Shift ID",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Content",
             "content": {
@@ -1772,7 +1822,7 @@
           "Shift Comments"
         ],
         "summary": "Upload image for shift",
-        "description": "Create a new shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    file (list[UploadFile]): A list of files to be uploaded.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
+        "description": "Upload image for shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    file (list[UploadFile]): A list of files to be uploaded.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
         "operationId": "create_media_for_comment_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post",
         "parameters": [
           {
@@ -1833,6 +1883,16 @@
               "application/json": {
                 "example": {
                   "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid Shift ID",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Shift Id"
                 }
               }
             }
@@ -2026,6 +2086,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
+                }
+              }
+            }
           }
         }
       }
@@ -2049,6 +2119,14 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
           "201": {
             "description": "Successful Response",
             "content": {
@@ -2091,6 +2169,16 @@
               }
             }
           },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal Server Error",
             "content": {
@@ -2108,7 +2196,7 @@
           "Shift Annotations"
         ],
         "summary": "Retrieve shift annotations based on shift ID",
-        "description": "Retrieve all annotations.\nThis endpoint returns a list of all annotations in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n\nReturns:\n    ShiftAnnotation: Shift Annotations match found",
+        "description": "Retrieve all annotations related to given shift ID.\nThis endpoint returns a list of all annotations in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n\nReturns:\n    ShiftAnnotation: Shift Annotations match found",
         "operationId": "get_shift_annotations_ska_oso_slt_services_slt_api_v0_shift_annotation_get",
         "parameters": [
           {
