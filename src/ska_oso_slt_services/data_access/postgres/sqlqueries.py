@@ -587,7 +587,7 @@ def select_latest_query(
     # Add conditions based on the parameters provided
     if tid is not None:
         where_clauses.append(sql.SQL("{field} = %s").format(field=sql.Identifier("id")))
-        params.append(id)
+        params.append(tid)
 
     if shift_id is not None:
         where_clauses.append(

@@ -91,11 +91,9 @@ class DBCrud:
             Exception: If database query fails
         """
         table_details = self._get_table_details(entity)
-
         if metadata:
             query, params = select_metadata_query(
-                table_details=table_details,
-                entity_id=filters["entity_id"],
+                table_details=table_details, entity_id=filters["entity_id"]
             )
         else:
             query, params = select_latest_query(
