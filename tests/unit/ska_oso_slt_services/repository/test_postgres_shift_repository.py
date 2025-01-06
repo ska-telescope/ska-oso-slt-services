@@ -2,7 +2,6 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, Mock, patch
 
-import pytest
 from psycopg import DatabaseError
 
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
@@ -12,7 +11,6 @@ from ska_oso_slt_services.repository.postgres_shift_repository import (
 )
 
 
-@pytest.fixture
 def mocked_postgres_repository():
     """Fixture that provides a PostgresShiftRepository with mocked dependencies."""
     repository = PostgresShiftRepository()
@@ -110,11 +108,8 @@ class TestPostgressShiftRepository(unittest.TestCase):
         self.assertEqual(result[eb_id]["eb_status"], expected_eb_status)
 
     def test_get_shifts(self):
-        # Create an instance of PostgressShiftRepository
-        repository = PostgresShiftRepository()
-        # Mock the postgres_data_access attribute
-        repository.postgres_data_access = Mock()
-        repository.crud = Mock()
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
 
         repository.crud.get_entities = Mock(return_value={"shift_id": "test-shift"})
         result = repository.get_shifts()
@@ -123,11 +118,8 @@ class TestPostgressShiftRepository(unittest.TestCase):
         self.assertEqual(result, {"shift_id": "test-shift"})
 
     def test_get_shift(self):
-        # Create an instance of PostgressShiftRepository
-        repository = PostgresShiftRepository()
-        # Mock the postgres_data_access attribute
-        repository.postgres_data_access = Mock()
-        repository.crud = Mock()
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
 
         repository.crud.get_entity = Mock(return_value={"shift_id": "test-shift"})
         result = repository.get_shift("test-shift")
@@ -137,11 +129,8 @@ class TestPostgressShiftRepository(unittest.TestCase):
 
     def test_update_shift_end_time(self):
         """Test successful shift end time update"""
-        # Create an instance of PostgresShiftRepository
-        repository = PostgresShiftRepository()
-        # Mock dependencies
-        repository.postgres_data_access = Mock()
-        repository.crud = Mock()
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
 
         # Create test data
         test_shift = Shift(
@@ -165,9 +154,8 @@ class TestPostgressShiftRepository(unittest.TestCase):
 
     def test_update_shift_end_time_already_ended(self):
         """Test updating an already ended shift"""
-        repository = PostgresShiftRepository()
-        repository.postgres_data_access = Mock()
-        repository.crud = Mock()
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
 
         # Create test data with end time already set
         test_shift = Shift(
@@ -191,9 +179,8 @@ class TestPostgressShiftRepository(unittest.TestCase):
 
     def test_update_shift_end_time_database_error(self):
         """Test database error handling during shift end time update"""
-        repository = PostgresShiftRepository()
-        repository.postgres_data_access = Mock()
-        repository.crud = Mock()
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
 
         # Create test data
         test_shift = Shift(
@@ -210,19 +197,16 @@ class TestPostgressShiftRepository(unittest.TestCase):
         db_error = DatabaseError("Test database error")
         repository.crud.update_entity.side_effect = db_error
 
-        # Call the method
-        result = repository.update_shift_end_time(test_shift)
+        # Verify it raises the error
+        with self.assertRaises(DatabaseError) as context:
+            repository.update_shift_end_time(test_shift)
 
-        # Verify it returns the error
-        self.assertEqual(result, db_error)
+        self.assertEqual(str(context.exception), "Test database error")
 
     def test_update_shift(self):
         """Test successful shift update"""
-        # Create an instance of PostgresShiftRepository
-        repository = PostgresShiftRepository()
-        # Mock dependencies
-        repository.postgres_data_access = Mock()
-        repository.crud = Mock()
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
 
         # Create test data
         test_shift = Shift(
@@ -247,9 +231,7 @@ class TestPostgressShiftRepository(unittest.TestCase):
         # Mock the get_shift_logs_comment method
         mock_comment = MagicMock()
         mock_comment.image = [MagicMock(unique_id="test_file_key")]
-        self.repository = PostgresShiftRepository()
-        self.repository.postgres_data_access = Mock()
-        self.repository.crud = Mock()
+        self.repository = mocked_postgres_repository()
         self.repository.get_shift_logs_comment = MagicMock(
             return_value=ShiftLogComment(
                 id=1,

@@ -206,7 +206,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         except (DatabaseError, DataError, InternalError) as error_msg:
 
             LOGGER.info("Error updating shift end time: %s", error_msg)
-            return error_msg
+            raise error_msg
 
     def update_shift(self, shift: Shift) -> Shift:
         """
