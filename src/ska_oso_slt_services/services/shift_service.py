@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional, Union
 
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.common.error_handling import NotFoundError
@@ -7,7 +7,6 @@ from ska_oso_slt_services.common.metadata_mixin import set_new_metadata, update_
 from ska_oso_slt_services.domain.shift_models import (
     EntityFilter,
     MatchType,
-    Metadata,
     SbiEntityStatus,
     Shift,
     ShiftAnnotation,
@@ -16,12 +15,12 @@ from ska_oso_slt_services.domain.shift_models import (
 )
 from ska_oso_slt_services.services.shift_annotation_service import ShiftAnnotations
 from ska_oso_slt_services.services.shift_comments_service import ShiftComments
-from ska_oso_slt_services.services.shift_logs_comment_service import ShiftLogsComment
+from ska_oso_slt_services.services.shift_logs_comment_service import ShiftLogsComments
 
 LOGGER = logging.getLogger(__name__)
 
 
-class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
+class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
 
     def merge_comments(self, shifts: List[dict]) -> Shift:
         """
@@ -33,10 +32,11 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         Returns:
             List[dict]: List of shift data with merged comments in shift logs.
         """
+
         for shift in shifts:
             shift_log_comments_dict = (
                 self.crud_shift_repository.get_shift_logs_comments(
-                    shift_id=shift["shift_id"]
+                    ShiftLogComment(), shift_id=shift["shift_id"]
                 )
             )
             if shift.get("shift_logs"):
@@ -58,10 +58,27 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
             List[dict]: List of shift data with merged shift comments.
         """
         for shift in shifts:
-            shift_comment_dict = self.crud_shift_repository.get_shift_comments(
-                shift_id=shift["shift_id"]
+            shift_comment_dict = self.crud_shift_repository.get_shift_logs_comments(
+                ShiftComment(), shift_id=shift["shift_id"]
             )
             shift["comments"] = shift_comment_dict
+
+        return shifts
+
+    def merge_shift_annotations(self, shifts: Shift) -> Shift:
+        """
+        Merge shift annotations into the provided list of shifts.
+
+        Args:
+            shifts (List[dict]): List of shift data dictionaries.
+
+        Returns:
+            List[dict]: List of shift data with merged shift annotations.
+        """
+        for shift in shifts:
+            shift["annotations"] = self.crud_shift_repository.get_shift_annotations(
+                shift_id=shift["shift_id"]
+            )
 
         return shifts
 
@@ -87,9 +104,7 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
             if shift.get("comments"):
                 for comment in shift["comments"]:
                     prepare_comment_with_metadata.append(
-                        self._prepare_shift_common_with_metadata(
-                            comment, shift_model=ShiftComment
-                        )
+                        self._prepare_entity_with_metadata(comment, model=ShiftComment)
                     )
 
             per_eb_comment_metadata = []
@@ -98,12 +113,14 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
                     prepare_log_comment_with_metadata = []
                     for comment in shift_log["comments"]:
                         prepare_log_comment_with_metadata.append(
-                            self._prepare_shift_log_comment_with_metadata(comment)
+                            self._prepare_entity_with_metadata(
+                                comment, model=ShiftLogComment
+                            )
                         )
                     per_eb_comment_metadata.append(prepare_log_comment_with_metadata)
 
-            shift_with_metadata = self._prepare_shift_with_metadata(
-                shifts_with_comments_and_log_comments
+            shift_with_metadata = self._prepare_entity_with_metadata(
+                shifts_with_comments_and_log_comments, model=Shift
             )
             shift_with_metadata.comments = prepare_comment_with_metadata
             if shift_with_metadata.shift_logs and per_eb_comment_metadata:
@@ -145,20 +162,28 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         if not shifts:
             raise NotFoundError("No shifts found for the given query.")
         LOGGER.info("Shifts: %s", shifts)
-
         prepared_shifts = []
         for shift in shifts:
             shifts_with_log_comments = self.merge_comments([shift])[0]
             shifts_with_comments_and_log_comments = self.merge_shift_comments(
                 [shifts_with_log_comments]
             )[0]
+            shifts_with_annotations = self.merge_shift_annotations([shift])[0]
             prepare_comment_with_metadata = []
+            prepare_annotation_with_metadata = []
 
             if shift.get("comments"):
                 for comment in shift["comments"]:
                     prepare_comment_with_metadata.append(
-                        self._prepare_shift_common_with_metadata(
-                            comment, shift_model=ShiftComment
+                        self._prepare_entity_with_metadata(
+                            entity=comment, model=ShiftComment
+                        )
+                    )
+            if shift.get("annotations"):
+                for annotation in shift["annotations"]:
+                    prepare_annotation_with_metadata.append(
+                        self._prepare_entity_with_metadata(
+                            entity=annotation, model=ShiftAnnotation
                         )
                     )
             per_eb_comment_metadata = []
@@ -167,14 +192,20 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
                     prepare_log_comment_with_metadata = []
                     for comment in shift_log["comments"]:
                         prepare_log_comment_with_metadata.append(
-                            self._prepare_shift_log_comment_with_metadata(comment)
+                            self._prepare_entity_with_metadata(
+                                entity=comment, model=ShiftLogComment
+                            )
                         )
                     per_eb_comment_metadata.append(prepare_log_comment_with_metadata)
 
-            shift_with_metadata = self._prepare_shift_with_metadata(
-                shifts_with_comments_and_log_comments
+            shift_with_metadata = self._prepare_entity_with_metadata(
+                entity=shifts_with_comments_and_log_comments, model=Shift
+            )
+            shift_with_metadata = self._prepare_entity_with_metadata(
+                entity=shifts_with_annotations, model=Shift
             )
             shift_with_metadata.comments = prepare_comment_with_metadata
+            shift_with_metadata.annotations = prepare_annotation_with_metadata
 
             if shift_with_metadata.shift_logs and per_eb_comment_metadata:
                 for i, shift_log in enumerate(
@@ -211,7 +242,7 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
         """
         shift_data.shift_id = shift_id
 
-        metadata = self.crud_shift_repository.get_latest_metadata(shift_id)
+        metadata = self.crud_shift_repository.get_entity_metadata(shift_id)
 
         if not metadata:
 
@@ -250,13 +281,17 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
             }:
                 raise ShiftEndedException()
 
-        metadata = self.crud_shift_repository.get_latest_metadata(shift_data.shift_id)
+        metadata = self.crud_shift_repository.get_entity_metadata(shift_data.shift_id)
         if not metadata:
             raise NotFoundError(f"No shift found with ID: {shift_data.shift_id}")
         shift = update_metadata(
             shift_data, metadata=metadata, last_modified_by=shift_data.shift_operator
         )
-        return self.crud_shift_repository.update_shift(shift)
+        updated_shift = self.crud_shift_repository.update_shift(shift)
+        shift_with_metadata = self._prepare_entity_with_metadata(
+            entity=updated_shift, model=Shift
+        )
+        return shift_with_metadata
 
     def delete_shift(self, shift_id):
         """
@@ -266,58 +301,6 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
             shift_id (str): The ID of the shift to delete.
         """
         self.crud_shift_repository.delete_shift(shift_id)
-
-    def _prepare_shift_with_metadata(self, shift: Dict[Any, Any]) -> Shift:
-        """
-        Prepare a shift object with metadata.
-
-        Args:
-            shift (Dict[Any, Any]): Raw shift data from the database.
-
-        Returns:
-            Shift: A Shift object with metadata included.
-        """
-        shift_load = Shift.model_validate(shift)
-        shift_load = set_new_metadata(shift_load)
-
-        return shift_load
-
-    def _prepare_shift_common_with_metadata(
-        self, shift_data: Dict[Any, Any], shift_model: ShiftComment | ShiftAnnotation
-    ) -> ShiftComment | ShiftAnnotation:
-        """
-        Prepare a shift data object with metadata.
-
-        Args:
-            shift_data (Dict[Any, Any]): Raw shift comment or annotation data from
-            the database.
-
-        Returns:
-            ShiftComment: A ShiftComment object with metadata included.
-            ShiftAnnotation: A ShiftAnnotation object with metadata included.
-        """
-        shift_data_load = shift_model.model_validate(shift_data)
-        metadata_dict = self._create_metadata(shift_data)
-        shift_data_load.metadata = Metadata.model_validate(metadata_dict)
-
-        return shift_data_load
-
-    def _prepare_shift_log_comment_with_metadata(
-        self, shift_log_comment: Dict[Any, Any]
-    ) -> ShiftLogComment:
-        """
-        Prepare a shift log comment object with metadata.
-
-        Args:
-            shift_log_comment (Dict[Any, Any]): Raw shift
-            log comment data from the database.
-
-        Returns:
-            ShiftLogComment: A ShiftLogComment object with metadata included.
-        """
-        shift_log_comment_load = ShiftLogComment.model_validate(shift_log_comment)
-        shift_log_comment_load = set_new_metadata(shift_log_comment_load)
-        return shift_log_comment_load
 
     def get_current_shift(self):
         """
@@ -342,23 +325,6 @@ class ShiftService(ShiftComments, ShiftLogsComment, ShiftAnnotations):
             return self.get_shift(shift_id=shift["shift_id"])
         else:
             raise NotFoundError("No shift found")
-
-    def _create_metadata(self, shift: Dict[Any, Any]) -> Dict[str, str]:
-        """
-        Create metadata dictionary from shift data.
-
-        Args:
-            shift (Dict[Any, Any]): The shift data.
-
-        Returns:
-            Dict[str, str]: A dictionary containing metadata information.
-        """
-        return {
-            "created_by": shift["created_by"],
-            "created_on": shift["created_on"],
-            "last_modified_on": shift["last_modified_on"],
-            "last_modified_by": shift["last_modified_by"],
-        }
 
     def updated_shift_log_info(self, current_shift_id: str) -> Union[Shift, str]:
         """

@@ -1,7 +1,7 @@
 [
     {
       "annotation": "This is a test annotation",
-      "operator_name": "Ross",
+      "user_name": "Ross",
       "shift_id": "shift-20241219-5175",
       "metadata": {
         "created_by": "string",
