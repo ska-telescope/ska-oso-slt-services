@@ -1,22 +1,5 @@
 @startuml SLT_class_diagram
 
-' Core domain models
-package "Domain Models" {
-    class Shift {
-        + id: int
-        + shift_id: str
-        + shift_start: datetime
-        + shift_end: datetime
-        + shift_operator: str
-        + comments: datetime
-        + annotations: datetime
-        + created_by: str
-        + created_on: datetime
-        + last_modified_by: str
-        + last_modified_on: datetime
-    }
-}
-
 ' Abstract layer
 package "Repositories"{
     abstract ShiftRepository{
@@ -28,9 +11,7 @@ package "Repositories"{
 
 ' Repository layer
 package "Repositories" {
-    class CrudShiftRepository {
-        + get_shift()
-        + get_shifts()
+    abstract CrudShiftRepository {
         + create_shift()
         + update_shift()
         + delete_shift()
@@ -105,8 +86,7 @@ ShiftService --> ShiftRepository
 ShiftService --> CrudShiftRepository
 CrudShiftRepository --> ShiftRepository
 PostgresShiftRepository --> CrudShiftRepository
-EdaShiftRepository --> ShiftRepository
-LogDbShiftRepository --> ShiftRepository
+
 
 EdaShiftRepository --> EdaDataAccess
 LogDbShiftRepository --> LogDbDataAccess

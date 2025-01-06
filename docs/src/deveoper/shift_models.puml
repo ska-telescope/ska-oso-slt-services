@@ -1,9 +1,9 @@
 @startuml Shift Models
 
 class Metadata {
-    +created_on: str
-    +created_by: str
-    +last_modified_by: datetime
+    +created_on: datetime
+    +created_by: Optional[str]
+    +last_modified_by: Optional[str]
     +last_modified_on: datetime
 }
 
@@ -12,77 +12,72 @@ class Operator {
 }
 
 class Media {
-    +path: str
-    +unique_id: str
-    +timestamp: str
+    +path: Optional[str]
+    +unique_id: Optional[str]
+    +timestamp: datetime
 }
 
 class ShiftLogComment {
-    +id: str
-    +log_comment: str
-    +operator_name: str
-    +shift_id: str
-    +image: List[Media]
-    +eb_id: str
-    +metadata: Metadata
+    +id: Optional[int]
+    +log_comment: Optional[str]
+    +operator_name: Optional[str]
+    +shift_id: Optional[str]
+    +image: Optional[List[Media]]
+    +eb_id: Optional[str]
+    +metadata:  Optional[Metadata]
 }
 
 class ShiftComment {
-    +id: str
-    +comment: str
-    +operator_name: str
-    +shift_id: str
-    +image: List[Media]
-    +metadata: Metadata
+    +id: Optional[int]
+    +comment:  Optional[str]
+    +operator_name: Optional[str]
+    +shift_id: Optional[str]
+    +image: Optional[List[Media]]
+    +metadata: Optional[Metadata]
 }
 
 class ShiftAnnotation {
-    +id: str
-    +annotation: str
-    +operator_name: str
-    +shift_id: str
-    +image: List[Media]
-    +metadata: Metadata
+    +id: Optional[int]
+    +annotation: Optional[str]
+    +operator_name: Optional[str]
+    +shift_id: Optional[str]
+    +metadata: Optional[Metadata]
 }
 
 class ShiftLogs {
-    +info: dict
-    +source: str
-    +log_time: datetime
-    +comments: List[ShiftLogComment]
+    +info: Optional[dict] 
+    +source: Optional[str]
+    +log_time: Optional[datetime]
+    +comments: Optional[List[ShiftLogComment]]
 }
 
 class ShiftBaseClass {
-    +id: str
-    +shift_id: str
-    +shift_start: datetime
-    +shift_end: datetime
-    +shift_operator: str
+    +shift_id: Optional[str]
+    +shift_start: Optional[datetime]
+    +shift_end: Optional[datetime]
+    +shift_operator: Optional[str]
 }
 
 class Shift {
-    +operator: Operator
-    +logs: ShiftLogs
+    +shift_logs: Optional[List[ShiftLogs]]
     +comments: List[ShiftComment]
+    +annotation: Optional[List[ShiftAnnotation]]
+    +metadata: Optional[Metadata]
 }
 
 ShiftBaseClass <|-- Shift
-ShiftLogComment "1" *-- "1" Operator
 ShiftLogComment "1" *-- "*" Media
 ShiftLogComment "1" *-- "1" Metadata
 
-ShiftComment "1" *-- "1" Operator
 ShiftComment "1" *-- "*" Media
 ShiftComment "1" *-- "1" Metadata
 
-ShiftAnnotation "1" *-- "1" Operator
 ShiftAnnotation "1" *-- "1" Metadata
 
 ShiftLogs "1" *-- "*" ShiftLogComment
 
 
-Shift "1" *-- "1" Operator
-Shift "1" *-- "1" ShiftLogs
+Shift "1" *-- "*" ShiftLogs
 Shift "1" *-- "*" ShiftComment
 Shift "1" *-- "*" ShiftAnnotation
 Media "1" *-- "1" Metadata
