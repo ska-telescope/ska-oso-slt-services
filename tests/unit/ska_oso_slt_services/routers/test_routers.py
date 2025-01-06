@@ -543,6 +543,10 @@ def test_get_shifts(mock_get_shift_log_comments, shift_history_data):
         == shift_history_data[0]["comments"][0]["comment"]
     )
     assert (
+        created_shift["annotations"][0]["annotation"]
+        == shift_history_data[0]["annotations"][0]["annotation"]
+    )
+    assert (
         created_shift["shift_logs"][0]["comments"][0]["log_comment"]
         == shift_history_data[0]["shift_logs"][0]["comments"][0]["log_comment"]
     )

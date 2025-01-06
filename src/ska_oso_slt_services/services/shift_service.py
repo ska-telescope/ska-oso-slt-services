@@ -76,10 +76,9 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
             List[dict]: List of shift data with merged shift annotations.
         """
         for shift in shifts:
-            shift_annotation_dict = self.crud_shift_repository.get_shift_annotations(
+            shift["annotations"] = self.crud_shift_repository.get_shift_annotations(
                 shift_id=shift["shift_id"]
             )
-            shift["annotations"] = shift_annotation_dict
 
         return shifts
 
