@@ -13,7 +13,12 @@ from ska_oso_slt_services.data_access.postgres.base_mapping import (
     BaseMapping,
     TableDetails,
 )
-from ska_oso_slt_services.domain.shift_models import Shift
+from ska_oso_slt_services.domain.shift_models import (
+    Shift,
+    ShiftAnnotation,
+    ShiftComment,
+    ShiftLogComment,
+)
 
 SqlTypes = Union[str, int, datetime]
 
@@ -38,7 +43,7 @@ def _field_json_dump(shift: Shift, field: str) -> Optional[str]:
     return json.dumps(field_value, default=str, indent=2)
 
 
-class ShiftLogMapping(BaseMapping["Shift"]):
+class ShiftLogMapping(BaseMapping[Shift]):
     """
     Provides mapping functionality for Shift objects
     to database operations.
@@ -88,7 +93,7 @@ class ShiftLogMapping(BaseMapping["Shift"]):
         return tuple(map_fn(shift) for map_fn in column_map_extra_keys.values())
 
 
-class ShiftLogCommentMapping(BaseMapping["ShiftLogComment"]):
+class ShiftLogCommentMapping(BaseMapping[ShiftLogComment]):
     """
     Provides mapping functionality for Shift Log Comment object
     to database operations.
@@ -116,7 +121,7 @@ class ShiftLogCommentMapping(BaseMapping["ShiftLogComment"]):
         )
 
 
-class ShiftCommentMapping(BaseMapping["ShiftComment"]):
+class ShiftCommentMapping(BaseMapping[ShiftComment]):
     """
     Provides mapping functionality for Shift Comment object
     to database operations.
@@ -143,7 +148,7 @@ class ShiftCommentMapping(BaseMapping["ShiftComment"]):
         )
 
 
-class ShiftAnnotationMapping(BaseMapping["ShiftAnnotation"]):
+class ShiftAnnotationMapping(BaseMapping[ShiftAnnotation]):
     """
     Provides mapping functionality for Shift Annotation object
     to database operations.

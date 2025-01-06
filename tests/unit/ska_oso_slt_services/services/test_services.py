@@ -276,7 +276,7 @@ class TestShiftService:
     ):
         # Arrange
         mock_shift_data = Mock(spec=Shift)
-        mock_shift_data.shift_id = "XXXXXXXXX"
+        mock_shift_data.shift_id = "test-shift"
         mock_shift_data.shift_operator = "John Doe"
         mock_shift_data.shift_start = "2024-01-01T08:00:00"
         mock_shift_data.shift_end = None
@@ -295,7 +295,7 @@ class TestShiftService:
 
         # Mock the return value for update_metadata
         mock_metadata_shift = Mock(spec=Shift)
-        mock_metadata_shift.shift_id = "XXXXXXXXX"
+        mock_metadata_shift.shift_id = "test-shift"
         mock_latest_metadata.return_value = mock_metadata_shift
         mock_update_metadata.return_value = mock_metadata_shift
 
@@ -305,12 +305,12 @@ class TestShiftService:
         # Act
         shift_service = ShiftService([PostgresShiftRepository])
         result = shift_service.update_shift(
-            shift_id="XXXXXXXXX", shift_data=mock_shift_data
+            shift_id="test-shift", shift_data=mock_shift_data
         )
 
         # Assert
         assert isinstance(result, Mock)
-        assert result.shift_id == "XXXXXXXXX"
+        assert result.shift_id == "test-shift"
 
         # Verify method calls
         mock_get_shift.assert_called_once_with(shift_id=mock_shift_data.shift_id)
@@ -318,20 +318,15 @@ class TestShiftService:
 
 class TestCreateShiftAnnotations:
 
-    @patch(
-        "ska_oso_slt_services.repository.postgres_shift_repository."
-        "PostgresShiftRepository._insert_shift_to_database"
-    )
+    @patch("ska_oso_slt_services.data_access.postgres.shift_crud.DBCrud.insert_entity")
     def test_create_shift_annotations_successful(self, mock_insert_shift_to_database):
         # Arrange
+
         mock_shift_annotations = ShiftAnnotation(id=1, annotation="Annotation 1")
 
         # Act
         mock_insert_shift_to_database.return_value = {"id": 10}
         repository = PostgresShiftRepository()
-        # Mock dependencies
-        repository.postgres_data_access = Mock()
-        repository.crud = Mock()
 
         # Mock get_shift to return our test shift
         test_shift = Shift(
@@ -354,10 +349,7 @@ class TestCreateShiftAnnotations:
         "postgres_shift_repository.PostgresShiftRepository.update_shift"
     )
     @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
-    @patch(
-        "ska_oso_slt_services.repository.postgres_shift_repository."
-        "PostgresShiftRepository._insert_shift_to_database"
-    )
+    @patch("ska_oso_slt_services.data_access.postgres.shift_crud.DBCrud.insert_entity")
     def test_create_annotations(
         self,
         mock_insert_shift_to_database,
@@ -369,7 +361,7 @@ class TestCreateShiftAnnotations:
     ):
         # Arrange
         mock_shift_data = Mock(spec=Shift)
-        mock_shift_data.id = "XXXXXXXXX"
+        mock_shift_data.id = "test-shift"
         mock_shift_data.shift_operator = "test-operator"
         mock_insert_shift_to_database.return_value = {"id": 10}
         mock_get_entity_metadata.return_value = {
@@ -383,7 +375,7 @@ class TestCreateShiftAnnotations:
 
         # Mock the return value for update_metadata
         mock_metadata_shift = Mock(spec=Shift)
-        mock_metadata_shift.shift_id = "XXXXXXXXX"
+        mock_metadata_shift.shift_id = "test-shift"
         mock_latest_metadata.return_value = mock_metadata_shift
         mock_update_metadata.return_value = mock_metadata_shift
 
@@ -411,10 +403,7 @@ class TestCreateShiftAnnotations:
     )
     @patch("ska_oso_slt_services.data_access.postgres.shift_crud.DBCrud.get_entity")
     @patch("ska_oso_slt_services.services.shift_service.ShiftService.get_shift")
-    @patch(
-        "ska_oso_slt_services.repository.postgres_shift_repository"
-        ".PostgresShiftRepository._insert_shift_to_database"
-    )
+    @patch("ska_oso_slt_services.data_access.postgres.shift_crud.DBCrud.insert_entity")
     def test_get_shift_annotation(
         self,
         mock_insert_shift_to_database,
@@ -426,7 +415,7 @@ class TestCreateShiftAnnotations:
     ):
         # Arrange
         mock_shift_data = Mock(spec=Shift)
-        mock_shift_data.id = "XXXXXXXXX"
+        mock_shift_data.id = "test-shift"
         mock_shift_data.shift_operator = "test-operator"
         mock_insert_shift_to_database.return_value = {"id": 10}
         mock_get_entity_metadata.return_value = {
@@ -463,7 +452,7 @@ class TestCreateShiftAnnotations:
     ):
         # Arrange
         mock_shift_data = Mock(spec=Shift)
-        mock_shift_data.id = "XXXXXXXXX"
+        mock_shift_data.id = "test-shift"
         mock_shift_data.shift_operator = "test-operator"
 
         # Mock the return value for get_shift
@@ -489,10 +478,7 @@ class TestCreateShiftAnnotations:
         # Assert
         assert result[0].id == 1
 
-    @patch(
-        "ska_oso_slt_services.repository.postgres_shift_repository."
-        "PostgresShiftRepository._insert_shift_to_database"
-    )
+    @patch("ska_oso_slt_services.data_access.postgres.shift_crud.DBCrud.insert_entity")
     def test_error_to_create_shift_annotations(self, mock_insert_shift_to_database):
         # Arrange
         mock_shift_annotations = ShiftAnnotation(id=1, annotation="Annotation 1")
@@ -500,9 +486,6 @@ class TestCreateShiftAnnotations:
         # Act
         mock_insert_shift_to_database.return_value = {"id": 10}
         repository = PostgresShiftRepository()
-        # Mock dependencies
-        repository.postgres_data_access = Mock()
-        repository.crud = Mock()
 
         # Mock get_shift to return our test shift
         test_shift = Shift(

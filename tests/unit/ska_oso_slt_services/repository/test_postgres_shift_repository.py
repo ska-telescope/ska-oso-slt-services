@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 from psycopg import DatabaseError
 
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
@@ -9,6 +10,15 @@ from ska_oso_slt_services.domain.shift_models import Media, Shift, ShiftLogComme
 from ska_oso_slt_services.repository.postgres_shift_repository import (
     PostgresShiftRepository,
 )
+
+
+@pytest.fixture
+def mocked_postgres_repository():
+    """Fixture that provides a PostgresShiftRepository with mocked dependencies."""
+    repository = PostgresShiftRepository()
+    repository.postgres_data_access = Mock()
+    repository.crud = Mock()
+    return repository
 
 
 class TestPostgressShiftRepository(unittest.TestCase):
@@ -110,7 +120,7 @@ class TestPostgressShiftRepository(unittest.TestCase):
         result = repository.get_shifts()
         # Assert the result
         self._assert_result_length(result, 1)
-        result = {"shift_id": "test-shift"}
+        self.assertEqual(result, {"shift_id": "test-shift"})
 
     def test_get_shift(self):
         # Create an instance of PostgressShiftRepository
@@ -123,7 +133,7 @@ class TestPostgressShiftRepository(unittest.TestCase):
         result = repository.get_shift("test-shift")
         # Assert the result
         self._assert_result_length(result, 1)
-        result = {"shift_id": "test-shift"}
+        self.assertEqual(result, {"shift_id": "test-shift"})
 
     def test_update_shift_end_time(self):
         """Test successful shift end time update"""
@@ -270,37 +280,3 @@ class TestPostgressShiftRepository(unittest.TestCase):
         # Test case where comment has no images
         mock_comment.image = []
         self.repository.get_shift_logs_comment = MagicMock(return_value=mock_comment)
-
-    # def test_create_shift_log_comment(self):
-    #     """Test creating a shift log comment."""
-    #     # Mock the get_shift_logs_comment method
-    #     mock_comment = MagicMock()
-    #     mock_comment.image = [MagicMock(unique_id="test_file_key")]
-    #     self.repository = PostgresShiftRepository()
-    #     self.repository.postgres_data_access = Mock()
-    #     self.repository.crud = Mock()
-    #     self.repository.get_shift_logs_comment = MagicMock(return_value=mock_comment)
-
-    #     # Mock the get_file_object_from_s3 function
-    #     with patch(
-    #         "ska_oso_slt_services.repository.postgres_shift_repository.get_file_object_from_s3"
-    #     ) as mock_s3:
-    #         mock_s3.return_value = ("test_file_key", "base64_content", "image/jpeg")
-
-    #         # Test successful case
-    #         result = self.repository.create_shift_logs_comment(
-    #             shift_id="test_shift_id",
-    #             log_comment="Test comment",
-    #             image=[Media(path="test_file_key", unique_id="test_file_key")],
-    #         )
-
-    #         self.assertEqual(result.log_comment, "Test comment")
-    #         self.assertEqual(len(result.image), 1)
-    #         self.assertEqual(result.image[0].unique_id, "test_file_key")
-
-    #         # Verify the mocks were called correctly
-    #         self.repository.crud.create_entity.assert_called_once()
-    #         self.repository.get_shift_logs_comment.assert_called_once_with(
-    #             comment_id=1, entity=ShiftLogComment
-    #         )
-    #         mock_s3.assert_called_once_with(file_key="test_file_key")
