@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import Dict, List, Union
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.common.metadata_mixin import (
@@ -7,7 +7,12 @@ from ska_oso_slt_services.common.metadata_mixin import (
     set_new_metadata,
     update_metadata,
 )
-from ska_oso_slt_services.domain.shift_models import Shift, ShiftLogComment
+from ska_oso_slt_services.domain.shift_models import (
+    Media,
+    Shift,
+    ShiftComment,
+    ShiftLogComment,
+)
 from ska_oso_slt_services.services.base_repository_service import BaseRepositoryService
 from ska_oso_slt_services.services.media_service import MediaService
 
@@ -82,7 +87,9 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
 
         return shift_log_comments_obj_with_metadata
 
-    def update_shift_log_comments(self, comment_id, shift_log_comment: ShiftLogComment):
+    def update_shift_log_comments(
+        self, comment_id, shift_log_comment: ShiftLogComment
+    ) -> ShiftLogComment:
         """
         Update an existing shift log comment with new data.
 
@@ -114,7 +121,7 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
 
     def create_shift_log_media(
         self, shift_id, shift_operator, file, eb_id, shift_model
-    ):
+    ) -> Media:
         """
         Create a media file for a shift.
 
@@ -139,7 +146,7 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
 
         return self.post_media(file=file, shift_comment=shift_comment)
 
-    def get_shift_log_media(self, comment_id):
+    def get_shift_log_media(self, comment_id) -> List[Dict[str, str]]:
         """
         Get a media file from a shift.
 
@@ -154,7 +161,9 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
             table_model=ShiftLogComment,
         )
 
-    def update_shift_log_with_image(self, comment_id, files, shift_model):
+    def update_shift_log_with_image(
+        self, comment_id, files, shift_model
+    ) -> Union[ShiftLogComment, ShiftComment]:
         """
         Add a media file to a shift.
 

@@ -1,3 +1,5 @@
+import pytest
+
 from ska_oso_slt_services.data_access.postgres.mapping_factory import (
     TableMappingFactory,
 )
@@ -11,27 +13,19 @@ from ska_oso_slt_services.domain.shift_models import (
 
 class TestMappingFactory:
 
-    def test_mapping_factory__given_shift__then_correct_mapping_type(self):
+    @pytest.mark.parametrize(
+        "input_class,expected_table_name",
+        [
+            (ShiftBaseClass, "tab_oda_slt"),
+            (ShiftAnnotation, "tab_oda_slt_shift_annotations"),
+            (ShiftComment, "tab_oda_slt_shift_comments"),
+            (ShiftLogComment, "tab_oda_slt_shift_log_comments"),
+        ],
+    )
+    def test_mapping_factory_creates_correct_mapping_type(
+        self, input_class, expected_table_name
+    ):
         # when
-        mapping = TableMappingFactory.create_mapping(ShiftBaseClass)
+        mapping = TableMappingFactory.create_mapping(input_class)
         # then
-        assert mapping.table_details.table_name == "tab_oda_slt"
-
-    # write same pattern type tet case for ShiftAnnotations
-    def test_mapping_factory__given_shift_annotation__then_correct_mapping_type(self):
-        # when
-        mapping = TableMappingFactory.create_mapping(ShiftAnnotation)
-        # then
-        assert mapping.table_details.table_name == "tab_oda_slt_shift_annotations"
-
-    def test_mapping_factory__given_shift_comment__then_correct_mapping_type(self):
-        # when
-        mapping = TableMappingFactory.create_mapping(ShiftComment)
-        # then
-        assert mapping.table_details.table_name == "tab_oda_slt_shift_comments"
-
-    def test_mapping_factory__given_shift_log_comment__then_correct_mapping_type(self):
-        # when
-        mapping = TableMappingFactory.create_mapping(ShiftLogComment)
-        # then
-        assert mapping.table_details.table_name == "tab_oda_slt_shift_log_comments"
+        assert mapping.table_details.table_name == expected_table_name

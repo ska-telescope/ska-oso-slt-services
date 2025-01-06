@@ -115,6 +115,22 @@
         "operationId": "get_shifts_ska_oso_slt_services_slt_api_v0_shifts_get",
         "parameters": [
           {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Id"
+            }
+          },
+          {
             "name": "shift_id",
             "in": "query",
             "required": false,
@@ -181,22 +197,6 @@
             }
           },
           {
-            "name": "annotations",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Annotations"
-            }
-          },
-          {
             "name": "match_type",
             "in": "query",
             "required": false,
@@ -226,6 +226,38 @@
                 }
               ],
               "title": "Sbi Status"
+            }
+          },
+          {
+            "name": "sbi_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sbi Id"
+            }
+          },
+          {
+            "name": "eb_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Eb Id"
             }
           }
         ],
@@ -540,9 +572,9 @@
         "tags": [
           "shifts"
         ],
-        "summary": "Update end time of existing shift",
-        "description": "Update end time of existing shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift (ShiftUpdate): The updated shift data.\n\nRaises:\n    HTTPException: If the shift is not found.",
-        "operationId": "update_shift_end_time_ska_oso_slt_services_slt_api_v0_shift_update__shift_id__put",
+        "summary": "Update an existing shift",
+        "description": "Update an existing shift end time.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift (Shift): The updated shift data.\n\nRaises:\n    HTTPException: If the shift is not found.",
+        "operationId": "update_shift_end_time_ska_oso_slt_services_slt_api_v0_shift_end__shift_id__put",
         "parameters": [
           {
             "name": "shift_id",
@@ -572,8 +604,18 @@
                 "schema": {},
                 "example": [
                   {
-                    
-                    "operator_name": "Chandler",
+                    "shift_id": "string",
+                    "shift_start": "2024-11-08T11:11:24.549Z",
+                    "shift_end": "2024-11-08T11:11:24.549Z",
+                    "shift_operator": "string",
+                    "annotations": "string",
+                    "shift_logs": [
+                      {
+                        "info": {},
+                        "source": "string",
+                        "log_time": "2024-11-08T11:11:24.549Z"
+                      }
+                    ],
                     "metadata": {
                       "created_by": "string",
                       "created_on": "2024-11-08T11:11:24.549Z",
@@ -585,12 +627,42 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid request parameters"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Shift Not Found"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Invalid Shift Id",
             "content": {
               "application/json": {
                 "example": {
                   "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
                 }
               }
             }
@@ -1483,7 +1555,7 @@
         ],
         "summary": "Update an existing shift",
         "description": "Update an existing shift comment.\n\nArgs:\n    comment_id (str): The unique identifier of the shift to update.\n    shift_comment (ShiftComment): The updated shift comment data.\n\nRaises:\n    HTTPException: If the shift is not found.",
-        "operationId": "update_shift_comments_ska_oso_slt_services_slt_api_v0_shift_comment__comment_id__put",
+        "operationId": "update_shift_comment_ska_oso_slt_services_slt_api_v0_shift_comment__comment_id__put",
         "parameters": [
           {
             "name": "comment_id",
@@ -2026,6 +2098,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error occurred"
+                }
+              }
+            }
           }
         }
       }
@@ -2037,7 +2119,7 @@
         ],
         "summary": "Create a new shift annotation",
         "description": "Create a new annotation.\n\nArgs:\n    shift_annotation (ShiftAnnotation): The shift annotation to create.\n\nReturns:\n    ShiftAnnotation: The created shift annotation.",
-        "operationId": "create_shift_annotations_ska_oso_slt_services_slt_api_v0_shift_annotation_post",
+        "operationId": "create_shift_annotation_ska_oso_slt_services_slt_api_v0_shift_annotation_post",
         "requestBody": {
           "required": true,
           "content": {
@@ -2049,14 +2131,13 @@
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {},
                 "example": [
                   {
-                    "id": 0,
                     "annotation": "string",
                     "user_name": "string",
                     "shift_id": "string",
@@ -2100,6 +2181,16 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       },
@@ -2107,23 +2198,16 @@
         "tags": [
           "Shift Annotations"
         ],
-        "summary": "Retrieve shift annotations based on shift ID",
-        "description": "Retrieve all annotations.\nThis endpoint returns a list of all annotations in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n\nReturns:\n    ShiftAnnotation: Shift Annotations match found",
-        "operationId": "get_shift_annotations_ska_oso_slt_services_slt_api_v0_shift_annotation_get",
+        "summary": "Get Shift annotation",
+        "description": "Get Annotation based on shift_id.\n\nArgs:\n    shift_id (str): The shift id to get.\n\nReturns:\n    ShiftAnnotation: The shift annotation.",
+        "operationId": "get_shift_annotation_ska_oso_slt_services_slt_api_v0_shift_annotation_get",
         "parameters": [
           {
             "name": "shift_id",
             "in": "query",
-            "required": false,
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "string",
               "title": "Shift Id"
             }
           }
@@ -2136,7 +2220,6 @@
                 "schema": {},
                 "example": [
                   {
-                    "id": 0,
                     "annotation": "string",
                     "user_name": "string",
                     "shift_id": "string",
@@ -2166,17 +2249,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "message": "No shifts annotations found for the given query."
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "message": "No shifts annotation found for the given query."
                 }
               }
             }
@@ -2190,6 +2263,16 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       }
@@ -2199,7 +2282,7 @@
         "tags": [
           "Shift Annotations"
         ],
-        "summary": "Update an existing shift annotation",
+        "summary": "Update an existing shift",
         "description": "Update an existing shift annotation.\n\nArgs:\n    annotation_id (str): The unique identifier of the shift to update.\n    shift_annotation (ShiftAnnotation): The updated shift annotation data.\n\nRaises:\n    HTTPException: If the shift is not found.",
         "operationId": "update_shift_annotations_ska_oso_slt_services_slt_api_v0_shift_annotation__annotation_id__put",
         "parameters": [
@@ -2231,8 +2314,7 @@
                 "schema": {},
                 "example": [
                   {
-                    "id": 0,
-                    "comment": "string",
+                    "annotation": "string",
                     "user_name": "string",
                     "shift_id": "string",
                     "metadata": {
@@ -2267,11 +2349,11 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                "example": {
+                  "message": "Invalid Shift Id"
                 }
               }
             }
@@ -2462,6 +2544,17 @@
       },
       "Shift": {
         "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
           "shift_id": {
             "anyOf": [
               {
@@ -2507,17 +2600,6 @@
               }
             ],
             "title": "Shift Operator"
-          },
-          "annotations": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Annotations"
           },
           "shift_logs": {
             "anyOf": [
@@ -2570,11 +2652,86 @@
               }
             ],
             "title": "Comments"
+          },
+          "annotations": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ShiftAnnotation"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annotations"
           }
         },
         "type": "object",
         "title": "Shift",
-        "description": "Represents a shift in the SLT Shift Log Tool.\n\n\n:param shift_logs Optional[List[ShiftLogs]]: The logs associated with the shift.\n:param media Optional[List[Media]]: The media associated with the shift.\n:param metadata Optional[Metadat]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
+        "description": "Represents a shift in the SLT Shift Log Tool.\n\n\n:param shift_logs Optional[List[ShiftLogs]]: The logs associated with the shift.\n:param media Optional[List[Media]]: The media associated with the shift.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
+      },
+      "ShiftAnnotation": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "annotation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annotation"
+          },
+          "operator_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator Name"
+          },
+          "shift_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shift Id"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Metadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ShiftAnnotation",
+        "description": "Represents a annotation associated with a shift in the Shift.\n\n:param annotation Optional[str]: The text of the annotation.\n:param operator_name Optional[str]: The name of the operator who made\n the annotation.\n:param shift_id Optional[str]: The unique identifier of the shift the annotation\n belongs to.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\nlike shift created_on, created_by etc..."
       },
       "ShiftComment": {
         "properties": {
@@ -2649,7 +2806,7 @@
         },
         "type": "object",
         "title": "ShiftComment",
-        "description": "Represents a comment associated with a shift in the SShift.\n\n:param id Optional[int]: The unique identifier of the comment.\n:param comment Optional[str]: The text of the comment.\n:param operator_name Optional[str]: The name of the operator who made the comment.\n:param shift_id Optional[str]: The unique identifier of the shift the comment\n belongs to.\n:param image Optional[List[Media]]: The image associated with the comment.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
+        "description": "Represents a comment associated with a shift in the Shift.\n\n:param comment Optional[str]: The text of the comment.\n:param operator_name Optional[str]: The name of the operator who made the comment.\n:param shift_id Optional[str]: The unique identifier of the shift the comment\n belongs to.\n:param image Optional[List[Media]]: The image associated with the comment.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\nlike shift created_on, created_by etc..."
       },
       "ShiftLogComment": {
         "properties": {
@@ -2735,7 +2892,7 @@
         },
         "type": "object",
         "title": "ShiftLogComment",
-        "description": "Represents a comment associated with a shift in the SLT Shift Log Tool.\n\n:param id Optional[int]: The unique identifier of the comment.\n:param log_comment Optional[str]: The text of the comment.\n:param operator_name Optional[str]: The name of the operator who made the comment.\n:param shift_id Optional[str]: The unique identifier of the shift\n the comment belongs to.\n:param image Optional[List[Media]]: The image associated with the comment.\n:param eb_id Optional[str]: The unique identifier of the EB associated\n with the comment.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\n like shift created_on, created_bye etc..."
+        "description": "Represents a comment associated with a shift in the SLT Shift Log Tool.\n\n:param log_comment Optional[str]: The text of the comment.\n:param operator_name Optional[str]: The name of the operator who made the comment.\n:param shift_id Optional[str]: The unique identifier of the shift\n the comment belongs to.\n:param image Optional[List[Media]]: The image associated with the comment.\n:param eb_id Optional[str]: The unique identifier of the EB associated\n with the comment.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\n like shift created_on, created_by etc..."
       },
       "ShiftLogs": {
         "properties": {

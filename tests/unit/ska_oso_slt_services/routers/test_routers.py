@@ -397,7 +397,7 @@ def test_get_shift_comments(mock_get_shift_comments, shift_comment_data):
     )
 
 
-@patch("ska_oso_slt_services.services.shift_service.ShiftService.update_shift_comments")
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.update_shift_comment")
 def test_update_shift_comments(mock_update_shift_comment, shift_comment_data):
     data_to_be_updated = {"comment": "This is a test comment"}
 

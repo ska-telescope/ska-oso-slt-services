@@ -155,9 +155,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
             Shift: The newly created shift with updated attributes.
         """
         shift = self._prepare_new_shift(shift)
-        unique_id = self._insert_shift_to_database(entity=shift)
-        if unique_id:
-            shift.id = unique_id.get("id")
+        id_created = self.crud.insert_entity(entity=shift, db=self.postgres_data_access)
+        if id_created:
+            shift.id = id_created.get("id")
         shift_log_updater.update_shift_id(shift.shift_id)
         return shift
 
@@ -174,21 +174,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
         shift.shift_start = get_datetime_for_timezone("UTC")
         shift.shift_id = create_shift_id()
         return shift
-
-    def _insert_shift_to_database(self, entity: Shift) -> Dict[str, int]:
-        """
-        Insert the entity into the database using appropriate table mapping.
-
-        Args:
-            entity (Shift): The shift object to be inserted in DB.
-
-        Returns:
-            Dict[str, int]: A dictionary containing the ID of the created entry.
-        """
-        id_created = self.crud.insert_entity(
-            entity=entity, db=self.postgres_data_access
-        )
-        return id_created
 
     def update_shift_end_time(self, shift: Shift) -> Shift:
         """
@@ -221,7 +206,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         except (DatabaseError, DataError, InternalError) as error_msg:
 
             LOGGER.info("Error updating shift end time: %s", error_msg)
-            return error_msg
+            raise error_msg
 
     def update_shift(self, shift: Shift) -> Shift:
         """
@@ -304,8 +289,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         if not comment.image:
             raise NotFoundError(f"No media found for comment with ID: {comment_id}")
-        files = []
 
+        files = []
         for image in comment.image:
             file_key, base64_content, content_type = get_file_object_from_s3(
                 file_key=image.unique_id
@@ -322,7 +307,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
     def add_media(
         self,
         comment_id: int,
-        shift_comment: ShiftComment,
+        shift_comment: Union[ShiftComment, ShiftLogComment],
         files,
         shift_model: Union[ShiftLogComment, ShiftComment],
     ) -> Union[ShiftLogComment, ShiftComment]:
@@ -331,8 +316,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         Args:
             comment_id (int): ID of comment or shift log comment.
-            shift_comment (ShiftComment): The shift comment object
-            to associate the media with.
+            shift_comment (ShiftComment, ShiftLogComment):
+            The shift comment or shift log comment object to associate
+            the media with.
             files : List of files to be uploaded.
             shift_model (Union[ShiftLogComment, ShiftComment]):
             The model class for the comment.
@@ -491,8 +477,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         Returns:
             Shift: The most recent shift object in the system.
-
-
         """
 
         return self.crud.get_latest_entity(entity=Shift(), db=self.postgres_data_access)
@@ -763,7 +747,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             filters={"id": comment_id},
         )
 
-    def update_shift_comments(
+    def update_shift_comment(
         self, comment_id: int, shift_comment: ShiftComment
     ) -> Optional[ShiftComment]:
         """
@@ -822,9 +806,12 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             ShiftAnnotation: The newly created shift annotation.
         """
-        unique_id = self._insert_shift_to_database(entity=shift_annotation)
-        if unique_id:
-            shift_annotation.id = unique_id.get("id")
+
+        id_created = self.crud.insert_entity(
+            entity=shift_annotation, db=self.postgres_data_access
+        )
+        if id_created:
+            shift_annotation.id = id_created.get("id")
         return shift_annotation
 
     def get_shift_annotations(

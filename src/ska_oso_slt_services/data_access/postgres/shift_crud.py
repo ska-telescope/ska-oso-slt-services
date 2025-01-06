@@ -5,7 +5,7 @@ for shift-related entities including creation, retrieval, and updates.
 """
 
 import logging
-from typing import Any, List, Optional, TypeVar
+from typing import Any, List, Optional, TypeVar, Union
 
 from ska_oso_slt_services.common.error_handling import NotFoundError
 from ska_oso_slt_services.data_access.postgres.base_mapping import BaseMapping
@@ -39,7 +39,7 @@ class DBCrud:
         """Initialize DatabaseOperations with a PostgreSQL data access instance."""
         self.data_access = PostgresDataAccess()
 
-    def update_entity(self, entity_id: int, entity: T, db: Any) -> None:
+    def update_entity(self, entity_id: Union[int, str], entity: T, db: Any) -> None:
         """Update an entity in the database.
 
         Args:
@@ -91,11 +91,9 @@ class DBCrud:
             Exception: If database query fails
         """
         table_details = self._get_table_details(entity)
-
         if metadata:
             query, params = select_metadata_query(
-                table_details=table_details,
-                entity_id=filters["entity_id"],
+                table_details=table_details, entity_id=filters["entity_id"]
             )
         else:
             query, params = select_latest_query(

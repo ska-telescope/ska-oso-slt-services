@@ -91,7 +91,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
 
         return shift_comment_with_metadata
 
-    def update_shift_comments(self, comment_id: int, shift_comment: ShiftComment):
+    def update_shift_comment(self, comment_id: int, shift_comment: ShiftComment):
         """
         Update an existing shift comment with new data.
 
@@ -126,7 +126,7 @@ class ShiftComments(MediaService, BaseRepositoryService):
             metadata=metadata,
             last_modified_by=shift.shift_operator,
         )
-        updated_comment = self.crud_shift_repository.update_shift_comments(
+        updated_comment = self.crud_shift_repository.update_shift_comment(
             comment_id, shift_log_comment_with_metadata
         )
         return self._prepare_entity_with_metadata(updated_comment, ShiftComment())
