@@ -8,9 +8,7 @@ from ska_oso_slt_services.services.base_repository_service import BaseRepository
 
 class MediaService(BaseRepositoryService):
 
-    def add_media(
-        self, comment_id: int, files: Any, shift_model: Any, table_mapping: Any
-    ) -> Media:
+    def add_media(self, comment_id: int, files: Any, shift_model: Any) -> Media:
         """
         Add a media file to a shift.
 
@@ -23,8 +21,8 @@ class MediaService(BaseRepositoryService):
         Returns:
             Shift: The updated comment with the added media.
         """
-        latest_metadata = self.crud_shift_repository.get_latest_metadata(
-            entity_id=comment_id, table_details=table_mapping
+        latest_metadata = self.crud_shift_repository.get_entity_metadata(
+            entity_id=comment_id, model=shift_model
         )
 
         if isinstance(shift_model, dict):
@@ -42,11 +40,10 @@ class MediaService(BaseRepositoryService):
             shift_comment=shift,
             files=files,
             shift_model=shift_model,
-            table_mapping=table_mapping,
         )
         return result.image
 
-    def post_media(self, file: Any, shift_comment: Any, table_mapping: Any) -> Media:
+    def post_media(self, file: Any, shift_comment: Any) -> Media:
         """
         Create a new comment for a shift log with metadata.
 
@@ -63,7 +60,7 @@ class MediaService(BaseRepositoryService):
             shift_comment = Media.model_validate(shift_comment)
 
         result = self.crud_shift_repository.insert_shift_image(
-            file=file, shift_comment=shift_comment, table_mapping=table_mapping
+            file=file, shift_comment=shift_comment
         )
         return result
 
