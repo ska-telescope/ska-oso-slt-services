@@ -197,7 +197,7 @@ class TableCreator:
             CREATE TABLE IF NOT EXISTS public.tab_oda_slt_shift_annotations (
                 id SERIAL PRIMARY KEY,
                 shift_id VARCHAR(50) NOT NULL,
-                operator_name VARCHAR(100) NOT NULL,
+                user_name VARCHAR(100) NOT NULL,
                 annotation TEXT,
                 created_by VARCHAR(100) NOT NULL,
                 created_on TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -208,8 +208,8 @@ class TableCreator:
             );
             CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_annotations_shift_id
             ON public.tab_oda_slt_shift_annotations (shift_id);
-            CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_annotations_operator_name
-            ON public.tab_oda_slt_shift_annotations (operator_name);
+            CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_annotations_user_name
+            ON public.tab_oda_slt_shift_annotations (user_name);
         """
         )
         try:

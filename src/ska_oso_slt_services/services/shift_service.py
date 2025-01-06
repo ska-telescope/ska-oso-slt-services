@@ -9,6 +9,7 @@ from ska_oso_slt_services.domain.shift_models import (
     MatchType,
     SbiEntityStatus,
     Shift,
+    ShiftAnnotation,
     ShiftComment,
     ShiftLogComment,
 )
@@ -61,6 +62,23 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
                 ShiftComment(), shift_id=shift["shift_id"]
             )
             shift["comments"] = shift_comment_dict
+
+        return shifts
+
+    def merge_shift_annotations(self, shifts: Shift) -> Shift:
+        """
+        Merge shift annotations into the provided list of shifts.
+
+        Args:
+            shifts (List[dict]): List of shift data dictionaries.
+
+        Returns:
+            List[dict]: List of shift data with merged shift annotations.
+        """
+        for shift in shifts:
+            shift["annotations"] = self.crud_shift_repository.get_shift_annotations(
+                shift_id=shift["shift_id"]
+            )
 
         return shifts
 
@@ -150,13 +168,22 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
             shifts_with_comments_and_log_comments = self.merge_shift_comments(
                 [shifts_with_log_comments]
             )[0]
+            shifts_with_annotations = self.merge_shift_annotations([shift])[0]
             prepare_comment_with_metadata = []
+            prepare_annotation_with_metadata = []
 
             if shift.get("comments"):
                 for comment in shift["comments"]:
                     prepare_comment_with_metadata.append(
                         self._prepare_entity_with_metadata(
                             entity=comment, model=ShiftComment
+                        )
+                    )
+            if shift.get("annotations"):
+                for annotation in shift["annotations"]:
+                    prepare_annotation_with_metadata.append(
+                        self._prepare_entity_with_metadata(
+                            entity=annotation, model=ShiftAnnotation
                         )
                     )
             per_eb_comment_metadata = []
@@ -174,7 +201,11 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
             shift_with_metadata = self._prepare_entity_with_metadata(
                 entity=shifts_with_comments_and_log_comments, model=Shift
             )
+            shift_with_metadata = self._prepare_entity_with_metadata(
+                entity=shifts_with_annotations, model=Shift
+            )
             shift_with_metadata.comments = prepare_comment_with_metadata
+            shift_with_metadata.annotations = prepare_annotation_with_metadata
 
             if shift_with_metadata.shift_logs and per_eb_comment_metadata:
                 for i, shift_log in enumerate(

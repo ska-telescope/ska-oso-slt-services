@@ -2139,7 +2139,7 @@
                 "example": [
                   {
                     "annotation": "string",
-                    "operator_name": "string",
+                    "user_name": "string",
                     "shift_id": "string",
                     "metadata": {
                       "created_by": "string",
@@ -2221,7 +2221,7 @@
                 "example": [
                   {
                     "annotation": "string",
-                    "operator_name": "string",
+                    "user_name": "string",
                     "shift_id": "string",
                     "metadata": {
                       "created_by": "string",
@@ -2315,7 +2315,7 @@
                 "example": [
                   {
                     "annotation": "string",
-                    "operator_name": "string",
+                    "user_name": "string",
                     "shift_id": "string",
                     "metadata": {
                       "created_by": "string",
@@ -2670,7 +2670,7 @@
         },
         "type": "object",
         "title": "Shift",
-        "description": "Represents a shift in the SLT Shift Log Tool.\n\n\n:param shift_logs Optional[List[ShiftLogs]]: The logs associated with the shift.\n:param media Optional[List[Media]]: The media associated with the shift.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
+        "description": "Represents a shift in the SLT Shift Log Tool.\n\n\n:param shift_logs Optional[List[ShiftLogs]]: The logs associated with the shift.\n:param media Optional[List[Media]]: The media associated with the shift.\n:param metadata Optional[Metadataa]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
       },
       "ShiftAnnotation": {
         "properties": {
@@ -2948,6 +2948,67 @@
         "type": "object",
         "title": "ShiftLogs",
         "description": "Represents logs associated with a shift in the SLT Shift Log Tool.\n\n:param info Optional[dict]: Information about the log.\n:param source Optional[str]: The source of the log.\n:param log_time Optional[datetime]: The time the log was created."
+      },
+      "ShiftAnnotation": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "annotation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "user_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator Name"
+          },
+          "shift_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shift Id"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Metadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ShiftAnnotation",
+        "description": "Represents a annotation associated with a shift in the Shift.\n\n:param id Optional[int]: The unique identifier of the annotation.\n:param annotation Optional[str]: The text of the annotation.\n:param operator_name Optional[str]: The name of the operator who made the annotation.\n:param shift_id Optional[str]: The unique identifier of the shift the annotation\n belongs to.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
       },
       "ValidationError": {
         "properties": {

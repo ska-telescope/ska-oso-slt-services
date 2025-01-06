@@ -144,8 +144,12 @@ class TestPostgressShiftRepository(unittest.TestCase):
         repository = mocked_postgres_repository()
 
         # Create test data
-        test_shift = Shift(**self.shift[0])
-        existing_shift = self.existing_shift_data
+        test_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+        existing_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
 
         # Mock get_shift to return our test shift
         repository.get_shift = Mock(return_value=existing_shift)
@@ -165,7 +169,9 @@ class TestPostgressShiftRepository(unittest.TestCase):
         repository = mocked_postgres_repository()
 
         # Create test data with end time already set
-        test_shift = Shift(**self.shift[0])
+        test_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
         existing_shift = Shift(
             shift_id="test-shift",
             shift_start="2023-01-01T00:00:00",
@@ -188,8 +194,12 @@ class TestPostgressShiftRepository(unittest.TestCase):
         repository = mocked_postgres_repository()
 
         # Create test data
-        test_shift = Shift(**self.shift[0])
-        existing_shift = self.existing_shift_data
+        test_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+        existing_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
 
         # Mock get_shift to return our test shift
         repository.get_shift = Mock(return_value=existing_shift)
@@ -210,8 +220,12 @@ class TestPostgressShiftRepository(unittest.TestCase):
         repository = mocked_postgres_repository()
 
         # Create test data
-        test_shift = Shift(**self.shift[0])
-        existing_shift = self.existing_shift_data
+        test_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+        existing_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
 
         # Mock get_shift to return our test shift
         repository.get_shift = Mock(return_value=existing_shift)

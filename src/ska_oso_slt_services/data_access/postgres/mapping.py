@@ -168,7 +168,7 @@ class ShiftAnnotationMapping(BaseMapping[ShiftAnnotation]):
             identifier_field="id",
             column_map={
                 "annotation": lambda annotation: annotation.annotation,
-                "operator_name": lambda annotation: annotation.operator_name,
+                "user_name": lambda annotation: annotation.user_name,
                 "shift_id": lambda annotation: annotation.shift_id,
             },
         )
