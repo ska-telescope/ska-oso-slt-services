@@ -63,3 +63,19 @@ def set_new_metadata(entity: T, created_by: Optional[str] = None) -> T:
         last_modified_by=created_by,
     )
     return entity
+
+
+def get_latest_metadata(entity: T) -> Metadata:
+    """
+    Get the metadata for a shift
+
+    :param entity: An SLT entity
+    :type entity: An SLT entity which contains Metadata
+    :return: The metadata for the shift
+    """
+    return {
+        "created_by": entity["created_by"],
+        "created_on": entity["created_on"],
+        "last_modified_on": entity["last_modified_on"],
+        "last_modified_by": entity["last_modified_by"],
+    }

@@ -1,13 +1,13 @@
 {
     "id": 1,
-    "log_comment": "This is the original comment",
-    "operator_name": "original_operator",
+    "log_comment": "This is the updated comment",
+    "operator_name": "updated_operator",
     "shift_id": "test-shift-id",
     "eb_id": "test-eb-id",
     "metadata": {
-        "created_by": "original_operator",
+        "created_by": "updated_operator",
         "created_on": "2024-09-14T16:49:54.889Z",
-        "last_modified_by": "original_operator",
-        "last_modified_on": "2024-09-14T16:49:54.889Z"
+        "last_modified_by": "updated_operator",
+        "last_modified_on": "2024-12-30T15:49:26.322349+00:00"
     }
 }

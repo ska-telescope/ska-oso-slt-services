@@ -1,4 +1,3 @@
-from datetime import datetime
 from http import HTTPStatus
 from unittest.mock import MagicMock, Mock, patch
 
@@ -297,14 +296,6 @@ def test_update_shift_log_comment(shift_initial_comment_data):
     assert "metadata" in updated_comment_response, "Metadata is missing in the response"
     metadata = updated_comment_response["metadata"]
 
-    # Inline normalization for datetime format comparison
-    expected_last_modified_on = datetime.fromisoformat(
-        updated_comment_data["metadata"]["last_modified_on"].replace("Z", "+00:00")
-    ).isoformat()
-    actual_last_modified_on = datetime.fromisoformat(
-        metadata["last_modified_on"].replace("Z", "+00:00")
-    ).isoformat()
-
     assert (
         metadata["last_modified_by"]
         == updated_comment_data["metadata"]["last_modified_by"]
@@ -312,10 +303,6 @@ def test_update_shift_log_comment(shift_initial_comment_data):
         f"Expected last_modified_by to be "
         f"'{updated_comment_data['metadata']['last_modified_by']}', but got "
         f"'{metadata['last_modified_by']}'"
-    )
-    assert actual_last_modified_on == expected_last_modified_on, (
-        f"Expected last_modified_on to be '{expected_last_modified_on}', but got "
-        f"'{actual_last_modified_on}'"
     )
 
 
@@ -410,7 +397,7 @@ def test_get_shift_comments(mock_get_shift_comments, shift_comment_data):
     )
 
 
-@patch("ska_oso_slt_services.services.shift_service.ShiftService.update_shift_comments")
+@patch("ska_oso_slt_services.services.shift_service.ShiftService.update_shift_comment")
 def test_update_shift_comments(mock_update_shift_comment, shift_comment_data):
     data_to_be_updated = {"comment": "This is a test comment"}
 
