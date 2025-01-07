@@ -321,8 +321,8 @@ def update_shift(shift_id: str, shift: Shift):
 
 @router.put(
     "/shift/end/{shift_id}",
-    tags=["shifts"],
-    summary="Update an existing shift",
+    tags=["Shifts"],
+    summary="Update an existing shift end time",
     responses={
         200: {
             "description": "Successful Response",
@@ -436,7 +436,7 @@ def update_shift_end_time(shift_id: str, shift: Shift):
 )
 def create_shift_log_comments(shift_log_comment: ShiftLogComment):
     """
-    Create a new shift.
+    Create a new shift log comment.
 
     Args:
         shift (ShiftCreate): The shift data to create.
@@ -499,7 +499,7 @@ def create_shift_log_comments(shift_log_comment: ShiftLogComment):
 )
 def get_shift_log_comments(shift_id: Optional[str] = None, eb_id: Optional[str] = None):
     """
-    Retrieve all shifts.
+    Retrieve all shift log comments.
     This endpoint returns a list of all shifts in the system.
 
     Args:
@@ -829,7 +829,7 @@ def patch_shift_log_info(shift_id: Optional[str]):
 )
 def create_shift_comments(shift_comment: ShiftComment):
     """
-    Create a new shift.
+    Create a new shift comment.
 
     Args:
         shift_comment (ShiftComment): The shift comment to create.
@@ -844,7 +844,7 @@ def create_shift_comments(shift_comment: ShiftComment):
 @router.get(
     "/shift_comment",
     tags=["Shift Comments"],
-    summary="Retrieve shift comments based on shift ID and EB ID,",
+    summary="Retrieve shift comments based on shift ID",
     responses={
         200: {
             "description": "Successful Response",
@@ -890,7 +890,7 @@ def create_shift_comments(shift_comment: ShiftComment):
 )
 def get_shift_comments(shift_id: Optional[str] = None):
     """
-    Retrieve all shifts.
+    Retrieve shift comments based on shift ID.
     This endpoint returns a list of all shifts in the system.
 
     Args:
@@ -906,7 +906,7 @@ def get_shift_comments(shift_id: Optional[str] = None):
 @router.put(
     "/shift_comment/{comment_id}",
     tags=["Shift Comments"],
-    summary="Update an existing shift",
+    summary="Update an existing shift comment",
     responses={
         200: {
             "description": "Successful Response",
@@ -1112,7 +1112,7 @@ def get_shift_log_media(comment_id: Optional[int]):
 @router.post(
     "/shift_comment/upload_image",
     tags=["Shift Comments"],
-    summary="Upload image for shift",
+    summary="Upload image for shift comment",
     responses={
         201: {
             "description": "Image Uploaded Successfully",
@@ -1156,7 +1156,7 @@ def create_media_for_comment(
     shift_id: str, shift_operator: str, file: UploadFile = File(...)
 ):
     """
-    Create a new shift.
+    Upload image for shift comment.
 
     Args:
         shift_id (str): The unique identifier of the shift to update.
@@ -1164,7 +1164,7 @@ def create_media_for_comment(
         file (list[UploadFile]): A list of files to be uploaded.
 
     Returns:
-        ShiftLogComment: The created shift log comment.
+        media: The uploaded image for shift comment.
     """
     media = shift_service.create_media_for_comment(
         shift_id=shift_id,

@@ -87,7 +87,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Shift Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -545,11 +558,24 @@
             }
           },
           "422": {
-            "description": "Invalid Shift Id",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Shift Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -638,21 +664,34 @@
             }
           },
           "404": {
-            "description": "Not Found",
+            "description": "Invalid Shift ID",
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Shift Not Found"
+                  "message": "Invalid Shift Id"
                 }
               }
             }
           },
           "422": {
-            "description": "Invalid Shift Id",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Shift Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -676,7 +715,7 @@
           "Shift Log Comments"
         ],
         "summary": "Create a new shift log comment",
-        "description": "Create a new shift.\n\nArgs:\n    shift (ShiftCreate): The shift data to create.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
+        "description": "Create a new shift log comment.\n\nArgs:\n    shift (ShiftCreate): The shift data to create.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
         "operationId": "create_shift_log_comments_ska_oso_slt_services_slt_api_v0_shift_log_comments_post",
         "requestBody": {
           "required": true,
@@ -768,7 +807,7 @@
           "Shift Log Comments"
         ],
         "summary": "Retrieve shift log comments based on shift ID and EB ID",
-        "description": "Retrieve all shifts.\nThis endpoint returns a list of all shifts in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n    eb_id(optional): EB ID\n\nReturns:\n    ShiftLogComment: Shift Log Comments match found",
+        "description": "Retrieve shifts data based on Shift ID and EB ID.\nThis endpoint returns a list of all shifts in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n    eb_id(optional): EB ID\n\nReturns:\n    ShiftLogComment: Shift Log Comments match found",
         "operationId": "get_shift_log_comments_ska_oso_slt_services_slt_api_v0_shift_log_comments_get",
         "parameters": [
           {
@@ -856,7 +895,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Shift Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -951,11 +1003,24 @@
             }
           },
           "422": {
-            "description": "Invalid Comment ID",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Comment Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -1043,7 +1108,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Comment Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -1330,12 +1408,35 @@
               }
             }
           },
+          "404": {
+            "description": "Invalid Shift ID",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Shift Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -1359,7 +1460,7 @@
           "Shift Comments"
         ],
         "summary": "Create a new shift comment",
-        "description": "Create a new shift.\n\nArgs:\n    shift_comment (ShiftComment): The shift comment to create.\n\nReturns:\n    ShiftComment: The created shift comment.",
+        "description": "Create a new shift comment.\n\nArgs:\n    shift_comment (ShiftComment): The shift comment to create.\n\nReturns:\n    ShiftComment: The created shift comment.",
         "operationId": "create_shift_comments_ska_oso_slt_services_slt_api_v0_shift_comment_post",
         "requestBody": {
           "required": true,
@@ -1439,11 +1540,24 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -1454,8 +1568,8 @@
         "tags": [
           "Shift Comments"
         ],
-        "summary": "Retrieve shift comments based on shift ID and EB ID,",
-        "description": "Retrieve all shifts.\nThis endpoint returns a list of all shifts in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n\nReturns:\n    ShiftComment: Shift Comments match found",
+        "summary": "Retrieve shift comments based on shift ID",
+        "description": "Retrieve shift comments based on shift ID.\nThis endpoint returns a list of all shifts in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n\nReturns:\n    ShiftComment: Shift Comments match found",
         "operationId": "get_shift_comments_ska_oso_slt_services_slt_api_v0_shift_comment_get",
         "parameters": [
           {
@@ -1536,11 +1650,24 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -1632,7 +1759,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Shift Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -1730,12 +1870,35 @@
               }
             }
           },
+          "404": {
+            "description": "Invalid Shift ID",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Shift Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -1820,7 +1983,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Comment Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -1844,7 +2020,7 @@
           "Shift Comments"
         ],
         "summary": "Upload image for shift",
-        "description": "Create a new shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    file (list[UploadFile]): A list of files to be uploaded.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
+        "description": "Upload image for shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    file (list[UploadFile]): A list of files to be uploaded.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
         "operationId": "create_media_for_comment_ska_oso_slt_services_slt_api_v0_shift_comment_upload_image_post",
         "parameters": [
           {
@@ -1909,12 +2085,35 @@
               }
             }
           },
+          "404": {
+            "description": "Invalid Shift ID",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Invalid Shift Id"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Shift Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2009,7 +2208,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Comment Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2094,7 +2306,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Comment Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2135,6 +2360,14 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
                 "schema": {},
                 "example": [
                   {
@@ -2172,22 +2405,35 @@
               }
             }
           },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "example": {
                   "message": "Internal server error occurred"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -2198,9 +2444,9 @@
         "tags": [
           "Shift Annotations"
         ],
-        "summary": "Get Shift annotation",
-        "description": "Get Annotation based on shift_id.\n\nArgs:\n    shift_id (str): The shift id to get.\n\nReturns:\n    ShiftAnnotation: The shift annotation.",
-        "operationId": "get_shift_annotation_ska_oso_slt_services_slt_api_v0_shift_annotation_get",
+        "summary": "Retrieve shift annotations based on shift ID",
+        "description": "Retrieve all annotations related to given shift ID.\nThis endpoint returns a list of all annotations in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n\nReturns:\n    ShiftAnnotation: Shift Annotations match found",
+        "operationId": "get_shift_annotations_ska_oso_slt_services_slt_api_v0_shift_annotation_get",
         "parameters": [
           {
             "name": "shift_id",
@@ -2265,11 +2511,24 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2353,7 +2612,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "message": "Invalid Shift Id"
+                  "detail": [
+                    {
+                      "type": "json_invalid",
+                      "loc": [
+                        "body",
+                        23
+                        ],
+                      "msg": "JSON decode error",
+                      "input": {},
+                      "ctx": {
+                      "error": "Invalid control character at"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2696,7 +2968,7 @@
             ],
             "title": "Annotation"
           },
-          "operator_name": {
+          "user_name": {
             "anyOf": [
               {
                 "type": "string"
@@ -2705,7 +2977,7 @@
                 "type": "null"
               }
             ],
-            "title": "Operator Name"
+            "title": "User Name"
           },
           "shift_id": {
             "anyOf": [
@@ -2948,67 +3220,6 @@
         "type": "object",
         "title": "ShiftLogs",
         "description": "Represents logs associated with a shift in the SLT Shift Log Tool.\n\n:param info Optional[dict]: Information about the log.\n:param source Optional[str]: The source of the log.\n:param log_time Optional[datetime]: The time the log was created."
-      },
-      "ShiftAnnotation": {
-        "properties": {
-          "id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Id"
-          },
-          "annotation": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Comment"
-          },
-          "user_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Operator Name"
-          },
-          "shift_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Shift Id"
-          },
-          "metadata": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Metadata"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "title": "ShiftAnnotation",
-        "description": "Represents a annotation associated with a shift in the Shift.\n\n:param id Optional[int]: The unique identifier of the annotation.\n:param annotation Optional[str]: The text of the annotation.\n:param operator_name Optional[str]: The name of the operator who made the annotation.\n:param shift_id Optional[str]: The unique identifier of the shift the annotation\n belongs to.\n:param metadata Optional[Metadata]: Metadata contains shift additional info\nlike shift created_on, created_bye etc..."
       },
       "ValidationError": {
         "properties": {
