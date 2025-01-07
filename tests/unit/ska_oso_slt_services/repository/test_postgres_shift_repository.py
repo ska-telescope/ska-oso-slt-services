@@ -1,13 +1,36 @@
 import unittest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+from psycopg import DatabaseError
+
+from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
+from ska_oso_slt_services.domain.shift_models import Media, Shift, ShiftLogComment
 from ska_oso_slt_services.repository.postgres_shift_repository import (
     PostgresShiftRepository,
 )
 
 
+def mocked_postgres_repository():
+    """Fixture that provides a PostgresShiftRepository with mocked dependencies."""
+    repository = PostgresShiftRepository()
+    repository.postgres_data_access = Mock()
+    repository.crud = Mock()
+    return repository
+
+
 class TestPostgressShiftRepository(unittest.TestCase):
+
+    @pytest.fixture(autouse=True)
+    def shift_fixture(self, shift_data):
+        self.shift = shift_data
+
+    @pytest.fixture(autouse=True)
+    def existing_shift_fixture(self):
+        self.existing_shift_data = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
 
     def test_get_oda_data(self):
         """
@@ -94,3 +117,159 @@ class TestPostgressShiftRepository(unittest.TestCase):
         )
         self.assertEqual(result[eb_id]["sbi_status"], expected_sbi_status)
         self.assertEqual(result[eb_id]["eb_status"], expected_eb_status)
+
+    def test_get_shifts(self):
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
+
+        repository.crud.get_entities = Mock(return_value={"shift_id": "test-shift"})
+        result = repository.get_shifts()
+        # Assert the result
+        self._assert_result_length(result, 1)
+        self.assertEqual(result, {"shift_id": "test-shift"})
+
+    def test_get_shift(self):
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
+
+        repository.crud.get_entity = Mock(return_value={"shift_id": "test-shift"})
+        result = repository.get_shift("test-shift")
+        # Assert the result
+        self._assert_result_length(result, 1)
+        self.assertEqual(result, {"shift_id": "test-shift"})
+
+    def test_update_shift_end_time(self):
+        """Test successful shift end time update"""
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
+
+        # Create test data
+        test_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+        existing_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+
+        # Mock get_shift to return our test shift
+        repository.get_shift = Mock(return_value=existing_shift)
+
+        # Call the method
+        result = repository.update_shift_end_time(test_shift)
+
+        # Verify the results
+        self.assertIsInstance(result, Shift)
+        self.assertEqual(result.shift_id, "test-shift")
+        self.assertIsNotNone(result.shift_end)
+        repository.crud.update_entity.assert_called_once()
+
+    def test_update_shift_end_time_already_ended(self):
+        """Test updating an already ended shift"""
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
+
+        # Create test data with end time already set
+        test_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+        existing_shift = Shift(
+            shift_id="test-shift",
+            shift_start="2023-01-01T00:00:00",
+            shift_end="2023-01-01T08:00:00",
+        )
+
+        # Mock get_shift to return already ended shift
+        repository.get_shift = Mock(return_value=existing_shift)
+
+        # Call the method
+        result = repository.update_shift_end_time(test_shift)
+
+        # Verify it returns ShiftEndedException
+        self.assertIsInstance(result, ShiftEndedException)
+        repository.crud.update_entity.assert_not_called()
+
+    def test_update_shift_end_time_database_error(self):
+        """Test database error handling during shift end time update"""
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
+
+        # Create test data
+        test_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+        existing_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+
+        # Mock get_shift to return our test shift
+        repository.get_shift = Mock(return_value=existing_shift)
+
+        # Mock database error
+        db_error = DatabaseError("Test database error")
+        repository.crud.update_entity.side_effect = db_error
+
+        # Verify it raises the error
+        with self.assertRaises(DatabaseError) as context:
+            repository.update_shift_end_time(test_shift)
+
+        self.assertEqual(str(context.exception), "Test database error")
+
+    def test_update_shift(self):
+        """Test successful shift update"""
+        # Get mocked repository from fixture
+        repository = mocked_postgres_repository()
+
+        # Create test data
+        test_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+        existing_shift = Shift(
+            shift_id="test-shift", shift_start="2023-01-01T00:00:00", shift_end=None
+        )
+
+        # Mock get_shift to return our test shift
+        repository.get_shift = Mock(return_value=existing_shift)
+
+        # Call the method
+        result = repository.update_shift(test_shift)
+
+        # Verify the results
+        self.assertIsInstance(result, Shift)
+        self.assertEqual(result.shift_id, "test-shift")
+
+    def test_get_media(self):
+        """Test getting media files for a comment."""
+        # Mock the get_shift_logs_comment method
+        mock_comment = MagicMock()
+        mock_comment.image = [MagicMock(unique_id="test_file_key")]
+        self.repository = mocked_postgres_repository()
+        self.repository.get_shift_logs_comment = MagicMock(
+            return_value=ShiftLogComment(
+                id=1,
+                log_comment="Test comment",
+                image=[Media(path="test_file_key", unique_id="test_file_key")],
+            )
+        )
+
+        # Mock the get_file_object_from_s3 function
+        with patch(
+            "ska_oso_slt_services.repository.postgres_shift_repository."
+            "get_file_object_from_s3"
+        ) as mock_s3:
+            mock_s3.return_value = ("test_file_key", "base64_content", "image/jpeg")
+
+            # Test successful case
+            result = self.repository.get_media(1, ShiftLogComment)
+
+            self.assertEqual(len(result), 1)
+            self.assertEqual(result[0]["file_key"], "test_file_key")
+
+            # Verify the mocks were called correctly
+            self.repository.get_shift_logs_comment.assert_called_once_with(
+                comment_id=1, entity=ShiftLogComment
+            )
+            mock_s3.assert_called_once_with(file_key="test_file_key")
+
+        # Test case where comment has no images
+        mock_comment.image = []
+        self.repository.get_shift_logs_comment = MagicMock(return_value=mock_comment)

@@ -952,7 +952,7 @@ def get_shift_comments(shift_id: Optional[str] = None):
         },
     },
 )
-def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
+def update_shift_comment(comment_id: str, shift_comment: ShiftComment):
     """
     Update an existing shift comment.
 
@@ -964,7 +964,7 @@ def update_shift_comments(comment_id: str, shift_comment: ShiftComment):
         HTTPException: If the shift is not found.
     """
 
-    shift_comments = shift_service.update_shift_comments(
+    shift_comments = shift_service.update_shift_comment(
         comment_id=comment_id, shift_comment=shift_comment
     )
     return shift_comments, HTTPStatus.OK

@@ -107,8 +107,9 @@ class ShiftAnnotation(SLTObject):
     like shift created_on, created_by etc...
     """
 
+    id: Optional[int] = None
     annotation: Optional[str] = None
-    operator_name: Optional[str] = None
+    user_name: Optional[str] = None
     shift_id: Optional[str] = None
     metadata: Optional[Metadata] = None
 
@@ -141,11 +142,11 @@ class ShiftBaseClass(SLTObject):
     :param annotations Optional[str]: Annotations for the shift.
     :param comments Optional[List[ShiftComment]]: List of comments for the shift.
     """
+    id: Optional[int] = None
     shift_id: Optional[str] = None
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None
     shift_operator: Optional[str] = None
-    annotations: Optional[str] = None
 
 
 class Shift(ShiftBaseClass):

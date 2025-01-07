@@ -1,7 +1,13 @@
-from typing import List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 from pydantic import BaseModel, Field
 
+from ska_oso_slt_services.common.metadata_mixin import get_latest_metadata
+from ska_oso_slt_services.domain.shift_models import (
+    Metadata,
+    ShiftAnnotation,
+    ShiftComment,
+)
 from ska_oso_slt_services.repository.postgres_shift_repository import (
     CRUDShiftRepository,
     PostgresShiftRepository,
@@ -89,6 +95,26 @@ class BaseRepositoryService(BaseModel):
             raise ValueError("Multiple PostgresShiftRepository instances found")
 
         self.crud_shift_repository = postgres_repos[0]
+
+    def _prepare_entity_with_metadata(
+        self, entity: Dict[Any, Any], model: ShiftComment | ShiftAnnotation
+    ) -> ShiftComment | ShiftAnnotation:
+        """
+        Prepare a shift data object with metadata.
+
+        Args:
+            shift_data (Dict[Any, Any]): Raw shift comment or annotation data from
+            the database.
+
+        Returns:
+            ShiftComment: A ShiftComment object with metadata included.
+            ShiftAnnotation: A ShiftAnnotation object with metadata included.
+        """
+        shift_data_load = model.model_validate(entity)
+        metadata_dict = get_latest_metadata(entity)
+        shift_data_load.metadata = Metadata.model_validate(metadata_dict)
+
+        return shift_data_load
 
     class Config:
         arbitrary_types_allowed = True

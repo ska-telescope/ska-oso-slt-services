@@ -7,7 +7,7 @@ selecting, and querying shifts.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from psycopg import sql
 
@@ -63,13 +63,10 @@ def update_query(
 ) -> QueryAndParameters:
     """
     Creates a query and parameters to update the given entity in the table,
-    overwriting values in the existing row and returning the row ID.
-
-    If there is not an existing row for the identifier
-    then no update is performed.
+    directly setting the provided fields without first fetching the existing row.
 
     Args:
-        entity_id: The entity_id contais id of shift or comment
+        entity_id: The entity_id contains id of shift or comment
         table_details (TableDetails): The information about the table
         to perform the update on.
         entity: The entity which will be persisted.
@@ -78,64 +75,46 @@ def update_query(
         QueryAndParameters: A tuple of the query and parameters,
         which psycopg will safely combine.
     """
-    columns = table_details.get_columns_with_metadata()
-    params = table_details.get_params_with_metadata(entity)
+    # Get only non-None fields to update
+    columns_and_params = [
+        (col, param)
+        for col, param in zip(
+            table_details.get_columns_with_metadata(),
+            table_details.get_params_with_metadata(entity),
+        )
+        if param is not None
+    ]
 
-    # Add the identifier value (e.g., shift_id or comment_id) to the end of params
-    query = sql.SQL(
-        """
-        UPDATE {table} SET ({fields}) = ({values})
-        WHERE id=(SELECT id FROM {table} WHERE {identifier_field}=%s)
-        RETURNING id;
-        """
-    ).format(
-        identifier_field=sql.Identifier(table_details.table_details.identifier_field),
-        table=sql.Identifier(table_details.table_details.table_name),
-        fields=sql.SQL(",").join(map(sql.Identifier, columns)),
-        values=sql.SQL(",").join(sql.Placeholder() * len(params)),
-    )
-    return query, params + (entity_id,)
-
-
-def select_latest_query(
-    table_details: TableDetails, shift_id: str
-) -> QueryAndParameters:
-    """
-    Creates a query and parameters to find the latest version of
-    the given entity in the table, returning the row if found.
-
-    Args:
-        table_details (TableDetails): The information about
-        the table to perform the query on.
-        shift_id (str): The identifier of the shift to search for.
-
-    Returns:
-        QueryAndParameters: A tuple of the query and parameters,
-        which psycopg will safely combine.
-    """
-    columns = table_details.get_columns_with_metadata()
-    where_clause = sql.SQL("WHERE {identifier_field} = %s ORDER BY id DESC").format(
-        identifier_field=sql.Identifier(table_details.table_details.identifier_field),
-    )
-    params = (shift_id,)
-
-    query = (
-        sql.SQL(
-            """
-        SELECT {fields}
-        FROM {table}
-        """
-        ).format(
-            fields=sql.SQL(",").join(map(sql.Identifier, columns)),
+    if not columns_and_params:
+        # If no fields to update, return a query that just verifies the record exists
+        query = sql.SQL("SELECT id FROM {table} WHERE {identifier_field}=%s").format(
             table=sql.Identifier(table_details.table_details.table_name),
             identifier_field=sql.Identifier(
                 table_details.table_details.identifier_field
             ),
         )
-        + where_clause
+        return query, (entity_id,)
+
+    columns, params = zip(*columns_and_params)
+
+    # Build SET clause for only non-None fields
+    set_pairs = sql.SQL(",").join(
+        sql.SQL("{} = {}").format(sql.Identifier(col), sql.Placeholder())
+        for col in columns
     )
 
-    return query, params
+    query = sql.SQL(
+        """
+        UPDATE {table} SET {set_pairs}
+        WHERE {identifier_field}=%s
+        RETURNING id;
+        """
+    ).format(
+        table=sql.Identifier(table_details.table_details.table_name),
+        set_pairs=set_pairs,
+        identifier_field=sql.Identifier(table_details.table_details.identifier_field),
+    )
+    return query, params + (entity_id,)
 
 
 def select_metadata_query(
@@ -470,11 +449,30 @@ def select_logs_by_status(
 
     # Add status condition if applicable
     if qry_params and status_column:
-        conditions.append(
-            f"log->>'info' ? {status_column!r}"
-            " AND (log->'info'->>{status_column!r})::text = %s"
-        )
-        params.append(qry_params.sbi_status.value)
+        dynamic_columns = table_details.get_columns_with_metadata()
+        column_selection = ", ".join(dynamic_columns)
+
+        # Build the dynamic column selection part of the query_
+        query_str = f"""
+            SELECT
+                {column_selection},
+                jsonb_agg(
+                    jsonb_build_object(
+                        'info', log->'info',
+                        'source', log->'source',
+                        'log_time', log->'log_time'
+                    )
+                ) shift_logs
+            FROM
+                {table_details.table_details.table_name},
+                jsonb_array_elements(shift_logs) AS log
+            WHERE
+                log->'info'->>{status_column!r} = %s
+            GROUP BY
+                {column_selection}
+        """
+        params = (qry_params.sbi_status.value,)
+        return query_str, params
 
     # Process entity filter conditions
     if entity_filter:
@@ -539,11 +537,9 @@ def select_logs_by_status(
     return query_str, tuple(params)
 
 
-def select_common_query(
+def select_latest_query(
     table_details: TableDetails,
-    id: Optional[int] = None,  # pylint: disable=W0622
-    shift_id: Optional[str] = None,
-    eb_id: Optional[str] = None,
+    filters,
 ) -> QueryAndParameters:
     """
     Creates a query to select comments / annotation based on various criteria:
@@ -563,6 +559,12 @@ def select_common_query(
         QueryAndParameters: A tuple of the query and parameters.
     """
     # Get the columns for the select statement
+    tid, shift_id, eb_id = (
+        filters.get("id"),
+        filters.get("shift_id"),
+        filters.get("eb_id"),
+    )
+
     column_list = list(table_details.get_columns_with_metadata())
     column_list.append("id")
     columns = tuple(column_list)
@@ -583,9 +585,9 @@ def select_common_query(
     params = []
 
     # Add conditions based on the parameters provided
-    if id is not None:
+    if tid is not None:
         where_clauses.append(sql.SQL("{field} = %s").format(field=sql.Identifier("id")))
-        params.append(id)
+        params.append(tid)
 
     if shift_id is not None:
         where_clauses.append(
