@@ -39,7 +39,7 @@ class ShiftComment {
 class ShiftAnnotation {
     +id: Optional[int]
     +annotation: Optional[str]
-    +operator_name: Optional[str]
+    +user_name: Optional[str]
     +shift_id: Optional[str]
     +metadata: Optional[Metadata]
 }
