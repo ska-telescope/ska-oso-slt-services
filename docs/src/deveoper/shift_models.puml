@@ -80,6 +80,6 @@ ShiftLogs "1" *-- "*" ShiftLogComment
 Shift "1" *-- "*" ShiftLogs
 Shift "1" *-- "*" ShiftComment
 Shift "1" *-- "*" ShiftAnnotation
-Media "1" *-- "1" Metadata
+Shift "1" *-- "1" Metadata
 
 @enduml
