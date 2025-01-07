@@ -1,0 +1,85 @@
+@startuml Shift Models
+
+class Metadata {
+    +created_on: datetime
+    +created_by: Optional[str]
+    +last_modified_by: Optional[str]
+    +last_modified_on: datetime
+}
+
+class Operator {
+    +name: str
+}
+
+class Media {
+    +path: Optional[str]
+    +unique_id: Optional[str]
+    +timestamp: datetime
+}
+
+class ShiftLogComment {
+    +id: Optional[int]
+    +log_comment: Optional[str]
+    +operator_name: Optional[str]
+    +shift_id: Optional[str]
+    +image: Optional[List[Media]]
+    +eb_id: Optional[str]
+    +metadata:  Optional[Metadata]
+}
+
+class ShiftComment {
+    +id: Optional[int]
+    +comment:  Optional[str]
+    +operator_name: Optional[str]
+    +shift_id: Optional[str]
+    +image: Optional[List[Media]]
+    +metadata: Optional[Metadata]
+}
+
+class ShiftAnnotation {
+    +id: Optional[int]
+    +annotation: Optional[str]
+    +user_name: Optional[str]
+    +shift_id: Optional[str]
+    +metadata: Optional[Metadata]
+}
+
+class ShiftLogs {
+    +info: Optional[dict] 
+    +source: Optional[str]
+    +log_time: Optional[datetime]
+    +comments: Optional[List[ShiftLogComment]]
+}
+
+class ShiftBaseClass {
+    +shift_id: Optional[str]
+    +shift_start: Optional[datetime]
+    +shift_end: Optional[datetime]
+    +shift_operator: Optional[str]
+}
+
+class Shift {
+    +shift_logs: Optional[List[ShiftLogs]]
+    +comments: List[ShiftComment]
+    +annotation: Optional[List[ShiftAnnotation]]
+    +metadata: Optional[Metadata]
+}
+
+ShiftBaseClass <|-- Shift
+ShiftLogComment "1" *-- "*" Media
+ShiftLogComment "1" *-- "1" Metadata
+
+ShiftComment "1" *-- "*" Media
+ShiftComment "1" *-- "1" Metadata
+
+ShiftAnnotation "1" *-- "1" Metadata
+
+ShiftLogs "1" *-- "*" ShiftLogComment
+
+
+Shift "1" *-- "*" ShiftLogs
+Shift "1" *-- "*" ShiftComment
+Shift "1" *-- "*" ShiftAnnotation
+Shift "1" *-- "1" Metadata
+
+@enduml
