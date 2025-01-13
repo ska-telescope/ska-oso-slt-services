@@ -55,7 +55,7 @@ def test_create_shift(updated_shift_data):
 
             # Send a POST request to the endpoint
             response = client.post(
-                f"{API_PREFIX}/shifts/create", json=updated_shift_data
+                f"{API_PREFIX}/shift/create", json=updated_shift_data
             )
     # Assertions
     assert (
@@ -101,7 +101,7 @@ def test_update_shift(existing_shift_data, updated_shift_data):
     ):
         # Send PUT request
         response = client.put(
-            f"{API_PREFIX}/shifts/update/{existing_shift_data['shift_id']}",
+            f"{API_PREFIX}/shift/update/{existing_shift_data['shift_id']}",
             json=updated_shift_data,
         )
 
@@ -171,7 +171,7 @@ def test_update_shift_after_end():
 
         with pytest.raises(ShiftEndedException):
             client.put(
-                f"{API_PREFIX}/shifts/update/test-id-1",
+                f"{API_PREFIX}/shift/update/test-id-1",
                 json=invalid_update_data,
             )
 
@@ -186,7 +186,7 @@ def test_update_shift_after_end():
             return_value={**existing_shift.__dict__, **valid_update_data},
         ):
             response = client.put(
-                f"{API_PREFIX}/shifts/update/test-id-1",
+                f"{API_PREFIX}/shift/update/test-id-1",
                 json=valid_update_data,
             )
 
