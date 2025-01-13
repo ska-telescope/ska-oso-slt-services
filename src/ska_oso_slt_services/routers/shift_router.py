@@ -189,7 +189,7 @@ def get_shifts(
 
 
 @router.post(
-    "/shift/create",
+    "/shift",
     tags=["Shifts"],
     summary="Create a new shift",
     responses={
@@ -256,7 +256,7 @@ def create_shift(shift: Shift):
 
 
 @router.put(
-    "/shift/update/{shift_id}",
+    "/shift/{shift_id}",
     tags=["Shifts"],
     summary="Update an existing shift",
     responses={
@@ -384,7 +384,7 @@ def update_shift_end_time(shift_id: str, shift: Shift):
 
 
 @router.post(
-    "/shift_log_comments",
+    "/shift_log_comment",
     tags=["Shift Log Comments"],
     summary="Create a new shift log comment",
     responses={
@@ -395,7 +395,7 @@ def update_shift_end_time(shift_id: str, shift: Shift):
                     "example": [
                         json.loads(
                             (
-                                current_dir / "response_files/shift_log_comments.json"
+                                current_dir / "response_files/shift_log_comment.json"
                             ).read_text()
                         )
                     ]
@@ -449,7 +449,7 @@ def create_shift_log_comments(shift_log_comment: ShiftLogComment):
 
 
 @router.get(
-    "/shift_log_comments",
+    "/shift_log_comment",
     tags=["Shift Log Comments"],
     summary="Retrieve shift log comments based on shift ID and EB ID",
     responses={
@@ -460,7 +460,7 @@ def create_shift_log_comments(shift_log_comment: ShiftLogComment):
                     "example": [
                         json.loads(
                             (
-                                current_dir / "response_files/shift_log_comments.json"
+                                current_dir / "response_files/shift_log_comment.json"
                             ).read_text()
                         )
                     ]
@@ -514,7 +514,7 @@ def get_shift_log_comments(shift_id: Optional[str] = None, eb_id: Optional[str] 
 
 
 @router.put(
-    "/shift_log_comments/{comment_id}",
+    "/shift_log_comment/{comment_id}",
     tags=["Shift Log Comments"],
     summary="Update an existing shift log comments",
     responses={
@@ -525,7 +525,7 @@ def get_shift_log_comments(shift_id: Optional[str] = None, eb_id: Optional[str] 
                     "example": [
                         json.loads(
                             (
-                                current_dir / "response_files/shift_log_comments.json"
+                                current_dir / "response_files/shift_log_comment.json"
                             ).read_text()
                         )
                     ]
@@ -581,7 +581,7 @@ def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogCommen
 
 
 @router.put(
-    "/shift_log_comments/upload_image/{comment_id}",
+    "/shift_log_comment/upload_image/{comment_id}",
     tags=["Shift Log Comments"],
     summary="Upload image for Shift log comment",
     responses={
@@ -727,7 +727,7 @@ def get_current_shift():
 
 
 @router.patch(
-    "/shifts/patch/update_shift_log_info/{shift_id}",
+    "/shift/patch/update_shift_log_info/{shift_id}",
     tags=["Shifts"],
     summary="Update Shift Log info",
     responses={
@@ -971,7 +971,7 @@ def update_shift_comment(comment_id: str, shift_comment: ShiftComment):
 
 
 @router.post(
-    "/shift_log_comments/upload_image",
+    "/shift_log_comment/upload_image",
     tags=["Shift Log Comments"],
     summary="Upload image for shift",
     responses={
@@ -1044,7 +1044,7 @@ def create_shift_log_media(
 
 
 @router.get(
-    "/shift_log_comments/download_images/{comment_id}",
+    "/shift_log_comment/download_images/{comment_id}",
     tags=["Shift Log Comments"],
     summary="download shift image",
     responses={
