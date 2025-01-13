@@ -5,6 +5,12 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+0.3.0
+******
+* Added Annotation APIs
+* Renamed some APIs
+* Changed Architecture of the SLT Backend Repo
+
 0.2.1
 ******
 * Added Changelog.rst file

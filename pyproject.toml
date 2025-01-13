@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-oso-slt-services"
-version = "0.2.1"
+version = "0.3.0"
 description = "Shift log tool"
 authors = ["Team Nakshatra"]
 license= "BSD-3-Clause"
