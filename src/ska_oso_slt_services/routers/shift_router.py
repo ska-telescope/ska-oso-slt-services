@@ -189,7 +189,7 @@ def get_shifts(
 
 
 @router.post(
-    "/shifts/create",
+    "/shift/create",
     tags=["Shifts"],
     summary="Create a new shift",
     responses={
@@ -256,7 +256,7 @@ def create_shift(shift: Shift):
 
 
 @router.put(
-    "/shifts/update/{shift_id}",
+    "/shift/update/{shift_id}",
     tags=["Shifts"],
     summary="Update an existing shift",
     responses={

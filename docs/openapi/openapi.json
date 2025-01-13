@@ -379,7 +379,7 @@
         }
       }
     },
-    "/ska-oso-slt-services/slt/api/v0/shifts/create": {
+    "/ska-oso-slt-services/slt/api/v0/shift/create": {
       "post": {
         "tags": [
           "Shifts"
@@ -477,7 +477,7 @@
         }
       }
     },
-    "/ska-oso-slt-services/slt/api/v0/shifts/update/{shift_id}": {
+    "/ska-oso-slt-services/slt/api/v0/shift/update/{shift_id}": {
       "put": {
         "tags": [
           "Shifts"
