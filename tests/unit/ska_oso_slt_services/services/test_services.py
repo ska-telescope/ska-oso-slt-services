@@ -19,6 +19,10 @@ class TestShiftService:
         "shift_service.ShiftService.merge_shift_comments"
     )
     @patch(
+        "ska_oso_slt_services.services."
+        "shift_service.ShiftService.merge_shift_annotations"
+    )
+    @patch(
         "ska_oso_slt_services.repository."
         "postgres_shift_repository.PostgresShiftRepository.get_shift"
     )
@@ -28,13 +32,13 @@ class TestShiftService:
         mock_merge_comments,
         mock_get_shift,
         mock_merge_shift_comments,
+        mock_merge_shift_annotations,
         mock_prepare_metadata,
     ):
-        # Arrange
-        shift_id = "test-shift-123"
         mock_shift = {
-            "id": shift_id,
+            "id": "test-shift-123",
             "comments": [{"id": "comment1", "comment": "Test comment"}],
+            "annotations": [{"id": "annotation1", "annotation": "Test annotation"}],
             "shift_logs": [
                 {
                     "id": "log1",
@@ -46,22 +50,24 @@ class TestShiftService:
         # # Set up mock returns
         mock_get_shift.return_value = mock_shift
         mock_merge_shift_comments.return_value = [mock_shift]
+        mock_merge_shift_annotations.return_value = [mock_shift]
 
         mock_shift_obj = Mock(spec=Shift)
-        mock_shift_obj.id = shift_id
+        mock_shift_obj.id = "test-shift-123"
         mock_shift_obj.shift_logs = [Mock(comments=[])]
         mock_shift_obj.comments = []
+        mock_shift_obj.annotations = []
 
         mock_prepare_metadata.return_value = mock_shift_obj
 
         # Act
         shift_service = ShiftService([PostgresShiftRepository])
-        result = shift_service.get_shift(shift_id)
+        result = shift_service.get_shift("test-shift-123")
 
         # Assert
         assert isinstance(result, Mock)  # Since we're using a Mock object
-        assert result.id == shift_id
-        mock_get_shift.assert_called_once_with(shift_id)
+        assert result.id == "test-shift-123"
+        mock_get_shift.assert_called_once_with("test-shift-123")
 
     @patch(
         "ska_oso_slt_services.services.shift_service."
