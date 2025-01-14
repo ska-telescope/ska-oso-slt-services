@@ -100,11 +100,22 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
                 [shifts_with_log_comments]
             )[0]
 
+            shifts_with_annotations = self.merge_shift_annotations([shift])[0]
+
             prepare_comment_with_metadata = []
+            prepare_annotation_with_metadata = []
             if shift.get("comments"):
                 for comment in shift["comments"]:
                     prepare_comment_with_metadata.append(
                         self._prepare_entity_with_metadata(comment, model=ShiftComment)
+                    )
+
+            if shift.get("annotations"):
+                for annotation in shift["annotations"]:
+                    prepare_annotation_with_metadata.append(
+                        self._prepare_entity_with_metadata(
+                            entity=annotation, model=ShiftAnnotation
+                        )
                     )
 
             per_eb_comment_metadata = []
@@ -122,7 +133,13 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
             shift_with_metadata = self._prepare_entity_with_metadata(
                 shifts_with_comments_and_log_comments, model=Shift
             )
+
+            shift_with_metadata = self._prepare_entity_with_metadata(
+                entity=shifts_with_annotations, model=Shift
+            )
+
             shift_with_metadata.comments = prepare_comment_with_metadata
+            shift_with_metadata.annotations = prepare_annotation_with_metadata
             if shift_with_metadata.shift_logs and per_eb_comment_metadata:
                 for i, shift_log in enumerate(
                     shift_with_metadata.shift_logs

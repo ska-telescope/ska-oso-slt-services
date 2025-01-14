@@ -623,7 +623,11 @@ class PostgresShiftRepository(CRUDShiftRepository):
         current_shift_data = Shift.model_validate(current_shift_data)
 
         created_after_eb_sbi_info = self.get_oda_data(
-            filter_date=current_shift_data.shift_start.isoformat()
+            filter_date=(
+                current_shift_data.shift_start.isoformat()
+                if current_shift_data.shift_start
+                else None
+            )
         )
 
         if current_shift_data.shift_logs and current_shift_data.shift_logs:

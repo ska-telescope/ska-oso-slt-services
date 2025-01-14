@@ -54,9 +54,7 @@ def test_create_shift(updated_shift_data):
         ):
 
             # Send a POST request to the endpoint
-            response = client.post(
-                f"{API_PREFIX}/shift/create", json=updated_shift_data
-            )
+            response = client.post(f"{API_PREFIX}/shift/", json=updated_shift_data)
     # Assertions
     assert (
         response.status_code == 200
@@ -101,7 +99,7 @@ def test_update_shift(existing_shift_data, updated_shift_data):
     ):
         # Send PUT request
         response = client.put(
-            f"{API_PREFIX}/shift/update/{existing_shift_data['shift_id']}",
+            f"{API_PREFIX}/shift/{existing_shift_data['shift_id']}",
             json=updated_shift_data,
         )
 
@@ -171,7 +169,7 @@ def test_update_shift_after_end():
 
         with pytest.raises(ShiftEndedException):
             client.put(
-                f"{API_PREFIX}/shift/update/test-id-1",
+                f"{API_PREFIX}/shift/test-id-1",
                 json=invalid_update_data,
             )
 
@@ -186,7 +184,7 @@ def test_update_shift_after_end():
             return_value={**existing_shift.__dict__, **valid_update_data},
         ):
             response = client.put(
-                f"{API_PREFIX}/shift/update/test-id-1",
+                f"{API_PREFIX}/shift/test-id-1",
                 json=valid_update_data,
             )
 
@@ -208,7 +206,7 @@ def test_get_shift_log_comments(mock_get_shift_comments, shift_log_comment_data)
 
     # Send a GET request to get shift log comments
     response = client.get(
-        f"{API_PREFIX}/shift_log_comments?shift_id=test-shift-id&eb_id=string"
+        f"{API_PREFIX}/shift_log_comment?shift_id=test-shift-id&eb_id=string"
     )
 
     assert (
@@ -266,7 +264,7 @@ def test_update_shift_log_comment(shift_initial_comment_data):
         # Send a PUT request to update shift log comment
         comment_id = shift_initial_comment_data["id"]
         response = client.put(
-            f"{API_PREFIX}/shift_log_comments/{comment_id}",
+            f"{API_PREFIX}/shift_log_comment/{comment_id}",
             json=updated_comment_data,
         )
 
@@ -601,7 +599,7 @@ def test_create_shift_log_comment(mock_create_shift_comment, shift_log_comment_d
 
     # Send a POST request to create shift log comment
     response = client.post(
-        f"{API_PREFIX}/shift_log_comments", json=shift_log_comment_data[0]
+        f"{API_PREFIX}/shift_log_comment", json=shift_log_comment_data[0]
     )
 
     assert (
@@ -666,7 +664,7 @@ def test_post_shift_log_comment_image(
     mock_get_shift.return_value = mock_shift_data
     # Send a POST request to the endpoint
     response = client.post(
-        f"{API_PREFIX}/shift_log_comments/upload_image?shift_id=shift-20241111-2"
+        f"{API_PREFIX}/shift_log_comment/upload_image?shift_id=shift-20241111-2"
         "&shift_operator=test&eb_id=test-id",
         files=test_file,
     )
@@ -702,7 +700,7 @@ def test_get_shift_log_comment_image(
     mock_shift_comment_image.return_value = get_shift_comment_image_data
 
     # Send a GET request to the endpoint
-    response = client.get(f"{API_PREFIX}/shift_log_comments/download_images/3")
+    response = client.get(f"{API_PREFIX}/shift_log_comment/download_images/3")
 
     # Assertions
     assert (
@@ -724,7 +722,7 @@ def test_patch_shift_log_info_success(mock_update_shift, shift_patch_log_data):
 
     # Make request to the endpoint
     response = client.patch(
-        f"{API_PREFIX}/shifts/patch/update_shift_log_info/shift-20241112-1"
+        f"{API_PREFIX}/shift/patch/update_shift_log_info/shift-20241112-1"
     )
 
     # Assertions
@@ -747,7 +745,7 @@ def test_add_shift_log_comment_image(
 
     # Send a PUT request to the endpoint
     response = client.put(
-        f"{API_PREFIX}/shift_log_comments/upload_image/2",
+        f"{API_PREFIX}/shift_log_comment/upload_image/2",
         files=test_file,
     )
     # Assertions
