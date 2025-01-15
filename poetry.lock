@@ -972,17 +972,14 @@ files = [
 
 [[package]]
 name = "mistune"
-version = "3.1.0"
-description = "A sane and fast Markdown parser with useful plugins and renderers"
+version = "2.0.5"
+description = "A sane Markdown parser with useful plugins and renderers"
 optional = false
-python-versions = ">=3.8"
+python-versions = "*"
 files = [
-    {file = "mistune-3.1.0-py3-none-any.whl", hash = "sha256:b05198cf6d671b3deba6c87ec6cf0d4eb7b72c524636eddb6dbf13823b52cee1"},
-    {file = "mistune-3.1.0.tar.gz", hash = "sha256:dbcac2f78292b9dc066cd03b7a3a26b62d85f8159f2ea5fd28e55df79908d667"},
+    {file = "mistune-2.0.5-py2.py3-none-any.whl", hash = "sha256:bad7f5d431886fcbaf5f758118ecff70d31f75231b34024a1341120340a65ce8"},
+    {file = "mistune-2.0.5.tar.gz", hash = "sha256:0246113cb2492db875c6be56974a7c893333bf26cd92891c85f63151cee09d34"},
 ]
-
-[package.dependencies]
-typing-extensions = {version = "*", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "mypy-extensions"
@@ -1952,23 +1949,22 @@ test = ["cython (>=3.0)", "defusedxml (>=0.7.1)", "pytest (>=8.0)", "setuptools 
 
 [[package]]
 name = "sphinx-mdinclude"
-version = "0.6.2"
+version = "0.5.4"
 description = "Markdown extension for Sphinx"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "sphinx_mdinclude-0.6.2-py3-none-any.whl", hash = "sha256:648e78edb067c0e4bffc22943278d49d54a0714494743592032fa3ad82a86984"},
-    {file = "sphinx_mdinclude-0.6.2.tar.gz", hash = "sha256:447462e82cb8be61404a2204227f920769eb923d2f57608e3325f3bb88286b4c"},
+    {file = "sphinx_mdinclude-0.5.4-py3-none-any.whl", hash = "sha256:c8b04b7bbc82aa47d7567841c3b030301dbdfa1cbd188ef2d2f117dcca79f199"},
+    {file = "sphinx_mdinclude-0.5.4.tar.gz", hash = "sha256:4a58c8f02e95a2b7ba0eb77a851e096e42c66958f9f7ffe575e427cf659e1789"},
 ]
 
 [package.dependencies]
-docutils = ">=0.19,<1.0"
-mistune = ">=3.0,<4.0"
+docutils = ">=0.16,<1.0"
+mistune = ">=2.0,<3.0"
 pygments = ">=2.8"
-sphinx = ">=6"
 
 [package.extras]
-dev = ["attribution (==1.7.1)", "black (==24.4.2)", "coverage (==7.5.1)", "docutils (==0.20.1)", "docutils (==0.21.2)", "flake8 (==7.0.0)", "flit (==3.9.0)", "mistune (==3.0.2)", "mypy (==1.10.0)", "sphinx (==7.1.2)", "sphinx (==7.3.7)", "ufmt (==2.5.1)", "usort (==1.0.8.post1)"]
+dev = ["attribution (==1.6.2)", "black (==24.4.0)", "coverage (==7.3.2)", "docutils (==0.20.1)", "docutils (==0.21.1)", "flake8 (==7.0.0)", "flit (==3.9.0)", "mistune (==2.0.4)", "mypy (==1.9.0)", "sphinx (==7.1.2)", "sphinx (==7.3.7)", "ufmt (==2.5.1)", "usort (==1.0.7)"]
 
 [[package]]
 name = "sphinxcontrib-applehelp"
@@ -2465,4 +2461,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "5a768967294b6b0c73fa1552c0ee7e84da6ae646ca31362f918cdbdce86b2593"
+content-hash = "18b926de2a4eee6bafef01bc3e5210c5ab8d38e5cdbc6fc951a7ced7189ece85"

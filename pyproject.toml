@@ -63,10 +63,14 @@ deepdiff = "^7.0.0"
 
 
 [tool.poetry.group.docs.dependencies]
-sphinxcontrib-openapi= "^0.8.1"
+sphinxcontrib-openapi= "^0.8.4"
 myst-parser = "^3.0.0"
 ska-ser-sphinx-theme = "^0.2.0"
 sphinx = "^7.0.2"
+# required to resolve the following import issue:
+# Could not import extension sphinxcontrib.openapi (exception: cannot import name 'error_string' from 'docutils.io'
+mistune = "^2"
+
 
 
 [tool.pytest.ini_options]
