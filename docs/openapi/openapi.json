@@ -8,7 +8,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift": {
       "get": {
         "tags": [
-          "Shifts"
+          "Shift"
         ],
         "summary": "Get a shift",
         "description": "Retrieve a specific shift by its ID.\n\nArgs:\n    shift_id (str): The unique identifier of the shift.\n\nRaises:\n    HTTPException: If the shift is not found.",
@@ -119,7 +119,7 @@
       },
       "post": {
         "tags": [
-          "Shifts"
+          "Shift"
         ],
         "summary": "Create a new shift",
         "description": "Create a new shift.\n\nArgs:\n    shift (ShiftCreate): The shift data to create.\n\nReturns:\n    Shift: The created shift.",
@@ -217,7 +217,7 @@
     "/ska-oso-slt-services/slt/api/v0/shifts": {
       "get": {
         "tags": [
-          "Shifts"
+          "Shift"
         ],
         "summary": "Retrieve shift data based on shift attributes like shift_id,match type and entity status",
         "description": "Retrieve all shifts.\nThis endpoint returns a list of all shifts in the system.",
@@ -478,7 +478,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift/{shift_id}": {
       "put": {
         "tags": [
-          "Shifts"
+          "Shift"
         ],
         "summary": "Update an existing shift",
         "description": "Update an existing shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift (ShiftUpdate): The updated shift data.\n\nRaises:\n    HTTPException: If the shift is not found.",
@@ -594,7 +594,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift/end/{shift_id}": {
       "put": {
         "tags": [
-          "shifts"
+          "Shift"
         ],
         "summary": "Update an existing shift",
         "description": "Update an existing shift end time.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift (Shift): The updated shift data.\n\nRaises:\n    HTTPException: If the shift is not found.",
@@ -710,7 +710,7 @@
     "/ska-oso-slt-services/slt/api/v0/current_shift": {
       "get": {
         "tags": [
-          "Shifts"
+          "Shift"
         ],
         "summary": "Get Current Shift",
         "description": "Retrieve the current active shift.\n\nThis endpoint returns the most recent shift based on the last modified or\ncreated time.\nIt does not require any input parameters and is used to retrieve the latest shift\nthat is currently active in the system.\n\nReturns:\n    Shift: The latest shift object in the system.\n    HTTPStatus: HTTP 200 OK on success.\n\nRaises:\n    HTTPException: If there is an issue retrieving the current shift\n     or if no shift is found.",
@@ -823,7 +823,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift/patch/update_shift_log_info/{shift_id}": {
       "patch": {
         "tags": [
-          "Shifts"
+          "Shift"
         ],
         "summary": "Update Shift Log info",
         "description": "Partially update an existing shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift (ShiftUpdate): The partial shift data to update.\n\nRaises:\n    HTTPException: If the shift is not found.",
@@ -1025,7 +1025,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_log_comment": {
       "post": {
         "tags": [
-          "Shift Log Comments"
+          "Shift Log Comment"
         ],
         "summary": "Create a new shift log comment",
         "description": "Create a new shift log comment.\n\nArgs:\n    shift (ShiftCreate): The shift data to create.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
@@ -1117,7 +1117,7 @@
       },
       "get": {
         "tags": [
-          "Shift Log Comments"
+          "Shift Log Comment"
         ],
         "summary": "Retrieve shift log comments based on shift ID and EB ID",
         "description": "Retrieve shifts data based on Shift ID and EB ID.\nThis endpoint returns a list of all shifts in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n    eb_id(optional): EB ID\n\nReturns:\n    ShiftLogComment: Shift Log Comments match found",
@@ -1242,7 +1242,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_log_comment/{comment_id}": {
       "put": {
         "tags": [
-          "Shift Log Comments"
+          "Shift Log Comment"
         ],
         "summary": "Update an existing shift log comments",
         "description": "Update an existing shift log comment.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_log_comment (ShiftLogComment): The updated shift log comment  data.\n\nRaises:\n    HTTPException: If the shift is not found.",
@@ -1354,7 +1354,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_log_comment/upload_image/{comment_id}": {
       "put": {
         "tags": [
-          "Shift Log Comments"
+          "Shift Log Comment"
         ],
         "summary": "Upload image for Shift log comment",
         "description": "Uploads FIle to s3 and updates the relevant Shift Log comment image with the URL\n\nArgs:\n    comment_id: Comment ID\n    file(s): File(s) to be uploaded\n\nReturns:\n     shift_log_comment (ShiftLogComment): The updated shift log comment  data.",
@@ -1455,7 +1455,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_log_comment/upload_image": {
       "post": {
         "tags": [
-          "Shift Log Comments"
+          "Shift Log Comment"
         ],
         "summary": "Upload image for shift",
         "description": "Upload one or more image files for a specific shift.\n\nThis endpoint allows uploading multiple image files associated\nwith a particular shift identified by the shift_id.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    eb_id (str): The EB ID associated with the shift.\n    files (list[UploadFile]): A list of files to be uploaded.\n\nReturns:\n    list: A list containing elements:\n        - image_response: The media (image) data associated with the comment.\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.",
@@ -1581,7 +1581,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_log_comment/download_images/{comment_id}": {
       "get": {
         "tags": [
-          "Shift Log Comments"
+          "Shift Log Comment"
         ],
         "summary": "download shift image",
         "description": "Retrieve media associated with a shift comment.\n\nArgs:\n    comment_id (Optional[int]): The unique identifier of the comment.\n        If None, returns all media.\n\nReturns:\n    tuple: A tuple containing:\n        - image_response: The media data from the shift service\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval",
@@ -1679,7 +1679,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_comment": {
       "post": {
         "tags": [
-          "Shift Comments"
+          "Shift Comment"
         ],
         "summary": "Create a new shift comment",
         "description": "Create a new shift comment.\n\nArgs:\n    shift_comment (ShiftComment): The shift comment to create.\n\nReturns:\n    ShiftComment: The created shift comment.",
@@ -1788,7 +1788,7 @@
       },
       "get": {
         "tags": [
-          "Shift Comments"
+          "Shift Comment"
         ],
         "summary": "Retrieve shift comments based on shift ID",
         "description": "Retrieve shift comments based on shift ID.\nThis endpoint returns a list of all shifts in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n\nReturns:\n    ShiftComment: Shift Comments match found",
@@ -1900,7 +1900,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_comment/{comment_id}": {
       "put": {
         "tags": [
-          "Shift Comments"
+          "Shift Comment"
         ],
         "summary": "Update an existing shift",
         "description": "Update an existing shift comment.\n\nArgs:\n    comment_id (str): The unique identifier of the shift to update.\n    shift_comment (ShiftComment): The updated shift comment data.\n\nRaises:\n    HTTPException: If the shift is not found.",
@@ -2015,7 +2015,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_comment/upload_image": {
       "post": {
         "tags": [
-          "Shift Comments"
+          "Shift Comment"
         ],
         "summary": "Upload image for shift",
         "description": "Upload image for shift.\n\nArgs:\n    shift_id (str): The unique identifier of the shift to update.\n    shift_operator (str): The shift operator name.\n    file (list[UploadFile]): A list of files to be uploaded.\n\nReturns:\n    ShiftLogComment: The created shift log comment.",
@@ -2132,7 +2132,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_comment/upload_image/{comment_id}": {
       "put": {
         "tags": [
-          "Shift Comments"
+          "Shift Comment"
         ],
         "summary": "Upload image for shift",
         "description": "Upload one or more image files for a specific shift.\n\nThis endpoint allows uploading multiple image files associated\nwith a particular shift identified by the shift_id.\n\nArgs:\n    comment_id (Optional[int]): The unique identifier of the\n        comment to which the images will be associated.\n    files (list[UploadFile]): A list of files to be uploaded.\n        Each file should be an image. This parameter uses\n        FastAPI's File(...) for handling file uploads.\n\nReturns:\n    list: A list containing elements:\n        - image_response: The media (image) data associated with the comment.\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval.",
@@ -2240,7 +2240,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_comment/download_images/{comment_id}": {
       "get": {
         "tags": [
-          "Shift Comments"
+          "Shift Comment"
         ],
         "summary": "download shift image",
         "description": "Retrieve media associated with a shift comment.\n\nArgs:\n    comment_id (Optional[int]): The unique identifier of the comment.\n        If None, returns all media.\n\nReturns:\n    tuple: A tuple containing:\n        - image_response: The media data from the shift service\n        - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval",
@@ -2338,7 +2338,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_annotation": {
       "post": {
         "tags": [
-          "Shift Annotations"
+          "Shift Annotation"
         ],
         "summary": "Create a new shift annotation",
         "description": "Create a new annotation.\n\nArgs:\n    shift_annotation (ShiftAnnotation): The shift annotation to create.\n\nReturns:\n    ShiftAnnotation: The created shift annotation.",
@@ -2440,7 +2440,7 @@
       },
       "get": {
         "tags": [
-          "Shift Annotations"
+          "Shift Annotation"
         ],
         "summary": "Retrieve shift annotations based on shift ID",
         "description": "Retrieve all annotations related to given shift ID.\nThis endpoint returns a list of all annotations in the system.\n\nArgs:\n    shift_id(optional): Shift ID\n\nReturns:\n    ShiftAnnotation: Shift Annotations match found",
@@ -2537,7 +2537,7 @@
     "/ska-oso-slt-services/slt/api/v0/shift_annotation/{annotation_id}": {
       "put": {
         "tags": [
-          "Shift Annotations"
+          "Shift Annotation"
         ],
         "summary": "Update an existing shift",
         "description": "Update an existing shift annotation.\n\nArgs:\n    annotation_id (str): The unique identifier of the shift to update.\n    shift_annotation (ShiftAnnotation): The updated shift annotation data.\n\nRaises:\n    HTTPException: If the shift is not found.",
