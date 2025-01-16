@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+0.3.1
+******
+* Updated ODA version to 7.1.1.
+
 0.3.0
 ******
 * Added Annotation APIs for adding and updating on shift history page.
