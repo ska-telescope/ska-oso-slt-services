@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "ska-oso-slt-services"
 version = "0.3.0"
-description = "Shift log tool"
+description = "Shift Log Tool"
 authors = ["Team Nakshatra"]
 license= "BSD-3-Clause"
 readme = "README.md"
@@ -35,7 +35,7 @@ priority = 'primary'
 python = "^3.10"
 python-dateutil = "^2.8.2"
 ska-ser-logging = "^0.4.1"
-ska-db-oda  = "6.3.0"
+ska-db-oda  = "7.1.1"
 pydantic = "^2.7"
 elasticsearch = "^8.14.0"
 pyhdbpp = "^1.5.12"
@@ -67,6 +67,7 @@ sphinxcontrib-openapi= "^0.8.1"
 myst-parser = "^3.0.0"
 ska-ser-sphinx-theme = "^0.2.0"
 sphinx = "^7.0.2"
+
 
 
 [tool.pytest.ini_options]

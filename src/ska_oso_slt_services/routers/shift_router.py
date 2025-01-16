@@ -54,7 +54,7 @@ router = APIRouter()
 
 @router.get(
     "/shift",
-    tags=["Shifts"],
+    tags=["Shift"],
     summary="Get a shift",
     responses={
         200: {
@@ -117,7 +117,7 @@ def get_shift(shift_id: Optional[str] = None):
 
 @router.get(
     "/shifts",
-    tags=["Shifts"],
+    tags=["Shift"],
     summary="Retrieve shift data based on shift attributes like shift_id,"
     "match type and entity status",
     responses={
@@ -190,7 +190,7 @@ def get_shifts(
 
 @router.post(
     "/shift",
-    tags=["Shifts"],
+    tags=["Shift"],
     summary="Create a new shift",
     responses={
         201: {
@@ -257,7 +257,7 @@ def create_shift(shift: Shift):
 
 @router.put(
     "/shift/{shift_id}",
-    tags=["Shifts"],
+    tags=["Shift"],
     summary="Update an existing shift",
     responses={
         200: {
@@ -321,7 +321,7 @@ def update_shift(shift_id: str, shift: Shift):
 
 @router.put(
     "/shift/end/{shift_id}",
-    tags=["Shifts"],
+    tags=["Shift"],
     summary="Update an existing shift end time",
     responses={
         200: {
@@ -385,7 +385,7 @@ def update_shift_end_time(shift_id: str, shift: Shift):
 
 @router.post(
     "/shift_log_comment",
-    tags=["Shift Log Comments"],
+    tags=["Shift Log Comment"],
     summary="Create a new shift log comment",
     responses={
         201: {
@@ -450,7 +450,7 @@ def create_shift_log_comments(shift_log_comment: ShiftLogComment):
 
 @router.get(
     "/shift_log_comment",
-    tags=["Shift Log Comments"],
+    tags=["Shift Log Comment"],
     summary="Retrieve shift log comments based on shift ID and EB ID",
     responses={
         200: {
@@ -515,7 +515,7 @@ def get_shift_log_comments(shift_id: Optional[str] = None, eb_id: Optional[str] 
 
 @router.put(
     "/shift_log_comment/{comment_id}",
-    tags=["Shift Log Comments"],
+    tags=["Shift Log Comment"],
     summary="Update an existing shift log comments",
     responses={
         200: {
@@ -582,7 +582,7 @@ def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogCommen
 
 @router.put(
     "/shift_log_comment/upload_image/{comment_id}",
-    tags=["Shift Log Comments"],
+    tags=["Shift Log Comment"],
     summary="Upload image for Shift log comment",
     responses={
         200: {
@@ -649,7 +649,7 @@ def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(
 
 @router.get(
     "/current_shift",
-    tags=["Shifts"],
+    tags=["Shift"],
     summary="Get Current Shift",
     responses={
         200: {
@@ -728,7 +728,7 @@ def get_current_shift():
 
 @router.patch(
     "/shift/patch/update_shift_log_info/{shift_id}",
-    tags=["Shifts"],
+    tags=["Shift"],
     summary="Update Shift Log info",
     responses={
         200: {
@@ -786,7 +786,7 @@ def patch_shift_log_info(shift_id: Optional[str]):
 
 @router.post(
     "/shift_comment",
-    tags=["Shift Comments"],
+    tags=["Shift Comment"],
     summary="Create a new shift comment",
     responses={
         201: {
@@ -843,7 +843,7 @@ def create_shift_comments(shift_comment: ShiftComment):
 
 @router.get(
     "/shift_comment",
-    tags=["Shift Comments"],
+    tags=["Shift Comment"],
     summary="Retrieve shift comments based on shift ID",
     responses={
         200: {
@@ -905,7 +905,7 @@ def get_shift_comments(shift_id: Optional[str] = None):
 
 @router.put(
     "/shift_comment/{comment_id}",
-    tags=["Shift Comments"],
+    tags=["Shift Comment"],
     summary="Update an existing shift comment",
     responses={
         200: {
@@ -972,7 +972,7 @@ def update_shift_comment(comment_id: str, shift_comment: ShiftComment):
 
 @router.post(
     "/shift_log_comment/upload_image",
-    tags=["Shift Log Comments"],
+    tags=["Shift Log Comment"],
     summary="Upload image for shift",
     responses={
         201: {
@@ -1045,7 +1045,7 @@ def create_shift_log_media(
 
 @router.get(
     "/shift_log_comment/download_images/{comment_id}",
-    tags=["Shift Log Comments"],
+    tags=["Shift Log Comment"],
     summary="download shift image",
     responses={
         200: {
@@ -1111,7 +1111,7 @@ def get_shift_log_media(comment_id: Optional[int]):
 
 @router.post(
     "/shift_comment/upload_image",
-    tags=["Shift Comments"],
+    tags=["Shift Comment"],
     summary="Upload image for shift comment",
     responses={
         201: {
@@ -1177,7 +1177,7 @@ def create_media_for_comment(
 
 @router.put(
     "/shift_comment/upload_image/{comment_id}",
-    tags=["Shift Comments"],
+    tags=["Shift Comment"],
     summary="Upload image for shift",
     responses={
         200: {
@@ -1253,7 +1253,7 @@ def add_media_to_comment(
 
 @router.get(
     "/shift_comment/download_images/{comment_id}",
-    tags=["Shift Comments"],
+    tags=["Shift Comment"],
     summary="download shift image",
     responses={
         200: {
@@ -1321,7 +1321,7 @@ def get_media_for_comment(comment_id: Optional[int]):
 
 @router.post(
     "/shift_annotation",
-    tags=["Shift Annotations"],
+    tags=["Shift Annotation"],
     summary="Create a new shift annotation",
     responses={
         200: {
@@ -1378,7 +1378,7 @@ def create_shift_annotation(shift_annotation: ShiftAnnotation):
 
 @router.get(
     "/shift_annotation",
-    tags=["Shift Annotations"],
+    tags=["Shift Annotation"],
     summary="Get Shift annotation",
     responses={
         200: {
@@ -1439,7 +1439,7 @@ def get_shift_annotation(shift_id: str):
 
 @router.put(
     "/shift_annotation/{annotation_id}",
-    tags=["Shift Annotations"],
+    tags=["Shift Annotation"],
     summary="Update an existing shift",
     responses={
         200: {
