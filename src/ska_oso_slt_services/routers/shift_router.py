@@ -1105,7 +1105,9 @@ def get_shift_log_media(comment_id: Optional[int]):
             - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval
     """
 
-    image_response = shift_service.get_shift_log_media(comment_id)
+    image_response = shift_service.get_shift_log_media(
+        comment_id, shift_model=ShiftLogComment
+    )
     return image_response, HTTPStatus.OK
 
 
