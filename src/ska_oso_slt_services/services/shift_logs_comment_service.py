@@ -146,19 +146,22 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
 
         return self.post_media(file=file, shift_comment=shift_comment)
 
-    def get_shift_log_media(self, comment_id) -> List[Dict[str, str]]:
+    def get_shift_log_media(
+        self, comment_id: int, shift_model: ShiftLogComment
+    ) -> List[Dict[str, str]]:
         """
         Get a media file from a shift.
 
         Args:
             comment_id (int): The ID of the comment to get the media from.
+            shift_model (ShiftLogComment): ShiftLogComment Object.
 
         Returns:
             file: The requested media file.
         """
         return self.crud_shift_repository.get_media(
-            comment_id,
-            table_model=ShiftLogComment,
+            comment_id=comment_id,
+            table_model=shift_model,
         )
 
     def update_shift_log_with_image(

@@ -283,12 +283,26 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Raises:
             NotFoundError: If no media is found for the given comment ID.
         """
-        comment = table_model.model_validate(
-            self.get_shift_logs_comment(comment_id=comment_id, entity=table_model)
-        )
 
-        if not comment.image:
+        # TODO make a common method for getting comment from log and shift db
+        # that will remove this if else also from line 293 to 302
+        # shift_obj = self.common_get_comment(comment_id=comment_id, entity=table_model)
+
+        if table_model == ShiftLogComment:
+
+            shift_obj = self.get_shift_logs_comment(
+                comment_id=comment_id, entity=table_model
+            )
+
+        elif table_model == ShiftComment:
+            shift_obj = self.get_shift_comment(comment_id=comment_id)
+        else:
+            raise ValueError(f"Invalid table model: {table_model}")
+
+        if not shift_obj:
             raise NotFoundError(f"No media found for comment with ID: {comment_id}")
+
+        comment = table_model.model_validate(shift_obj)
 
         files = []
         for image in comment.image:
@@ -424,7 +438,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         return self.crud.get_entity(
             entity=entity,
             db=self.postgres_data_access,
-            filters={"comment_id": comment_id},
+            filters={"id": comment_id},
         )
 
     def create_shift_logs_comment(self, shift_log_comment: ShiftLogComment) -> dict:
