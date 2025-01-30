@@ -2,12 +2,12 @@ apiVersion: v2
 name: ska-oso-slt-services-umbrella
 description: Helm umbrella chart for the SLT Services
 type: application
-version: 0.3.1
-appVersion: 0.3.1
+version: 0.3.2
+appVersion: 0.3.2
 icon: https://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
 dependencies:
 - name: ska-oso-slt-services
-  version: 0.3.1
+  version: 0.3.2
   repository: file://../ska-oso-slt-services
 
 # ODA is a dependency of OSO services. Include it for data persistence
