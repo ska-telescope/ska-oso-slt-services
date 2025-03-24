@@ -70,12 +70,10 @@ def create_shift_id(
     Returns:
         str: The generated shift ID.
     """
-    import random
-    import datetime    
-    return 'slt-' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+str(random.randint(1,1000))
-    # return f"{skuid.fetch_skuid(skuid_entity_type)}".replace(
-    #     "t", TELESCOPE_DICT[telescope_type]
-    # )
+
+    return f"{skuid.fetch_skuid(skuid_entity_type)}".replace(
+        "t", TELESCOPE_DICT[telescope_type]
+    )
 
 
 class PostgresShiftRepository(CRUDShiftRepository):
@@ -127,7 +125,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         )
         return shifts
 
-    def get_shift(self, shift_id: str, user_id:str=None) -> Shift:
+    def get_shift(self, shift_id: str, user_id: str = None) -> Shift:
         """
         Retrieve a specific shift by its ID.
 
@@ -145,8 +143,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         if user_id:
             filter.update({"user_id": user_id})
         shift = self.crud.get_entity(
-            entity=Shift(), db=self.postgres_data_access,
-            filters=filter
+            entity=Shift(), db=self.postgres_data_access, filters=filter
         )
         return shift
 
@@ -194,7 +191,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
 
         try:
 
-            existing_shift = Shift.model_validate(self.get_shift(shift.shift_id))
+            existing_shift = Shift.model_validate(
+                self.get_shift(shift.shift_id, user_id=shift.user_id)
+            )
 
             if existing_shift.shift_end:
 
@@ -206,6 +205,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
                 entity_id=shift.shift_id,
                 entity=existing_shift,
                 db=self.postgres_data_access,
+                user_id=shift.user_id,
             )
             return existing_shift
 
@@ -214,7 +214,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             LOGGER.info("Error updating shift end time: %s", error_msg)
             raise error_msg
 
-    def update_shift(self, shift: Shift, user_id:str=None) -> Shift:
+    def update_shift(self, shift: Shift, user_id: str = None) -> Shift:
         """
         Update an existing shift with the provided fields.
         Only non-None fields in the shift object will be updated.
@@ -235,7 +235,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             entity_id=shift.shift_id,
             entity=shift,
             db=self.postgres_data_access,
-            user_id=user_id
+            user_id=user_id,
         )
 
         # Fetch and return the updated shift
@@ -270,7 +270,10 @@ class PostgresShiftRepository(CRUDShiftRepository):
         return Metadata.model_validate(meta_data)
 
     def get_media(
-        self, comment_id: int, table_model: Union[ShiftLogComment, ShiftComment], user_id:str=None
+        self,
+        comment_id: int,
+        table_model: Union[ShiftLogComment, ShiftComment],
+        user_id: str = None,
     ) -> List[Dict[str, str]]:
         """
         Get media files associated with a shift comment.
@@ -331,7 +334,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         shift_comment: Union[ShiftComment, ShiftLogComment],
         files,
         shift_model: Union[ShiftLogComment, ShiftComment],
-        user_id:str
+        user_id: str,
     ) -> Union[ShiftLogComment, ShiftComment]:
         """
         Add media files associated with a shift comment.
@@ -360,7 +363,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
             media_list.append(media)
 
         current_shift_comment = shift_model.model_validate(
-            self.get_shift_logs_comment(comment_id=comment_id,user_id=user_id, entity=shift_comment)
+            self.get_shift_logs_comment(
+                comment_id=comment_id, user_id=user_id, entity=shift_comment
+            )
         )
 
         current_shift_comment.metadata = shift_comment.metadata
@@ -374,7 +379,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             entity_id=comment_id,
             entity=current_shift_comment,
             db=self.postgres_data_access,
-            user_id=user_id
+            user_id=user_id,
         )
 
         return current_shift_comment
@@ -400,7 +405,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         shift: ShiftLogComment,
         shift_id: Optional[str] = None,
         eb_id: Optional[str] = None,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Retrieve comments from shift logs based on shift ID or EB ID.
@@ -489,7 +494,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             entity_id=comment_id,
             entity=shift_log_comment,
             db=self.postgres_data_access,
-            user_id=user_id
+            user_id=user_id,
         )
 
         updated_log_comment = self.get_shift_logs_comment(
@@ -638,7 +643,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             raise NotFoundError("Error in updating shift")
 
-    def updated_shift_log_info(self, current_shift_id: str) -> Union[Shift, str]:
+    def updated_shift_log_info(
+        self, current_shift_id: str, user_id: str
+    ) -> Union[Shift, str]:
         """
         Update the shift log information based on new information from ODA
         sources.
@@ -648,7 +655,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         no new data found
         """
         shift_logs_info = {}
-        current_shift_data = self.get_shift(current_shift_id)
+        current_shift_data = self.get_shift(current_shift_id, user_id)
+        if current_shift_data:
+            raise NotFoundError(f"No shift found with id: {current_shift_id}")
         current_shift_data = Shift.model_validate(current_shift_data)
 
         created_after_eb_sbi_info = self.get_oda_data(
@@ -744,7 +753,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
             shift_comment.id = unique_id.get("id")
         return shift_comment
 
-    def get_shift_comments(self, shift_id: Optional[str] = None, user_id:Optional[str]= None) -> List[ShiftComment]:
+    def get_shift_comments(
+        self, shift_id: Optional[str] = None, user_id: Optional[str] = None
+    ) -> List[ShiftComment]:
         """
         Retrieve comments from shift based on shift ID.
 
@@ -756,14 +767,16 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         filters = {"shift_id": shift_id}
         if user_id:
-            filters.update({"user_id":user_id})
+            filters.update({"user_id": user_id})
         return self.crud.get_entities(
             entity=ShiftComment(),
             db=self.postgres_data_access,
             filters=filters,
         )
 
-    def get_shift_comment(self, comment_id: int, user_id:str=None) -> Optional[ShiftComment]:
+    def get_shift_comment(
+        self, comment_id: int, user_id: str = None
+    ) -> Optional[ShiftComment]:
         """
         Retrieve a specific shift comment by its ID.
 
@@ -779,7 +792,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         filters = {"id": comment_id}
         if user_id:
-            filters.update({"user_id":user_id})
+            filters.update({"user_id": user_id})
         return self.crud.get_entity(
             entity=ShiftComment(),
             db=self.postgres_data_access,
@@ -787,7 +800,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         )
 
     def update_shift_comment(
-        self, comment_id: int, shift_comment: ShiftComment, user_id:str
+        self, comment_id: int, shift_comment: ShiftComment, user_id: str
     ) -> Optional[ShiftComment]:
         """
         Update an existing shift comment with new data.
@@ -808,7 +821,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             entity_id=comment_id,
             entity=shift_comment,
             db=self.postgres_data_access,
-            user_id=user_id
+            user_id=user_id,
         )
 
         updated_comment = self.get_shift_comment(comment_id)
@@ -855,7 +868,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         return shift_annotation
 
     def get_shift_annotations(
-        self, shift_id: Optional[str] = None, user_id:Optional[str]= None
+        self, shift_id: Optional[str] = None, user_id: Optional[str] = None
     ) -> List[ShiftAnnotation]:
         """
         Retrieve annotations from shift based on shift ID.
@@ -868,14 +881,16 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         filters = {"shift_id": shift_id}
         if user_id:
-            filters.update({"user_id":user_id})
+            filters.update({"user_id": user_id})
         return self.crud.get_entities(
             entity=ShiftAnnotation(),
             db=self.postgres_data_access,
             filters=filters,
         )
 
-    def get_shift_annotation(self, annotation_id: int, user_id:str=None) -> Optional[ShiftAnnotation]:
+    def get_shift_annotation(
+        self, annotation_id: int, user_id: str = None
+    ) -> Optional[ShiftAnnotation]:
         """
         Retrieve a specific shift annotation by its ID.
 
@@ -891,7 +906,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         filters = {"id": annotation_id}
         if user_id:
-            filters.update({"user_id":user_id})
+            filters.update({"user_id": user_id})
         annotation = self.crud.get_entity(
             entity=ShiftAnnotation(),
             db=self.postgres_data_access,
@@ -925,7 +940,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             entity_id=annotation_id,
             entity=shift_annotation,
             db=self.postgres_data_access,
-            user_id=shift_annotation.user_id
+            user_id=shift_annotation.user_id,
         )
 
         updated_comment = self.get_shift_annotation(annotation_id)

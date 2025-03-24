@@ -37,7 +37,9 @@ class ShiftAnnotations(BaseRepositoryService):
             shift_annotation=shift_annotation
         )
 
-    def get_shift_annotations(self, shift_id: str = None, user_id:str=None) -> List[ShiftAnnotation]:
+    def get_shift_annotations(
+        self, shift_id: str = None, user_id: str = None
+    ) -> List[ShiftAnnotation]:
         """
         Retrieve annotation for shift based on shift ID.
 
@@ -66,7 +68,9 @@ class ShiftAnnotations(BaseRepositoryService):
 
         return shift_annotations_obj_with_metadata
 
-    def get_shift_annotation(self, annotation_id: int = None, user_id:int=None) -> List[ShiftAnnotation]:
+    def get_shift_annotation(
+        self, annotation_id: int = None, user_id: int = None
+    ) -> List[ShiftAnnotation]:
         """
         Retrieve annotations for shift based on annotation ID.
 
@@ -93,7 +97,7 @@ class ShiftAnnotations(BaseRepositoryService):
         return shift_annotation_with_metadata
 
     def update_shift_annotations(
-        self, annotation_id: int, shift_annotation: ShiftAnnotation, user_id:str=None
+        self, annotation_id: int, shift_annotation: ShiftAnnotation, user_id: str = None
     ) -> ShiftAnnotation:
         """
         Update an existing shift annotation with new data.

@@ -32,7 +32,8 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
             ShiftLogComment: The created shift log comment.
         """
         shift = self.crud_shift_repository.get_shift(
-            shift_id=shift_log_comment_data.shift_id, user_id=shift_log_comment_data.user_id
+            shift_id=shift_log_comment_data.shift_id,
+            user_id=shift_log_comment_data.user_id,
         )
         if not shift:
             raise NotFoundError("No shifts log comments found for the given query.")
@@ -80,14 +81,13 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
             raise NotFoundError("No shifts log comments found for the given query.")
         LOGGER.info("Shift log comments : %s", shift_log_comments)
 
-        shift_log_comments_obj_with_metadata = []
+        log_comment_metadata_array = []
         for shift_log_comment in shift_log_comments:
-            shift_log_comment_with_metadata = get_latest_metadata(
-                entity=shift_log_comment
+            shift_log_comments_obj_with_metadata = self._prepare_entity_with_metadata(
+                shift_log_comment, ShiftLogComment()
             )
-            shift_log_comments_obj_with_metadata.append(shift_log_comment_with_metadata)
-
-        return shift_log_comments_obj_with_metadata
+            log_comment_metadata_array.append(shift_log_comments_obj_with_metadata)
+        return log_comment_metadata_array
 
     def update_shift_log_comments(
         self, comment_id, shift_log_comment: ShiftLogComment, user_id
@@ -150,7 +150,7 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
         return self.post_media(file=file, shift_comment=shift_comment)
 
     def get_shift_log_media(
-        self, comment_id: int, shift_model: ShiftLogComment
+        self, comment_id: int, shift_model: ShiftLogComment, user_id: str = None
     ) -> List[Dict[str, str]]:
         """
         Get a media file from a shift.
@@ -163,12 +163,11 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
             file: The requested media file.
         """
         return self.crud_shift_repository.get_media(
-            comment_id=comment_id,
-            table_model=shift_model,
+            comment_id=comment_id, table_model=shift_model, user_id=user_id
         )
 
     def update_shift_log_with_image(
-        self, comment_id, files, shift_model
+        self, comment_id, files, shift_model, user_id
     ) -> Union[ShiftLogComment, ShiftComment]:
         """
         Add a media file to a shift.
@@ -185,4 +184,5 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
             comment_id=comment_id,
             files=files,
             shift_model=shift_model,
+            user_id=user_id,
         )

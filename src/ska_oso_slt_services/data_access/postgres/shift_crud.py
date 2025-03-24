@@ -39,7 +39,9 @@ class DBCrud:
         """Initialize DatabaseOperations with a PostgreSQL data access instance."""
         self.data_access = PostgresDataAccess()
 
-    def update_entity(self, entity_id: Union[int, str], entity: T, db: Any, user_id:str) -> None:
+    def update_entity(
+        self, entity_id: Union[int, str], entity: T, db: Any, user_id: str
+    ) -> None:
         """Update an entity in the database.
 
         Args:
@@ -52,7 +54,10 @@ class DBCrud:
         """
         table_details = self._get_table_details(entity)
         query, params = update_query(
-            entity_id=entity_id, table_details=table_details, entity=entity, user_id=user_id
+            entity_id=entity_id,
+            table_details=table_details,
+            entity=entity,
+            user_id=user_id,
         )
         db.update(query, params)
 

@@ -9,9 +9,8 @@ from importlib.metadata import version
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from psycopg import DatabaseError, DataError, InternalError
-from ska_ser_logging import configure_logging
 from ska_aaa_authhelpers import auth_watchdog_lifespan
-
+from ska_ser_logging import configure_logging
 
 from ska_oso_slt_services.common import (
     database_error_handler,
@@ -40,7 +39,11 @@ def create_app(production=PRODUCTION) -> FastAPI:
     LOGGER.info("Creating FastAPI app")
     configure_logging(level=LOG_LEVEL)
 
-    app = FastAPI(openapi_url=f"{API_PREFIX}/openapi.json", docs_url=f"{API_PREFIX}/ui", lifespan=auth_watchdog_lifespan())
+    app = FastAPI(
+        openapi_url=f"{API_PREFIX}/openapi.json",
+        docs_url=f"{API_PREFIX}/ui",
+        lifespan=auth_watchdog_lifespan(),
+    )
 
     app.add_middleware(
         CORSMiddleware,

@@ -36,7 +36,9 @@ class ShiftComments(MediaService, BaseRepositoryService):
             shift_comment=shift_comment
         )
 
-    def get_shift_comments(self, shift_id: str = None, user_id: str = None) -> List[ShiftComment]:
+    def get_shift_comments(
+        self, shift_id: str = None, user_id: str = None
+    ) -> List[ShiftComment]:
         """
         Retrieve comments for shift based on shift ID.
 
@@ -65,7 +67,9 @@ class ShiftComments(MediaService, BaseRepositoryService):
 
         return shift_comments_obj_with_metadata
 
-    def get_shift_comment(self, comment_id: int = None, user_id:str=None) -> List[ShiftComment]:
+    def get_shift_comment(
+        self, comment_id: int = None, user_id: str = None
+    ) -> List[ShiftComment]:
         """
         Retrieve comments for shift based on comment ID.
 
@@ -91,7 +95,9 @@ class ShiftComments(MediaService, BaseRepositoryService):
 
         return shift_comment_with_metadata
 
-    def update_shift_comment(self, comment_id: int, shift_comment: ShiftComment, user_id:str):
+    def update_shift_comment(
+        self, comment_id: int, shift_comment: ShiftComment, user_id: str
+    ):
         """
         Update an existing shift comment with new data.
 
@@ -106,7 +112,9 @@ class ShiftComments(MediaService, BaseRepositoryService):
             NotFoundError: If no comment is found with the provided ID.
         """
         # for getting shift_id to get operator name
-        existing_shift_comment = self.get_shift_comment(comment_id=comment_id, user_id=user_id)
+        existing_shift_comment = self.get_shift_comment(
+            comment_id=comment_id, user_id=user_id
+        )
 
         if not existing_shift_comment:
             raise NotFoundError(f"No comment found with id: {comment_id}")
@@ -131,7 +139,9 @@ class ShiftComments(MediaService, BaseRepositoryService):
         )
         return self._prepare_entity_with_metadata(updated_comment, ShiftComment())
 
-    def add_media_to_comment(self, comment_id: id, files: Any, shift_model: Any, user_id:str):
+    def add_media_to_comment(
+        self, comment_id: id, files: Any, shift_model: Any, user_id: str
+    ):
         """
         Add a media file to a shift.
 
@@ -144,13 +154,12 @@ class ShiftComments(MediaService, BaseRepositoryService):
             Shift: The updated comment with the added media.
         """
         return self.add_media(
-            comment_id=comment_id,
-            files=files,
-            shift_model=shift_model,
-            user_id=user_id
+            comment_id=comment_id, files=files, shift_model=shift_model, user_id=user_id
         )
 
-    def get_media_for_comment(self, comment_id: int, shift_model: Any, user_id:str=None) -> list[Media]:
+    def get_media_for_comment(
+        self, comment_id: int, shift_model: Any, user_id: str = None
+    ) -> list[Media]:
         """
         Get a media file from a shift.
 
@@ -164,7 +173,12 @@ class ShiftComments(MediaService, BaseRepositoryService):
         return self.crud_shift_repository.get_media(comment_id, shift_model, user_id)
 
     def create_media_for_comment(
-        self, shift_id: int, shift_operator: str, file: Any, shift_model: Any, user_id:str
+        self,
+        shift_id: int,
+        shift_operator: str,
+        file: Any,
+        shift_model: Any,
+        user_id: str,
     ):
         """
         Create a media file for a shift.

@@ -7,6 +7,7 @@ from ska_oso_slt_services.domain.shift_models import (
     Metadata,
     ShiftAnnotation,
     ShiftComment,
+    ShiftLogComment,
 )
 from ska_oso_slt_services.repository.postgres_shift_repository import (
     CRUDShiftRepository,
@@ -97,8 +98,10 @@ class BaseRepositoryService(BaseModel):
         self.crud_shift_repository = postgres_repos[0]
 
     def _prepare_entity_with_metadata(
-        self, entity: Dict[Any, Any], model: ShiftComment | ShiftAnnotation
-    ) -> ShiftComment | ShiftAnnotation:
+        self,
+        entity: Dict[Any, Any],
+        model: ShiftComment | ShiftAnnotation | ShiftLogComment,
+    ) -> ShiftComment | ShiftAnnotation | ShiftLogComment:
         """
         Prepare a shift data object with metadata.
 

@@ -8,7 +8,9 @@ from ska_oso_slt_services.services.base_repository_service import BaseRepository
 
 class MediaService(BaseRepositoryService):
 
-    def add_media(self, comment_id: int, files: Any, shift_model: Any, user_id:str) -> Media:
+    def add_media(
+        self, comment_id: int, files: Any, shift_model: Any, user_id: str
+    ) -> Media:
         """
         Add a media file to a shift.
 
@@ -40,7 +42,7 @@ class MediaService(BaseRepositoryService):
             shift_comment=shift,
             files=files,
             shift_model=shift_model,
-            user_id=user_id
+            user_id=user_id,
         )
         return result.image
 

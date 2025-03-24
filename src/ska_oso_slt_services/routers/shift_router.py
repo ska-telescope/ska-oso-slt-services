@@ -1,19 +1,19 @@
 """
 Shift Router used for routes the request to appropriate method
 """
-from enum import Enum
-from functools import partial
-from typing import Annotated
-from os import environ
 
 import json
 import logging
-from functools import lru_cache
+from enum import Enum
+from functools import lru_cache, partial
 from http import HTTPStatus
+from os import environ
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, File, UploadFile
+from ska_aaa_authhelpers import AuthContext, Requires
+from ska_aaa_authhelpers import validation_rules as rules
 
 from ska_oso_slt_services.domain.shift_models import (
     EntityFilter,
@@ -26,7 +26,6 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftLogComment,
 )
 from ska_oso_slt_services.services.shift_service import ShiftService
-from ska_aaa_authhelpers import AuthContext, Requires
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,9 +43,9 @@ class StrEnum(str, Enum):
 
 class OurScopes(StrEnum):
     SHIFT_WRITE = "shift:write"
-    SHIFT_COMMENT_WRITE= "shift_comment:write"
-    SHIFT_COMMENT_VIEW= "shift_comment:view"
     SHIFT_VIEW = "shift:view"
+    SHIFT_COMMENT_WRITE = "shift_comment:write"
+    SHIFT_COMMENT_VIEW = "shift_comment:view"
     SHIFT_LOG_COMMENT_WRITE = "shift_log_comment:write"
     SHIFT_LOG_COMMENT_VIEW = "shift_log_comment:view"
     SHIFT_ANNOTATION_WRITE = "shift_annotation:write"
@@ -130,14 +129,16 @@ router = APIRouter()
         },
     },
 )
-def get_shift(shift_id: Optional[str],
-              auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
-                    scopes={OurScopes.SHIFT_VIEW},
-                ),
-            ],):
+def get_shift(
+    shift_id: Optional[str],
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
+            scopes={OurScopes.SHIFT_VIEW},
+        ),
+    ],
+):
     """
     Retrieve a specific shift by its ID.
 
@@ -147,13 +148,14 @@ def get_shift(shift_id: Optional[str],
     Raises:
         HTTPException: If the shift is not found.
     """
-    if SLTRole.OPERATOR in auth.roles:
+    if SLTRole.OPERATOR in auth.roles and auth.user_id:
         shifts = shift_service.get_shift(shift_id=shift_id, user_id=auth.user_id)
         return shifts, HTTPStatus.OK
-    # return shift_service.get_shift(shift_id=shift_id), HTTPStatus.OK
     elif SLTRole.OPERATIONAL_SCIENTIST in auth.roles:
         shifts = shift_service.get_shift(shift_id=shift_id)
         return shifts, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.get(
@@ -217,11 +219,11 @@ def get_shift(shift_id: Optional[str],
 )
 def get_shifts(
     auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
-                    scopes={OurScopes.SHIFT_VIEW},
-                ),
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
+            scopes={OurScopes.SHIFT_VIEW},
+        ),
     ],
     shift: ShiftBaseClass = Depends(),
     match_type: MatchType = Depends(),
@@ -288,14 +290,16 @@ def get_shifts(
         },
     },
 )
-def create_shift(shift: Shift, 
-                 auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR},
-                    scopes={OurScopes.SHIFT_WRITE},
-                ),
-    ],):
+def create_shift(
+    shift: Shift,
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR},
+            scopes={OurScopes.SHIFT_WRITE},
+        ),
+    ],
+):
     """
     Create a new shift.
 
@@ -305,12 +309,12 @@ def create_shift(shift: Shift,
     Returns:
         Shift: The created shift.
     """
-    if SLTRole.OPERATOR in auth.roles:
-        shift.user_id = auth.user_id;
+    if SLTRole.OPERATOR in auth.roles and auth.user_id:
+        shift.user_id = auth.user_id
         shifts = shift_service.create_shift(shift)
-        # shift_log_updater.update_shift_id(shifts.shift_id)
-
         return shifts, HTTPStatus.CREATED
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.put(
@@ -362,13 +366,17 @@ def create_shift(shift: Shift,
         },
     },
 )
-def update_shift(shift_id: str, shift: Shift, auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR},
-                    scopes={OurScopes.SHIFT_WRITE},
-                ),
-    ],):
+def update_shift(
+    shift_id: str,
+    shift: Shift,
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR},
+            scopes={OurScopes.SHIFT_WRITE},
+        ),
+    ],
+):
     """
     Update an existing shift.
 
@@ -384,68 +392,82 @@ def update_shift(shift_id: str, shift: Shift, auth: Annotated[
         return shifts, HTTPStatus.OK
 
 
-# @router.put(
-#     "/shift/end/{shift_id}",
-#     tags=["Shift"],
-#     summary="Update an existing shift end time",
-#     responses={
-#         200: {
-#             "description": "Successful Response",
-#             "content": {
-#                 "application/json": {
-#                     "example": [
-#                         json.loads(
-#                             (
-#                                 current_dir / "response_files/shift_response.json"
-#                             ).read_text()
-#                         )
-#                     ]
-#                 }
-#             },
-#         },
-#         400: {
-#             "description": "Bad Request",
-#             "content": {
-#                 "application/json": {
-#                     "example": {"message": "Invalid request parameters"}
-#                 }
-#             },
-#         },
-#         404: {
-#             "description": "Not Found",
-#             "content": {
-#                 "application/json": {"example": {"message": "Shift Not Found"}}
-#             },
-#         },
-#         422: {
-#             "description": "Invalid Shift Id",
-#             "content": {
-#                 "application/json": {"example": {"message": "Invalid Shift Id"}}
-#             },
-#         },
-#         500: {
-#             "description": "Internal Server Error",
-#             "content": {
-#                 "application/json": {
-#                     "example": {"message": "Internal server error occurred"}
-#                 }
-#             },
-#         },
-#     },
-# )
-# def update_shift_end_time(shift_id: str, shift: Shift):
-#     """
-#     Update an existing shift end time.
+@router.put(
+    "/shift/end/{shift_id}",
+    tags=["Shift"],
+    summary="Update an existing shift end time",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/shift_response.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Shift Not Found"}}
+            },
+        },
+        422: {
+            "description": "Invalid Shift Id",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def update_shift_end_time(
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR},
+            scopes={OurScopes.SHIFT_WRITE},
+        ),
+    ],
+    shift_id: str,
+    shift: Shift,
+):
+    """
+    Update an existing shift end time.
 
-#     Args:
-#         shift_id (str): The unique identifier of the shift to update.
-#         shift (Shift): The updated shift data.
+    Args:
+        shift_id (str): The unique identifier of the shift to update.
+        shift (Shift): The updated shift data.
 
-#     Raises:
-#         HTTPException: If the shift is not found.
-#     """
-#     shifts = shift_service.update_shift_end_time(shift_id, shift)
-#     return shifts, HTTPStatus.OK
+    Raises:
+        HTTPException: If the shift is not found.
+    """
+    if SLTRole.OPERATOR in auth.roles and auth.user_id:
+        shift.user_id = auth.user_id
+        shifts = shift_service.update_shift_end_time(shift_id, shift)
+        return shifts, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.post(
@@ -499,14 +521,16 @@ def update_shift(shift_id: str, shift: Shift, auth: Annotated[
         },
     },
 )
-def create_shift_log_comments(shift_log_comment: ShiftLogComment,
-                              auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR},
-                    scopes={OurScopes.SHIFT_WRITE},
-                ),
-    ],):
+def create_shift_log_comments(
+    shift_log_comment: ShiftLogComment,
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR},
+            scopes={OurScopes.SHIFT_LOG_COMMENT_WRITE},
+        ),
+    ],
+):
     """
     Create a new shift log comment.
 
@@ -516,10 +540,14 @@ def create_shift_log_comments(shift_log_comment: ShiftLogComment,
     Returns:
         ShiftLogComment: The created shift log comment.
     """
-    if SLTRole.OPERATOR in auth.roles:
+    if SLTRole.OPERATOR in auth.roles and auth.user_id:
         shift_log_comment.user_id = auth.user_id
-        shift_log_comment_obj = shift_service.create_shift_logs_comment(shift_log_comment)
+        shift_log_comment_obj = shift_service.create_shift_logs_comment(
+            shift_log_comment
+        )
         return shift_log_comment_obj, HTTPStatus.CREATED
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.get(
@@ -571,13 +599,17 @@ def create_shift_log_comments(shift_log_comment: ShiftLogComment,
         },
     },
 )
-def get_shift_log_comments( auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
-                    scopes={OurScopes.SHIFT_WRITE, OurScopes.SHIFT_VIEW},
-                ),
-    ],shift_id: Optional[str] = None, eb_id: Optional[str] = None):
+def get_shift_log_comments(
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
+            scopes={OurScopes.SHIFT_LOG_COMMENT_VIEW},
+        ),
+    ],
+    shift_id: Optional[str] = None,
+    eb_id: Optional[str] = None,
+):
     """
     Retrieve all shift log comments.
     This endpoint returns a list of all shifts in the system.
@@ -590,11 +622,15 @@ def get_shift_log_comments( auth: Annotated[
         ShiftLogComment: Shift Log Comments match found
     """
     if SLTRole.OPERATOR in auth.roles and auth.user_id:
-        shift_log_comments = shift_service.get_shift_logs_comments(shift_id, eb_id, auth.user_id)
+        shift_log_comments = shift_service.get_shift_logs_comments(
+            shift_id, eb_id, auth.user_id
+        )
         return shift_log_comments, HTTPStatus.OK
     elif SLTRole.OPERATIONAL_SCIENTIST:
         shift_log_comments = shift_service.get_shift_logs_comments(shift_id, eb_id)
         return shift_log_comments, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.put(
@@ -646,13 +682,17 @@ def get_shift_log_comments( auth: Annotated[
         },
     },
 )
-def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogComment, auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
-                    scopes={OurScopes.SHIFT_WRITE, OurScopes.SHIFT_VIEW},
-                ),
-    ],):
+def update_shift_log_comments(
+    comment_id: str,
+    shift_log_comment: ShiftLogComment,
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR},
+            scopes={OurScopes.SHIFT_LOG_COMMENT_WRITE},
+        ),
+    ],
+):
     """
     Update an existing shift log comment.
 
@@ -667,136 +707,82 @@ def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogCommen
     if SLTRole.OPERATOR in auth.roles and auth.user_id:
         shift_log_comment.user_id = auth.user_id
         shift_log_comments = shift_service.update_shift_log_comments(
-            comment_id=comment_id, shift_log_comment=shift_log_comment, user_id=auth.user_id
+            comment_id=comment_id,
+            shift_log_comment=shift_log_comment,
+            user_id=auth.user_id,
         )
         return shift_log_comments, HTTPStatus.OK
-
-# @router.put(
-#     "/shift_log_comment/upload_image/{comment_id}",
-#     tags=["Shift Log Comment"],
-#     summary="Upload image for Shift log comment",
-#     responses={
-#         200: {
-#             "description": "Successful Response",
-#             "content": {
-#                 "application/json": {
-#                     "example": [
-#                         {
-#                             "path": "test_path",
-#                             "unique_id": "test_unique_id",
-#                             "timestamp": "2024-11-11T15:46:13.223618Z",
-#                         }
-#                     ]
-#                 }
-#             },
-#         },
-#         400: {
-#             "description": "Bad Request",
-#             "content": {
-#                 "application/json": {
-#                     "example": {"message": "Invalid request parameters"}
-#                 }
-#             },
-#         },
-#         404: {
-#             "description": "Not Found",
-#             "content": {
-#                 "application/json": {"example": {"message": "Comment ID Not Found"}}
-#             },
-#         },
-#         422: {
-#             "description": "Unprocessable Content",
-#             "content": {
-#                 "application/json": {"example": {"message": "Invalid Comment Id"}}
-#             },
-#         },
-#         500: {
-#             "description": "Internal Server Error",
-#             "content": {
-#                 "application/json": {
-#                     "example": {"message": "Internal server error occurred"}
-#                 }
-#             },
-#         },
-#     },
-# )
-# def update_shift_log_with_image(comment_id: int, files: list[UploadFile] = File(...)):
-#     """
-#     Uploads FIle to s3 and updates the relevant Shift Log comment image with the URL
-
-#     Args:
-#         comment_id: Comment ID
-#         file(s): File(s) to be uploaded
-
-#     Returns:
-#          shift_log_comment (ShiftLogComment): The updated shift log comment  data.
-#     """
-
-#     media = shift_service.update_shift_log_with_image(
-#         comment_id=comment_id, files=files, shift_model=ShiftLogComment
-#     )
-#     return media, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
-# @router.get(
-#     "/current_shift",
-#     tags=["Shift"],
-#     summary="Get Current Shift",
-#     responses={
-#         200: {
-#             "description": "Successful Response",
-#             "content": {
-#                 "application/json": {
-#                     "example": [
-#                         json.loads(
-#                             (
-#                                 current_dir
-#                                 / "response_files/multiple_shift_response.json"
-#                             ).read_text()
-#                         )
-#                     ]
-#                 }
-#             },
-#         },
-#         400: {
-#             "description": "Bad Request",
-#             "content": {
-#                 "application/json": {
-#                     "example": {"message": "Invalid request parameters"}
-#                 }
-#             },
-#         },
-#         404: {
-#             "description": "Not Found",
-#             "content": {
-#                 "application/json": {"example": {"message": "Shift Not Found"}}
-#             },
-#         },
-#         422: {
-#             "description": "Unprocessable Content",
-#             "content": {
-#                 "application/json": {
-#                     "example": {
-#                         "type": "datetime_from_date_parsing",
-#                         "loc": ["query", "shift_start"],
-#                         "msg": "Input should be a valid datetime or date",
-#                         "input": "test",
-#                         "ctx": {"error": "input is too short"},
-#                     }
-#                 }
-#             },
-#         },
-#         500: {
-#             "description": "Internal Server Error",
-#             "content": {
-#                 "application/json": {
-#                     "example": {"message": "Internal server error occurred"}
-#                 }
-#             },
-#         },
-#     },
-# )
-# def get_current_shift():
+@router.get(
+    "/current_shift",
+    tags=["Shift"],
+    summary="Get Current Shift",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir
+                                / "response_files/multiple_shift_response.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Shift Not Found"}}
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "type": "datetime_from_date_parsing",
+                        "loc": ["query", "shift_start"],
+                        "msg": "Input should be a valid datetime or date",
+                        "input": "test",
+                        "ctx": {"error": "input is too short"},
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def get_current_shift(
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
+            scopes={OurScopes.SHIFT_VIEW},
+        ),
+    ],
+):
     """
     Retrieve the current active shift.
 
@@ -813,66 +799,83 @@ def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogCommen
         HTTPException: If there is an issue retrieving the current shift
          or if no shift is found.
     """
-    shift = shift_service.get_current_shift()
-    return shift, HTTPStatus.OK
+    if SLTRole.OPERATOR in auth.roles and auth.user_id:
+        shift = shift_service.get_current_shift()
+        return shift, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
-# @router.patch(
-#     "/shift/patch/update_shift_log_info/{shift_id}",
-#     tags=["Shift"],
-#     summary="Update Shift Log info",
-#     responses={
-#         200: {
-#             "description": "Successful Response",
-#             "content": {
-#                 "application/json": {
-#                     "example": [
-#                         json.loads(
-#                             (
-#                                 current_dir / "response_files/oda_log_info.json"
-#                             ).read_text()
-#                         )
-#                     ]
-#                 }
-#             },
-#         },
-#         400: {
-#             "description": "Bad Request",
-#             "content": {
-#                 "application/json": {
-#                     "example": {"message": "Invalid request parameters"}
-#                 }
-#             },
-#         },
-#         422: {
-#             "description": "Unprocessable Content",
-#             "content": {
-#                 "application/json": {"example": {"message": "Invalid Shift Id"}}
-#             },
-#         },
-#         500: {
-#             "description": "Internal Server Error",
-#             "content": {
-#                 "application/json": {
-#                     "example": {"message": "Internal server error occurred"}
-#                 }
-#             },
-#         },
-#     },
-# )
-# def patch_shift_log_info(shift_id: Optional[str]):
-#     """
-#     Partially update an existing shift.
+@router.patch(
+    "/shift/patch/update_shift_log_info/{shift_id}",
+    tags=["Shift"],
+    summary="Update Shift Log info",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        json.loads(
+                            (
+                                current_dir / "response_files/oda_log_info.json"
+                            ).read_text()
+                        )
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Shift Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def patch_shift_log_info(
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR},
+            scopes={OurScopes.SHIFT_WRITE},
+        ),
+    ],
+    shift_id: Optional[str],
+):
+    """
+    Partially update an existing shift.
 
-#     Args:
-#         shift_id (str): The unique identifier of the shift to update.
-#         shift (ShiftUpdate): The partial shift data to update.
+    Args:
+        shift_id (str): The unique identifier of the shift to update.
+        shift (ShiftUpdate): The partial shift data to update.
 
-#     Raises:
-#         HTTPException: If the shift is not found.
-#     """
-#     shift = shift_service.updated_shift_log_info(current_shift_id=shift_id)
-#     return shift, HTTPStatus.OK
+    Raises:
+        HTTPException: If the shift is not found.
+    """
+    if SLTRole.OPERATOR in auth.roles and auth.user_id:
+        shift = shift_service.updated_shift_log_info(
+            current_shift_id=shift_id, user_id=auth.user_id
+        )
+        return shift, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.post(
@@ -918,14 +921,16 @@ def update_shift_log_comments(comment_id: str, shift_log_comment: ShiftLogCommen
         },
     },
 )
-def create_shift_comments(shift_comment: ShiftComment,
-                          auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR},
-                    scopes={OurScopes.SHIFT_COMMENT_WRITE},
-                ),
-    ],):
+def create_shift_comments(
+    shift_comment: ShiftComment,
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR},
+            scopes={OurScopes.SHIFT_COMMENT_WRITE},
+        ),
+    ],
+):
     """
     Create a new shift comment.
 
@@ -935,10 +940,12 @@ def create_shift_comments(shift_comment: ShiftComment,
     Returns:
         ShiftComment: The created shift comment.
     """
-    if SLTRole.OPERATOR in auth.roles and auth.user_id and OurScopes.SHIFT_COMMENT_WRITE:
+    if SLTRole.OPERATOR in auth.roles and auth.user_id:
         shift_comment.user_id = auth.user_id
         shift_comment_obj = shift_service.create_shift_comment(shift_comment)
         return shift_comment_obj, HTTPStatus.CREATED
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.get(
@@ -988,13 +995,18 @@ def create_shift_comments(shift_comment: ShiftComment,
         },
     },
 )
-def get_shift_comments( auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
-                    scopes={OurScopes.SHIFT_COMMENT_VIEW,}
-                ),
-    ],shift_id: Optional[str] = None):
+def get_shift_comments(
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
+            scopes={
+                OurScopes.SHIFT_COMMENT_VIEW,
+            },
+        ),
+    ],
+    shift_id: Optional[str] = None,
+):
     """
     Retrieve shift comments based on shift ID.
     This endpoint returns a list of all shifts in the system.
@@ -1005,13 +1017,15 @@ def get_shift_comments( auth: Annotated[
     Returns:
         ShiftComment: Shift Comments match found
     """
-    if SLTRole.OPERATOR in auth.roles and auth.user_id and OurScopes.SHIFT_COMMENT_VIEW:
+    if SLTRole.OPERATOR in auth.roles and auth.user_id:
         user_id = auth.user_id
         shift_comments = shift_service.get_shift_comments(shift_id, user_id)
         return shift_comments, HTTPStatus.OK
-    elif SLTRole.OPERATIONAL_SCIENTIST and OurScopes.SHIFT_COMMENT_VIEW:
+    elif SLTRole.OPERATIONAL_SCIENTIST:
         shift_comments = shift_service.get_shift_comments(shift_id)
         return shift_comments, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.put(
@@ -1063,13 +1077,19 @@ def get_shift_comments( auth: Annotated[
         },
     },
 )
-def update_shift_comment( auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR},
-                    scopes={OurScopes.SHIFT_COMMENT_WRITE,}
-                ),
-    ],comment_id: str, shift_comment: ShiftComment):
+def update_shift_comment(
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR},
+            scopes={
+                OurScopes.SHIFT_COMMENT_WRITE,
+            },
+        ),
+    ],
+    comment_id: str,
+    shift_comment: ShiftComment,
+):
     """
     Update an existing shift comment.
 
@@ -1086,6 +1106,8 @@ def update_shift_comment( auth: Annotated[
             comment_id=comment_id, shift_comment=shift_comment, user_id=auth.user_id
         )
         return shift_comments, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.post(
@@ -1133,13 +1155,15 @@ def update_shift_comment( auth: Annotated[
 )
 def create_shift_log_media(
     auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR},
-                    scopes={OurScopes.SHIFT_COMMENT_WRITE,}
-                ),
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR}, scopes={OurScopes.SHIFT_LOG_COMMENT_WRITE}
+        ),
     ],
-    shift_id: str, shift_operator: str, eb_id: str, file: UploadFile = File(...)
+    shift_id: str,
+    shift_operator: str,
+    eb_id: str,
+    file: UploadFile = File(...),
 ):
     """
     Upload one or more image files for a specific shift.
@@ -1168,74 +1192,173 @@ def create_shift_log_media(
             user_id=auth.user_id,
         )
         return media, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
-# @router.get(
-#     "/shift_log_comment/download_images/{comment_id}",
-#     tags=["Shift Log Comment"],
-#     summary="download shift image",
-#     responses={
-#         200: {
-#             "description": "Successful Response",
-#             "content": {
-#                 "application/json": {
-#                     "example": [
-#                         {
-#                             "file_key": "test.jpeg",
-#                             "media_content": "test_media_content",
-#                             "content_type": "image/jpeg",
-#                         }
-#                     ]
-#                 }
-#             },
-#         },
-#         400: {
-#             "description": "Bad Request",
-#             "content": {
-#                 "application/json": {
-#                     "example": {"message": "Invalid request parameters"}
-#                 }
-#             },
-#         },
-#         404: {
-#             "description": "Not Found",
-#             "content": {
-#                 "application/json": {"example": {"message": "Comment ID Not Found"}}
-#             },
-#         },
-#         422: {
-#             "description": "Unprocessable Content",
-#             "content": {
-#                 "application/json": {"example": {"message": "Invalid Comment Id"}}
-#             },
-#         },
-#         500: {
-#             "description": "Internal Server Error",
-#             "content": {
-#                 "application/json": {
-#                     "example": {"message": "Internal server error occurred"}
-#                 }
-#             },
-#         },
-#     },
-# )
-# def get_shift_log_media(comment_id: Optional[int]):
-#     """Retrieve media associated with a shift comment.
+@router.put(
+    "/shift_log_comment/upload_image/{comment_id}",
+    tags=["Shift Log Comment"],
+    summary="Upload image for Shift log comment",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "path": "test_path",
+                            "unique_id": "test_unique_id",
+                            "timestamp": "2024-11-11T15:46:13.223618Z",
+                        }
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Comment ID Not Found"}}
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def update_shift_log_with_image(
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
+            scopes={
+                OurScopes.SHIFT_LOG_COMMENT_WRITE,
+            },
+        ),
+    ],
+    comment_id: int,
+    files: list[UploadFile] = File(...),
+):
+    """
+    Uploads FIle to s3 and updates the relevant Shift Log comment image with the URL
 
-#     Args:
-#         comment_id (Optional[int]): The unique identifier of the comment.
-#             If None, returns all media.
+    Args:
+        comment_id: Comment ID
+        file(s): File(s) to be uploaded
 
-#     Returns:
-#         tuple: A tuple containing:
-#             - image_response: The media data from the shift service
-#             - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval
-#     """
+    Returns:
+         shift_log_comment (ShiftLogComment): The updated shift log comment  data.
+    """
+    if SLTRole.OPERATOR in auth.roles and auth.user_id:
+        media = shift_service.update_shift_log_with_image(
+            comment_id=comment_id,
+            files=files,
+            shift_model=ShiftLogComment,
+            user_id=auth.user_id,
+        )
+        return media, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
-#     image_response = shift_service.get_shift_log_media(
-#         comment_id, shift_model=ShiftLogComment
-#     )
-#     return image_response, HTTPStatus.OK
+
+@router.get(
+    "/shift_log_comment/download_images/{comment_id}",
+    tags=["Shift Log Comment"],
+    summary="download shift image",
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "file_key": "test.jpeg",
+                            "media_content": "test_media_content",
+                            "content_type": "image/jpeg",
+                        }
+                    ]
+                }
+            },
+        },
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Invalid request parameters"}
+                }
+            },
+        },
+        404: {
+            "description": "Not Found",
+            "content": {
+                "application/json": {"example": {"message": "Comment ID Not Found"}}
+            },
+        },
+        422: {
+            "description": "Unprocessable Content",
+            "content": {
+                "application/json": {"example": {"message": "Invalid Comment Id"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Internal server error occurred"}
+                }
+            },
+        },
+    },
+)
+def get_shift_log_media(
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
+            scopes={
+                OurScopes.SHIFT_LOG_COMMENT_VIEW,
+            },
+        ),
+    ],
+    comment_id: Optional[int],
+):
+    """Retrieve media associated with a shift comment.
+
+    Args:
+        comment_id (Optional[int]): The unique identifier of the comment.
+            If None, returns all media.
+
+    Returns:
+        tuple: A tuple containing:
+            - image_response: The media data from the shift service
+            - HTTPStatus.OK: HTTP 200 status code indicating successful retrieval
+    """
+    if SLTRole.OPERATOR in auth.roles and auth.user_id:
+        image_response = shift_service.get_shift_log_media(
+            comment_id, shift_model=ShiftLogComment, user_id=auth.user_id
+        )
+        return image_response, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.post(
@@ -1283,13 +1406,17 @@ def create_shift_log_media(
 )
 def create_media_for_comment(
     auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR},
-                    scopes={OurScopes.SHIFT_COMMENT_WRITE,}
-                ),
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR},
+            scopes={
+                OurScopes.SHIFT_COMMENT_WRITE,
+            },
+        ),
     ],
-    shift_id: str, shift_operator: str, file: UploadFile = File(...)
+    shift_id: str,
+    shift_operator: str,
+    file: UploadFile = File(...),
 ):
     """
     Upload image for shift comment.
@@ -1311,6 +1438,8 @@ def create_media_for_comment(
             user_id=auth.user_id,
         )
         return media, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.put(
@@ -1362,14 +1491,18 @@ def create_media_for_comment(
         },
     },
 )
-def add_media_to_comment(auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR},
-                    scopes={OurScopes.SHIFT_COMMENT_WRITE,}
-                ),
+def add_media_to_comment(
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR},
+            scopes={
+                OurScopes.SHIFT_COMMENT_WRITE,
+            },
+        ),
     ],
-    comment_id: Optional[str], files: list[UploadFile] = File(...)
+    comment_id: Optional[str],
+    files: list[UploadFile] = File(...),
 ):
     """
     Upload one or more image files for a specific shift.
@@ -1394,6 +1527,8 @@ def add_media_to_comment(auth: Annotated[
             comment_id, files, shift_model=ShiftComment, user_id=auth.user_id
         )
         return media, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.get(
@@ -1445,14 +1580,18 @@ def add_media_to_comment(auth: Annotated[
         },
     },
 )
-def get_media_for_comment(comment_id: Optional[int],
-                          auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
-                    scopes={OurScopes.SHIFT_COMMENT_VIEW,}
-                ),
-    ],):
+def get_media_for_comment(
+    comment_id: Optional[int],
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
+            scopes={
+                OurScopes.SHIFT_COMMENT_VIEW,
+            },
+        ),
+    ],
+):
     """Retrieve media associated with a shift comment.
 
     Args:
@@ -1469,6 +1608,8 @@ def get_media_for_comment(comment_id: Optional[int],
             comment_id, shift_model=ShiftComment, user_id=auth.user_id
         )
         return image_response, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.post(
@@ -1514,13 +1655,18 @@ def get_media_for_comment(comment_id: Optional[int],
         },
     },
 )
-def create_shift_annotation(auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
-                    scopes={OurScopes.SHIFT_ANNOTATION_WRITE,}
-                ),
-    ],shift_annotation: ShiftAnnotation):
+def create_shift_annotation(
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
+            scopes={
+                OurScopes.SHIFT_ANNOTATION_WRITE,
+            },
+        ),
+    ],
+    shift_annotation: ShiftAnnotation,
+):
     """
     Create a new annotation.
 
@@ -1534,6 +1680,8 @@ def create_shift_annotation(auth: Annotated[
         shift_annotation.user_id = auth.user_id
         shift_annotation_obj = shift_service.create_shift_annotation(shift_annotation)
         return shift_annotation_obj, HTTPStatus.CREATED
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.get(
@@ -1583,13 +1731,18 @@ def create_shift_annotation(auth: Annotated[
         },
     },
 )
-def get_shift_annotation(shift_id: str, auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
-                    scopes={OurScopes.SHIFT_ANNOTATION_VIEW,}
-                ),
-    ]):
+def get_shift_annotation(
+    shift_id: str,
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
+            scopes={
+                OurScopes.SHIFT_ANNOTATION_VIEW,
+            },
+        ),
+    ],
+):
     """
     Get Annotation based on shift_id.
 
@@ -1600,11 +1753,15 @@ def get_shift_annotation(shift_id: str, auth: Annotated[
         ShiftAnnotation: The shift annotation.
     """
     if SLTRole.OPERATOR in auth.roles and auth.user_id:
-        shift_annotations_obj = shift_service.get_shift_annotations(shift_id, auth.user_id)
+        shift_annotations_obj = shift_service.get_shift_annotations(
+            shift_id, auth.user_id
+        )
         return shift_annotations_obj, HTTPStatus.OK
     if SLTRole.OPERATIONAL_SCIENTIST in auth.roles:
         shift_annotations_obj = shift_service.get_shift_annotations(shift_id)
         return shift_annotations_obj, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")
 
 
 @router.put(
@@ -1656,13 +1813,19 @@ def get_shift_annotation(shift_id: str, auth: Annotated[
         },
     },
 )
-def update_shift_annotations(auth: Annotated[
-                AuthContext,
-                Permissions(
-                    roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
-                    scopes={OurScopes.SHIFT_ANNOTATION_VIEW,}
-                ),
-    ],annotation_id: str, shift_annotation: ShiftAnnotation):
+def update_shift_annotations(
+    auth: Annotated[
+        AuthContext,
+        Permissions(
+            roles={SLTRole.OPERATOR, SLTRole.OPERATIONAL_SCIENTIST},
+            scopes={
+                OurScopes.SHIFT_ANNOTATION_VIEW,
+            },
+        ),
+    ],
+    annotation_id: str,
+    shift_annotation: ShiftAnnotation,
+):
     """
     Update an existing shift annotation.
 
@@ -1676,6 +1839,10 @@ def update_shift_annotations(auth: Annotated[
     if SLTRole.OPERATOR in auth.roles and auth.user_id or SLTRole.OPERATIONAL_SCIENTIST:
         shift_annotation.user_id = auth.user_id
         shift_annotations = shift_service.update_shift_annotations(
-            annotation_id=annotation_id, shift_annotation=shift_annotation, user_id=auth.user_id
+            annotation_id=annotation_id,
+            shift_annotation=shift_annotation,
+            user_id=auth.user_id,
         )
         return shift_annotations, HTTPStatus.OK
+    else:
+        rules.authfail("Autherization failed: invalid role or scope")

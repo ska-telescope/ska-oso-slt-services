@@ -59,7 +59,7 @@ def insert_query(
 
 
 def update_query(
-    entity_id: str | int,  table_details: TableDetails, entity: Any, user_id:str=None
+    entity_id: str | int, table_details: TableDetails, entity: Any, user_id: str = None
 ) -> QueryAndParameters:
     """
     Creates a query and parameters to update the given entity in the table,
@@ -94,7 +94,9 @@ def update_query(
             ),
         )
         if user_id:
-            query = sql.SQL("SELECT id FROM {table} WHERE {identifier_field}=%s AND user_id=%s").format(
+            query = sql.SQL(
+                "SELECT id FROM {table} WHERE {identifier_field}=%s AND user_id=%s"
+            ).format(
                 table=sql.Identifier(table_details.table_details.table_name),
                 identifier_field=sql.Identifier(
                     table_details.table_details.identifier_field
@@ -602,7 +604,7 @@ def select_latest_query(
             sql.SQL("{field} = %s").format(field=sql.Identifier("shift_id"))
         )
         params.append(shift_id)
-    
+
     if user_id is not None:
         where_clauses.append(
             sql.SQL("{field} = %s").format(field=sql.Identifier("user_id"))
