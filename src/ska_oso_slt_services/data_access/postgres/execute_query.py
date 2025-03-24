@@ -146,6 +146,7 @@ class TableCreator:
                 shift_operator VARCHAR(100) NOT NULL,
                 shift_logs JSONB,
                 annotations TEXT,
+                user_id VARCHAR(100) NOT NULL,
                 created_by VARCHAR(50) NOT NULL,
                 created_on TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 last_modified_by VARCHAR(50) NOT NULL,
@@ -160,6 +161,7 @@ class TableCreator:
             CREATE TABLE IF NOT EXISTS public.tab_oda_slt_shift_comments (
                 id SERIAL PRIMARY KEY,
                 shift_id VARCHAR(50) NOT NULL,
+                user_id VARCHAR(100) NOT NULL,
                 operator_name VARCHAR(100) NOT NULL,
                 comment TEXT,
                 image jsonb NULL,
@@ -177,6 +179,7 @@ class TableCreator:
             CREATE TABLE IF NOT EXISTS public.tab_oda_slt_shift_log_comments (
                 id SERIAL PRIMARY KEY,
                 shift_id VARCHAR(50) NOT NULL,
+                user_id VARCHAR(100) NOT NULL,
                 eb_id VARCHAR(60) NOT NULL,
                 operator_name VARCHAR(100) NOT NULL,
                 log_comment TEXT,
@@ -198,6 +201,7 @@ class TableCreator:
                 id SERIAL PRIMARY KEY,
                 shift_id VARCHAR(50) NOT NULL,
                 user_name VARCHAR(100) NOT NULL,
+                user_id VARCHAR(100) NOT NULL,
                 annotation TEXT,
                 created_by VARCHAR(100) NOT NULL,
                 created_on TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

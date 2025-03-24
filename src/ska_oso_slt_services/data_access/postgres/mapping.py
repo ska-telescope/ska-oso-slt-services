@@ -63,6 +63,7 @@ class ShiftLogMapping(BaseMapping[Shift]):
             identifier_field="shift_id",
             column_map={
                 "shift_id": lambda shift: shift.shift_id,
+                "user_id": lambda shift: shift.user_id,
                 "shift_start": lambda shift: shift.shift_start,
                 "shift_end": lambda shift: shift.shift_end,
                 "shift_operator": lambda shift: shift.shift_operator,
@@ -115,6 +116,7 @@ class ShiftLogCommentMapping(BaseMapping[ShiftLogComment]):
                 "log_comment": lambda comment: comment.log_comment,
                 "operator_name": lambda comment: comment.operator_name,
                 "shift_id": lambda comment: comment.shift_id,
+                "user_id": lambda comment: comment.user_id,
                 "image": lambda comment: _field_json_dump(comment, "image"),
                 "eb_id": lambda comment: comment.eb_id,
             },
@@ -143,6 +145,7 @@ class ShiftCommentMapping(BaseMapping[ShiftComment]):
                 "comment": lambda comment: comment.comment,
                 "operator_name": lambda comment: comment.operator_name,
                 "shift_id": lambda comment: comment.shift_id,
+                "user_id": lambda comment: comment.user_id,
                 "image": lambda comment: _field_json_dump(comment, "image"),
             },
         )
@@ -169,6 +172,7 @@ class ShiftAnnotationMapping(BaseMapping[ShiftAnnotation]):
             column_map={
                 "annotation": lambda annotation: annotation.annotation,
                 "user_name": lambda annotation: annotation.user_name,
+                "user_id": lambda annotation: annotation.user_id,
                 "shift_id": lambda annotation: annotation.shift_id,
             },
         )

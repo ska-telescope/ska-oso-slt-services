@@ -32,8 +32,10 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
             ShiftLogComment: The created shift log comment.
         """
         shift = self.crud_shift_repository.get_shift(
-            shift_id=shift_log_comment_data.shift_id
+            shift_id=shift_log_comment_data.shift_id, user_id=shift_log_comment_data.user_id
         )
+        if not shift:
+            raise NotFoundError("No shifts log comments found for the given query.")
         shift = Shift(**shift)
         if not shift:
             raise NotFoundError(f"Shift not found {shift_log_comment_data.shift_id}")
@@ -56,7 +58,7 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
         )
 
     def get_shift_logs_comments(
-        self, shift_id: str = None, eb_id: str = None
+        self, shift_id: str = None, eb_id: str = None, user_id: str = None
     ) -> List[ShiftLogComment]:
         """
         Retrieve comments for shift logs based on shift ID or EB ID.
@@ -72,7 +74,7 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
             NotFoundError: If no comments are found for the given filters.
         """
         shift_log_comments = self.crud_shift_repository.get_shift_logs_comments(
-            ShiftLogComment(), shift_id=shift_id, eb_id=eb_id
+            ShiftLogComment(), shift_id=shift_id, eb_id=eb_id, user_id=user_id
         )
         if not shift_log_comments:
             raise NotFoundError("No shifts log comments found for the given query.")
@@ -88,7 +90,7 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
         return shift_log_comments_obj_with_metadata
 
     def update_shift_log_comments(
-        self, comment_id, shift_log_comment: ShiftLogComment
+        self, comment_id, shift_log_comment: ShiftLogComment, user_id
     ) -> ShiftLogComment:
         """
         Update an existing shift log comment with new data.
@@ -116,11 +118,11 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
         )
 
         return self.crud_shift_repository.update_shift_logs_comments(
-            comment_id, shift_log_comment_with_metadata
+            comment_id, shift_log_comment_with_metadata, user_id
         )
 
     def create_shift_log_media(
-        self, shift_id, shift_operator, file, eb_id, shift_model
+        self, shift_id, shift_operator, file, eb_id, shift_model, user_id
     ) -> Media:
         """
         Create a media file for a shift.
@@ -135,13 +137,14 @@ class ShiftLogsComments(MediaService, BaseRepositoryService):
         Returns:
             Shift: The updated shift with the added media.
         """
-        shift = self.get_shift(shift_id)
+        shift = self.get_shift(shift_id, user_id)
         if not shift:
             raise NotFoundError(f"No shift found with id: {shift_id}")
 
         shift_comment = shift_model(shift_id=shift_id, operator_name=shift_operator)
 
         shift_comment.eb_id = eb_id
+        shift_comment.user_id = user_id
         shift_comment = set_new_metadata(shift_comment, shift_operator)
 
         return self.post_media(file=file, shift_comment=shift_comment)

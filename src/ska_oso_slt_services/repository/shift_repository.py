@@ -34,7 +34,7 @@ class ShiftRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_shift(self, shift_id: str) -> Shift:
+    def get_shift(self, shift_id: str, user_id:str=None) -> Shift:
         """
         Retrieve a shift by its SID.
 
@@ -68,7 +68,7 @@ class CRUDShiftRepository(ShiftRepository):
         """
         raise NotImplementedError
 
-    def update_shift(self, shift: Shift) -> Shift:
+    def update_shift(self, shift: Shift, user_id:str=None) -> Shift:
         """
         Update an existing shift.
 

@@ -82,7 +82,7 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
 
         return shifts
 
-    def get_shift(self, shift_id: str) -> Shift:
+    def get_shift(self, shift_id: str, user_id:str=None) -> Shift:
         """
         Retrieve a shift by its ID.
 
@@ -92,7 +92,7 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
         Returns:
             Shift: The shift data if found, None otherwise.
         """
-        shift = self.crud_shift_repository.get_shift(shift_id)
+        shift = self.crud_shift_repository.get_shift(shift_id, user_id)
 
         if shift:
             shifts_with_log_comments = self.merge_comments([shift])[0]
@@ -271,7 +271,7 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
 
         return self.crud_shift_repository.update_shift_end_time(shift)
 
-    def update_shift(self, shift_id: str, shift_data: Shift) -> Shift:
+    def update_shift(self, shift_id: str,  shift_data: Shift, user_id:str=None) -> Shift:
         """
         Update an existing shift.
 
@@ -287,7 +287,7 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
         """
 
         shift_data.shift_id = shift_id
-        current_shift_status = self.get_shift(shift_id=shift_data.shift_id)
+        current_shift_status = self.get_shift(shift_id=shift_data.shift_id, user_id=user_id)
         if current_shift_status.shift_end:
             # TODO remove hardcoding of fields here as this are only used once
             # so separate config file currently not feasible

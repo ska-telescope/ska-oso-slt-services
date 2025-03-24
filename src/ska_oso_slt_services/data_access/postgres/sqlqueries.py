@@ -59,7 +59,7 @@ def insert_query(
 
 
 def update_query(
-    entity_id: str | int, table_details: TableDetails, entity: Any
+    entity_id: str | int,  table_details: TableDetails, entity: Any, user_id:str=None
 ) -> QueryAndParameters:
     """
     Creates a query and parameters to update the given entity in the table,
@@ -93,8 +93,15 @@ def update_query(
                 table_details.table_details.identifier_field
             ),
         )
+        if user_id:
+            query = sql.SQL("SELECT id FROM {table} WHERE {identifier_field}=%s AND user_id=%s").format(
+                table=sql.Identifier(table_details.table_details.table_name),
+                identifier_field=sql.Identifier(
+                    table_details.table_details.identifier_field
+                ),
+            )
+            return query, (entity_id, user_id)
         return query, (entity_id,)
-
     columns, params = zip(*columns_and_params)
 
     # Build SET clause for only non-None fields
@@ -559,10 +566,11 @@ def select_latest_query(
         QueryAndParameters: A tuple of the query and parameters.
     """
     # Get the columns for the select statement
-    tid, shift_id, eb_id = (
+    tid, shift_id, eb_id, user_id = (
         filters.get("id"),
         filters.get("shift_id"),
         filters.get("eb_id"),
+        filters.get("user_id"),
     )
 
     column_list = list(table_details.get_columns_with_metadata())
@@ -594,6 +602,12 @@ def select_latest_query(
             sql.SQL("{field} = %s").format(field=sql.Identifier("shift_id"))
         )
         params.append(shift_id)
+    
+    if user_id is not None:
+        where_clauses.append(
+            sql.SQL("{field} = %s").format(field=sql.Identifier("user_id"))
+        )
+        params.append(user_id)
 
     if shift_id is not None and eb_id is not None:
         where_clauses.append(

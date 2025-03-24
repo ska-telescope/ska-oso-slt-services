@@ -65,6 +65,7 @@ class ShiftLogComment(SLTObject):
     """
 
     id: Optional[int] = None
+    user_id: Optional[str] = None
     log_comment: Optional[str] = None
     operator_name: Optional[str] = None
     shift_id: Optional[str] = None
@@ -87,6 +88,7 @@ class ShiftComment(SLTObject):
     """
 
     id: Optional[int] = None
+    user_id: Optional[str] = None
     comment: Optional[str] = None
     operator_name: Optional[str] = None
     shift_id: Optional[str] = None
@@ -109,6 +111,7 @@ class ShiftAnnotation(SLTObject):
 
     id: Optional[int] = None
     annotation: Optional[str] = None
+    user_id: Optional[str] = None
     user_name: Optional[str] = None
     shift_id: Optional[str] = None
     metadata: Optional[Metadata] = None
@@ -143,6 +146,7 @@ class ShiftBaseClass(SLTObject):
     :param comments Optional[List[ShiftComment]]: List of comments for the shift.
     """
     id: Optional[int] = None
+    user_id: Optional[str] = None
     shift_id: Optional[str] = None
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None

@@ -37,7 +37,7 @@ class ShiftAnnotations(BaseRepositoryService):
             shift_annotation=shift_annotation
         )
 
-    def get_shift_annotations(self, shift_id: str = None) -> List[ShiftAnnotation]:
+    def get_shift_annotations(self, shift_id: str = None, user_id:str=None) -> List[ShiftAnnotation]:
         """
         Retrieve annotation for shift based on shift ID.
 
@@ -52,7 +52,7 @@ class ShiftAnnotations(BaseRepositoryService):
         """
 
         shift_annotations = self.crud_shift_repository.get_shift_annotations(
-            shift_id=shift_id
+            shift_id=shift_id, user_id=user_id
         )
         if not shift_annotations:
             raise NotFoundError("No Shift annotations found for the given query.")
@@ -66,7 +66,7 @@ class ShiftAnnotations(BaseRepositoryService):
 
         return shift_annotations_obj_with_metadata
 
-    def get_shift_annotation(self, annotation_id: int = None) -> List[ShiftAnnotation]:
+    def get_shift_annotation(self, annotation_id: int = None, user_id:int=None) -> List[ShiftAnnotation]:
         """
         Retrieve annotations for shift based on annotation ID.
 
@@ -80,7 +80,7 @@ class ShiftAnnotations(BaseRepositoryService):
             NotFoundError: If no annotations are found for the given filters.
         """
         shift_annotation = self.crud_shift_repository.get_shift_annotation(
-            annotation_id=annotation_id
+            annotation_id=annotation_id, user_id=user_id
         )
         if not shift_annotation:
             raise NotFoundError("No Shift annotation found for the given query.")
@@ -93,7 +93,7 @@ class ShiftAnnotations(BaseRepositoryService):
         return shift_annotation_with_metadata
 
     def update_shift_annotations(
-        self, annotation_id: int, shift_annotation: ShiftAnnotation
+        self, annotation_id: int, shift_annotation: ShiftAnnotation, user_id:str=None
     ) -> ShiftAnnotation:
         """
         Update an existing shift annotation with new data.
@@ -110,13 +110,13 @@ class ShiftAnnotations(BaseRepositoryService):
         """
         # for getting annotation_id
         existing_shift_annotation = self.get_shift_annotation(
-            annotation_id=annotation_id
+            annotation_id=annotation_id, user_id=user_id
         )
 
         if not existing_shift_annotation:
             raise NotFoundError(f"No annotation found with id: {annotation_id}")
 
-        shift = self.get_shift(existing_shift_annotation.shift_id)
+        shift = self.get_shift(existing_shift_annotation.shift_id, user_id=user_id)
         if not shift:
             raise NotFoundError(
                 f"No shift found with id: {shift_annotation['shift_id']}"
