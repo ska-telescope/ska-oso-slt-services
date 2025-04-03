@@ -209,11 +209,36 @@ class TableCreator:
                 last_modified_by VARCHAR(100) NOT NULL,
                 CONSTRAINT fk_shift FOREIGN KEY (shift_id)
                 REFERENCES public.tab_oda_slt(shift_id)
+                
             );
             CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_annotations_shift_id
             ON public.tab_oda_slt_shift_annotations (shift_id);
             CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_annotations_user_name
             ON public.tab_oda_slt_shift_annotations (user_name);
+            CREATE TABLE IF NOT EXISTS public.tab_oda_slt_shift_logs (
+                id SERIAL PRIMARY KEY,
+                shift_id VARCHAR(50) NOT NULL,
+                user_id VARCHAR(100) NOT NULL,
+                eb_id VARCHAR(60) NOT NULL,
+                sbd_ref VARCHAR(60) NOT NULL,
+                sbi_ref VARCHAR(60) NOT NULL,
+                eb_status eb_status NOT NULL,
+                interface VARCHAR(60) NOT NULL,
+                telescope TEXT,
+                sbi_status sbi_status NOT NULL,
+                sbd_version integer NOT NULL,
+                request_response jsonb NOT NULL,
+                source TEXT,
+                log_time timestamp with time zone NOT NULL,
+                created_by VARCHAR(100) NOT NULL,
+                created_on TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                last_modified_on TIMESTAMPTZ NOT NULL,
+                last_modified_by VARCHAR(100) NOT NULL,
+                CONSTRAINT fk_shift FOREIGN KEY (shift_id)
+                REFERENCES public.tab_oda_slt(shift_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_logs_shift_id
+            ON public.tab_oda_slt_shift_logs (shift_id);
         """
         )
         try:

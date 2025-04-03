@@ -16,6 +16,7 @@ from ska_oso_slt_services.data_access.postgres.mapping import (
     ShiftCommentMapping,
     ShiftLogCommentMapping,
     ShiftLogMapping,
+    ShiftLogsMapping,
 )
 from ska_oso_slt_services.domain.shift_models import (
     Shift,
@@ -23,6 +24,7 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftBaseClass,
     ShiftComment,
     ShiftLogComment,
+    ShiftLogs,
 )
 
 
@@ -38,6 +40,7 @@ class MappingType(Enum):
     SHIFT_LOG_COMMENT = auto()
     SHIFT_COMMENT = auto()
     SHIFT_ANNOTATION = auto()
+    SHIFT_LOGS = auto()
 
 
 class TableMappingFactory:
@@ -82,6 +85,7 @@ class TableMappingFactory:
             ShiftLogComment: MappingType.SHIFT_LOG_COMMENT,
             ShiftComment: MappingType.SHIFT_COMMENT,
             ShiftAnnotation: MappingType.SHIFT_ANNOTATION,
+            ShiftLogs: MappingType.SHIFT_LOGS,
         }
 
         entity_type = entity if isinstance(entity, type) else type(entity)
@@ -109,6 +113,7 @@ class TableMappingFactory:
             MappingType.SHIFT_LOG_COMMENT: ShiftLogCommentMapping,
             MappingType.SHIFT_COMMENT: ShiftCommentMapping,
             MappingType.SHIFT_ANNOTATION: ShiftAnnotationMapping,
+            MappingType.SHIFT_LOGS: ShiftLogsMapping,
         }
 
         if mapping_type not in mapping_classes:
@@ -126,10 +131,16 @@ class TableMappingFactory:
                     ShiftLogComment,
                     ShiftComment,
                     ShiftAnnotation,
+                    ShiftLogs,
                 ]
             ],
             Union[
-                Shift, ShiftBaseClass, ShiftLogComment, ShiftComment, ShiftAnnotation
+                Shift,
+                ShiftBaseClass,
+                ShiftLogComment,
+                ShiftComment,
+                ShiftAnnotation,
+                ShiftLogs,
             ],
         ],
     ) -> BaseMapping:

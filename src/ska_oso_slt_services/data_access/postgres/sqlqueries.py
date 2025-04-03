@@ -42,6 +42,7 @@ def insert_query(
         which psycopg will safely combine.
     """
     columns = table_details.get_columns_with_metadata()
+
     params = table_details.get_params_with_metadata(entity)
     query = sql.SQL(
         """
@@ -610,6 +611,12 @@ def select_latest_query(
             sql.SQL("{field} = %s").format(field=sql.Identifier("user_id"))
         )
         params.append(user_id)
+
+    if eb_id:
+        where_clauses.append(
+            sql.SQL("{field} = %s").format(field=sql.Identifier("eb_id"))
+        )
+        params.append(eb_id)
 
     if shift_id is not None and eb_id is not None:
         where_clauses.append(

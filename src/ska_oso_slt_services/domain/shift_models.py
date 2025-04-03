@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List, Optional
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
-from ska_oso_pdm.entity_status_history import SBIStatus
+from ska_oso_pdm.entity_status_history import OSOEBStatus, SBIStatus
 
 from ska_oso_slt_services.common.codec import SLTObject
 from ska_oso_slt_services.common.utils import get_datetime_for_timezone
@@ -128,10 +128,21 @@ class ShiftLogs(SLTObject):
 
     # model_config = ConfigDict(extra="forbid")
 
-    info: Optional[dict] = None
+    id: Optional[int] = None
+    shift_id: Optional[str] = None
+    user_id: Optional[str] = None
+    eb_id: Optional[str] = None
+    sbd_ref: Optional[str] = None
+    sbi_ref: Optional[str] = None
+    eb_status: Optional[OSOEBStatus] = None
+    sbi_status: Optional[SBIStatus] = None
+    interface: Optional[str] = None
+    telescope: Optional[str] = None
+    sbd_version: Optional[int] = None
+    request_response: Optional[list] = None
     source: Optional[str] = None
     log_time: Optional[datetime] = None
-    comments: Optional[List[ShiftLogComment]] = None
+    metadata: Optional[Metadata] = None
 
 
 class ShiftBaseClass(SLTObject):

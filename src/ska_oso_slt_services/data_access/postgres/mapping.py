@@ -18,6 +18,7 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftAnnotation,
     ShiftComment,
     ShiftLogComment,
+    ShiftLogs,
 )
 
 SqlTypes = Union[str, int, datetime]
@@ -174,5 +175,43 @@ class ShiftAnnotationMapping(BaseMapping[ShiftAnnotation]):
                 "user_name": lambda annotation: annotation.user_name,
                 "user_id": lambda annotation: annotation.user_id,
                 "shift_id": lambda annotation: annotation.shift_id,
+            },
+        )
+
+
+class ShiftLogsMapping(BaseMapping[ShiftLogs]):
+    """
+    Provides mapping functionality for Shift Log Comment object
+    to database operations.
+    """
+
+    @property
+    def table_details(self) -> TableDetails:
+        """
+        Get the table details for shift comments.
+
+        Returns:
+            CommentTableDetails: An object containing the table name,
+            identifier field, and column mappings.
+        """
+        return TableDetails(
+            table_name="tab_oda_slt_shift_logs",
+            identifier_field="id",
+            column_map={
+                "shift_id": lambda shift_logs: shift_logs.shift_id,
+                "user_id": lambda shift_logs: shift_logs.user_id,
+                "eb_id": lambda shift_logs: shift_logs.eb_id,
+                "sbd_ref": lambda shift_logs: shift_logs.sbd_ref,
+                "sbi_ref": lambda shift_logs: shift_logs.sbi_ref,
+                "eb_status": lambda shift_logs: shift_logs.eb_status,
+                "sbi_status": lambda shift_logs: shift_logs.sbi_status,
+                "interface": lambda shift_logs: shift_logs.interface,
+                "telescope": lambda shift_logs: shift_logs.telescope,
+                "sbd_version": lambda shift_logs: shift_logs.sbd_version,
+                "request_response": lambda shift_logs: _field_json_dump(
+                    shift_logs, "request_response"
+                ),
+                "source": lambda shift_logs: shift_logs.source,
+                "log_time": lambda shift_logs: shift_logs.log_time,
             },
         )
