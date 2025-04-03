@@ -143,6 +143,7 @@ class ShiftLogs(SLTObject):
     source: Optional[str] = None
     log_time: Optional[datetime] = None
     metadata: Optional[Metadata] = None
+    comments: Optional[List[ShiftLogComment]] = None
 
 
 class ShiftBaseClass(SLTObject):

@@ -646,6 +646,26 @@ class PostgresShiftRepository(CRUDShiftRepository):
             return {"details": "Shift updated successfully"}
         else:
             raise NotFoundError("Error in updating shift")
+        
+    def get_shift_logs(self, shift_id: Optional[str] = None,
+                       user_id:Optional[str]=None) -> List[ShiftComment]:
+        """
+        Retrieve comments from shift based on shift ID.
+
+        Args:
+            shift_id (Optional[str]): The shift ID to filter comments by.
+
+        Returns:
+            List[Dict]: List of comments associated with the specified filters.
+        """
+        filters={"shift_id": shift_id}
+        if user_id:
+            filters["user_id"]=user_id
+        return self.crud.get_entities(
+            entity=ShiftLogs(),
+            db=self.postgres_data_access,
+            filters=filters,
+        )
 
     def updated_shift_log_info(
         self, current_shift_id: str, user_id: str
