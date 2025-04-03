@@ -733,8 +733,13 @@ class PostgresShiftRepository(CRUDShiftRepository):
                 # Create new log
                 shift_logs = set_new_metadata(shift_logs, user_id)
                 self.crud.insert_entity(entity=shift_logs, db=self.postgres_data_access)
-
-        LOGGER.info("Shift Logs have been processed")
+        filters = {"shift_id": current_shift_data.shift_id}
+        if user_id:
+            filters["user_id"] = user_id
+        shift_logs = self.crud.get_entities(
+            entity=ShiftLogs(), db=self.postgres_data_access, filters=filters
+        )
+        current_shift_data.shift_logs = shift_logs
         return current_shift_data
 
     def create_shift_comment(self, shift_comment: ShiftComment) -> ShiftComment:
