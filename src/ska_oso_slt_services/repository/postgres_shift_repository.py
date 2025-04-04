@@ -4,7 +4,6 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Union
 
-from deepdiff import DeepDiff
 from psycopg import DatabaseError, DataError, InternalError, sql
 from ska_ser_skuid.client import SkuidClient
 
@@ -16,7 +15,7 @@ from ska_oso_slt_services.common.constant import (
 )
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
 from ska_oso_slt_services.common.error_handling import NotFoundError
-from ska_oso_slt_services.common.metadata_mixin import update_metadata
+from ska_oso_slt_services.common.metadata_mixin import set_new_metadata
 from ska_oso_slt_services.common.utils import (
     get_datetime_for_timezone,
     set_telescope_type,
@@ -623,20 +622,54 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             raise NotFoundError("Error in updating shift")
 
-    def updated_shift_log_info(self, current_shift_id: str) -> Union[Shift, str]:
+    def get_shift_logs(
+        self, shift_id: Optional[str] = None, user_id: Optional[str] = None
+    ) -> List[ShiftComment]:
+        """
+        Retrieve logs from shift based on shift ID.
+
+        Args:
+            shift_id (Optional[str]): The shift ID to filter logs by.
+            user_id (Optional[str]): The user ID to filter logs by.
+
+        Returns:
+            List[Dict]: List of shift logs associated with the specified filters.
+        """
+        filters = {"shift_id": shift_id}
+        if user_id:
+            filters["user_id"] = user_id
+        return self.crud.get_entities(
+            entity=ShiftLogs(),
+            db=self.postgres_data_access,
+            filters=filters,
+        )
+
+    def updated_shift_log_info(
+        self, current_shift_id: str, user_id: str = None
+    ) -> Union[Shift, str]:
         """
         Update the shift log information based on new information from ODA
         sources.
 
-        :param current_shift_id int: The unique identifier of the current shift.
-        :returns: Updated Shift if new data found else message stating
-        no new data found
+        Args:
+            current_shift_id (str): The unique identifier of the current shift.
+            user_id (str): The ID of the user making the update.
+
+        Returns:
+            Union[Shift, str]: Updated Shift if new data found else message stating
+            no new data found
+
+        Raises:
+            NotFoundError: If no shift is found with the given ID
         """
-        shift_logs_info = {}
+        # Get current shift data
         current_shift_data = self.get_shift(current_shift_id)
+        if not current_shift_data:
+            raise NotFoundError(f"No shift found with id: {current_shift_id}")
         current_shift_data = Shift.model_validate(current_shift_data)
 
-        created_after_eb_sbi_info = self.get_oda_data(
+        # Get ODA data for the shift period
+        log_data = self.get_oda_data(
             filter_date=(
                 current_shift_data.shift_start.isoformat()
                 if current_shift_data.shift_start
@@ -644,69 +677,66 @@ class PostgresShiftRepository(CRUDShiftRepository):
             )
         )
 
-        if current_shift_data.shift_logs and current_shift_data.shift_logs:
-            for log in current_shift_data.shift_logs:
-                log = ShiftLogs.model_validate(log)
-                shift_logs_info[log.info["eb_id"]] = log.info
-        else:
-            current_shift_data.shift_logs = []
+        def create_shift_log_params(
+            logs: dict, user_id: str, current_shift_id: str
+        ) -> dict:
+            """Create standard parameter dictionary for shift logs."""
+            return {
+                "user_id": user_id,
+                "shift_id": current_shift_id,
+                "eb_id": logs["eb_id"],
+                "sbd_ref": logs["sbd_ref"],
+                "sbi_ref": logs["sbi_ref"],
+                "eb_status": logs["eb_status"],
+                "sbi_status": logs["sbi_status"],
+                "interface": logs["interface"],
+                "telescope": logs["telescope"],
+                "sbd_version": logs["sbd_version"],
+                "request_response": [
+                    {
+                        "log_time": datetime.now(tz=timezone.utc),
+                        "logs": logs["request_responses"],
+                    }
+                ],
+                "log_time": datetime.now(tz=timezone.utc),
+                "source": "ODA",
+            }
 
-        if created_after_eb_sbi_info:
-            diff = DeepDiff(
-                shift_logs_info, created_after_eb_sbi_info, ignore_order=True
+        # Process each log entry
+        for _, logs in log_data.items():
+            filters = {"eb_id": logs["eb_id"]}
+            if user_id:
+                filters["user_id"] = user_id
+
+            existing_logs = self.crud.get_entity(
+                entity=ShiftLogs(), db=self.postgres_data_access, filters=filters
             )
 
-            new_eb_ids = set(
-                self._extract_eb_id_from_key(key)
-                for key in diff.get("dictionary_item_added", [])
-            )
-            changed_eb_ids = set(
-                [
-                    self._extract_eb_id_from_key(key)
-                    for key in diff.get("values_changed", {}).keys()
-                ]
-            )
+            shift_log_params = create_shift_log_params(logs, user_id, current_shift_id)
+            shift_logs = ShiftLogs.model_validate(shift_log_params)
 
-            new_eb_ids = new_eb_ids - changed_eb_ids
-
-            if new_eb_ids:
-                for new_eb_id in new_eb_ids:
-                    new_info = created_after_eb_sbi_info[new_eb_id]
-                    new_log_obj = ShiftLogs(
-                        info=new_info,
-                        log_time=datetime.now(tz=timezone.utc),
-                        source="ODA",
-                    )
-                    current_shift_data.shift_logs.append(new_log_obj)
-
-            if changed_eb_ids:
-                for updated_eb_id in changed_eb_ids:
-                    for i in range(len(current_shift_data.shift_logs)):
-                        if (
-                            current_shift_data.shift_logs[i].info["eb_id"]
-                            == updated_eb_id
-                        ):
-                            current_shift_data.shift_logs[i].info = (
-                                created_after_eb_sbi_info[updated_eb_id]
-                            )
-
-            metadata = self.get_entity_metadata(current_shift_id)
-            shift = update_metadata(
-                current_shift_data,
-                metadata=metadata,
-                last_modified_by=current_shift_data.shift_operator,
-            )
-
-            updated_shift_with_info = self.patch_shift(shift=shift)
-
-            LOGGER.info("Shift Logs have been updated successfully")
-            LOGGER.info(updated_shift_with_info)
-
-            return shift
-
-        else:
-            LOGGER.info("No New Logs found in ODA")
-            return "NO New Logs found in ODA"
+            if existing_logs:
+                # Update existing log
+                existing_logs["request_response"].extend(shift_logs.request_response)
+                shift_logs.request_response = existing_logs["request_response"]
+                shift_logs = set_new_metadata(shift_logs, user_id)
+                self.crud.update_entity(
+                    entity_id=existing_logs["id"],
+                    entity=shift_logs,
+                    db=self.postgres_data_access,
+                )
+            else:
+                # Create new log
+                shift_logs = set_new_metadata(shift_logs, user_id)
+                self.crud.insert_entity(entity=shift_logs, db=self.postgres_data_access)
+        filters = {"shift_id": current_shift_data.shift_id}
+        if user_id:
+            filters["user_id"] = user_id
+        shift_logs = self.crud.get_entities(
+            entity=ShiftLogs(), db=self.postgres_data_access, filters=filters
+        )
+        current_shift_data.shift_logs = shift_logs
+        return current_shift_data
 
     def create_shift_comment(self, shift_comment: ShiftComment) -> ShiftComment:
         """

@@ -601,6 +601,12 @@ def select_latest_query(
         )
         params.append(eb_id)
 
+    if eb_id:
+        where_clauses.append(
+            sql.SQL("{field} = %s").format(field=sql.Identifier("eb_id"))
+        )
+        params.append(eb_id)
+
     # Build the final query based on the conditions
     if where_clauses:
         query = base_query + sql.SQL(" WHERE ") + sql.SQL(" AND ").join(where_clauses)

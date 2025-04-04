@@ -39,7 +39,12 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
                     ShiftLogComment(), shift_id=shift["shift_id"]
                 )
             )
-            if shift.get("shift_logs"):
+            shift_logs = self.crud_shift_repository.get_shift_logs(
+                shift_id=shift["shift_id"]
+            )
+            if shift_logs:
+                shift["shift_logs"] = shift_logs
+
                 for shift_log in shift["shift_logs"]:
                     shift_log["comments"] = []
                     for comment in shift_log_comments_dict:
