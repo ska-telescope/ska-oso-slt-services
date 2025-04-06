@@ -2,6 +2,7 @@ import logging
 from typing import Any, List, Optional, Tuple
 
 from psycopg import DatabaseError, DataError, InternalError, sql
+from psycopg.rows import dict_row
 
 from ska_oso_slt_services.infrastructure.postgres_connection import PostgresConnection
 
@@ -13,8 +14,8 @@ class PostgresDataAccess:
     Postgres Data Access Class
     """
 
-    def __init__(self):
-        self.postgres_connection = PostgresConnection().get_connection()
+    def __init__(self, postgres_connection=PostgresConnection().get_connection()):
+        self.postgres_connection = postgres_connection
 
     def insert(self, query: sql.Composed, params: Tuple) -> int:
         """
@@ -26,13 +27,20 @@ class PostgresDataAccess:
         """
         try:
             # temporary SLT table creation code
-            table_creator = get_table_creator()
-            table_creator.create_slt_table()
-            with self.postgres_connection.connection() as conn:
-                with conn.cursor() as cursor:
+            if hasattr(self.postgres_connection, "row_factory"):
+                with self.postgres_connection.cursor(row_factory=dict_row) as cursor:
                     cursor.execute(query, params)
-                    conn.commit()
+                    self.postgres_connection.commit()
                     return cursor.fetchone()
+            else:
+                table_creator = get_table_creator()
+                table_creator.create_slt_table()
+                with self.postgres_connection.connection() as conn:
+                    with conn.cursor() as cursor:
+                        cursor.execute(query, params)
+                        self.postgres_connection.commit()
+                        return cursor.fetchone()
+
         except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
             LOGGER.info("Error executing insert query: %s", e)
@@ -52,11 +60,18 @@ class PostgresDataAccess:
         :return: The number of rows affected.
         """
         try:
-            with self.postgres_connection.connection() as conn:
-                with conn.cursor() as cursor:
+            if hasattr(self.postgres_connection, "row_factory"):
+                with self.postgres_connection.cursor(row_factory=dict_row) as cursor:
                     cursor.execute(query, params)
-                    conn.commit()
+                    self.postgres_connection.commit()
                     return cursor.rowcount
+            else:
+                with self.postgres_connection.connection() as conn:
+                    with conn.cursor() as cursor:
+                        cursor.execute(query, params)
+                        conn.commit()
+                        return cursor.rowcount
+
         except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
             LOGGER.info("Error executing update query: %s", e)
@@ -68,7 +83,9 @@ class PostgresDataAccess:
             raise e
 
     def delete(self, query: str, connection):
-        pass
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+        return True
 
     def get(self, query: sql.Composed, params: Tuple) -> List[Tuple[int, str]]:
         """
@@ -79,10 +96,16 @@ class PostgresDataAccess:
         :return: The result of the query.
         """
         try:
-            with self.postgres_connection.connection() as conn:
-                with conn.cursor() as cursor:
+            if hasattr(self.postgres_connection, "row_factory"):
+                with self.postgres_connection.cursor(row_factory=dict_row) as cursor:
                     cursor.execute(query, params)
                     return cursor.fetchall()
+            else:
+                with self.postgres_connection.connection() as conn:
+                    with conn.cursor() as cursor:
+                        cursor.execute(query, params)
+                        return cursor.fetchall()
+
         except (DatabaseError, InternalError, DataError) as e:
             LOGGER.error("Error executing get query: %s", e)
             raise
@@ -100,12 +123,18 @@ class PostgresDataAccess:
         """
         try:
             # temporary SLT table creation code
-            table_creator = get_table_creator()
-            table_creator.create_slt_table()
-            with self.postgres_connection.connection() as conn:
-                with conn.cursor() as cursor:
+            if hasattr(self.postgres_connection, "row_factory"):
+                with self.postgres_connection.cursor(row_factory=dict_row) as cursor:
                     cursor.execute(query, params)
                     return cursor.fetchone()
+            else:
+                table_creator = get_table_creator()
+                table_creator.create_slt_table()
+                with self.postgres_connection.connection() as conn:
+                    with conn.cursor() as cursor:
+                        cursor.execute(query, params)
+                        return cursor.fetchone()
+
         except (DatabaseError, InternalError, DataError) as e:
             # Handle database-related exceptions
             LOGGER.info("Error executing single record query: %s", e)

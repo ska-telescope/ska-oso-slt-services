@@ -84,13 +84,12 @@ class PostgresShiftRepository(CRUDShiftRepository):
     the CRUDShiftRepository base class.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, postgres_data_access=PostgresDataAccess()) -> None:
         """
         Initialize the ShiftService.
         Sets up the PostgresDataAccess and ShiftLogMapping instances.
         """
-
-        self.postgres_data_access = PostgresDataAccess()
+        self.postgres_data_access = postgres_data_access
         self.crud = DBCrud()
 
     def get_shifts(
@@ -156,8 +155,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         """
         shift = self._prepare_new_shift(shift)
         id_created = self.crud.insert_entity(entity=shift, db=self.postgres_data_access)
-        if id_created:
-            shift.id = id_created.get("id")
+        shift.id = id_created.get("id")
         shift_log_updater.update_shift_id(shift.shift_id)
         return shift
 
@@ -172,7 +170,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
             Shift: The prepared shift object.
         """
         shift.shift_start = get_datetime_for_timezone("UTC")
-        shift.shift_id = create_shift_id()
+        if not shift.shift_id:
+            shift.shift_id = create_shift_id()
         return shift
 
     def update_shift_end_time(self, shift: Shift) -> Shift:
