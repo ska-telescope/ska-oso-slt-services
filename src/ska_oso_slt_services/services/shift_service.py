@@ -49,7 +49,7 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
                 for shift_log in shift["shift_logs"]:
                     shift_log["comments"] = []
                     for comment in shift_log_comments_dict:
-                        if shift_log["info"]["eb_id"] == comment["eb_id"]:
+                        if shift_log["eb_id"] == comment["eb_id"]:
                             shift_log["comments"].append(comment)
         return shifts
 

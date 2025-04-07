@@ -184,7 +184,7 @@ class ShiftLogsMapping(BaseMapping[ShiftLogs]):
     @property
     def table_details(self) -> TableDetails:
         """
-        Get the table details for shift comments.
+        Get the table details for shift log mapping.
 
         Returns:
             CommentTableDetails: An object containing the table name,

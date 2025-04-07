@@ -682,6 +682,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Raises:
             NotFoundError: If no shift is found with the given ID
         """
+        user_id = user_id if user_id else "1"
         # Get current shift data
         current_shift_data = self.get_shift(current_shift_id)
         if not current_shift_data:
