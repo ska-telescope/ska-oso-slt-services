@@ -98,6 +98,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
         match_type: Optional[MatchType] = None,
         entity_status: Optional[SbiEntityStatus] = None,
         entities: Optional[EntityFilter] = None,
+        shift_ids: Optional[List] = None,
     ) -> List[Shift]:
         """
         Retrieve a list of shifts based on the provided query parameters.
@@ -121,6 +122,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
             oda_entities=entities,
             entity_status=entity_status,
             match_type=match_type,
+            entity_ids=shift_ids,
         )
         return shifts
 
@@ -622,6 +624,22 @@ class PostgresShiftRepository(CRUDShiftRepository):
         else:
             raise NotFoundError("Error in updating shift")
 
+    def get_shift_logs_info(
+        self,
+        entity: Optional[Any],
+        entities: Optional[Any],
+        entity_status: Optional[Any],
+        match_type: Optional[Any],
+    ):
+        logs = self.crud.get_entities(
+            entity=entity,
+            db=self.postgres_data_access,
+            oda_entities=entities,
+            entity_status=entity_status,
+            match_type=match_type,
+        )
+        return logs
+
     def get_shift_logs(
         self, shift_id: Optional[str] = None, user_id: Optional[str] = None
     ) -> List[ShiftComment]:
@@ -635,7 +653,9 @@ class PostgresShiftRepository(CRUDShiftRepository):
         Returns:
             List[Dict]: List of shift logs associated with the specified filters.
         """
-        filters = {"shift_id": shift_id}
+        filters = []
+        if shift_id:
+            filters = {"shift_id": shift_id}
         if user_id:
             filters["user_id"] = user_id
         return self.crud.get_entities(

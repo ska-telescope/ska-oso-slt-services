@@ -26,7 +26,7 @@ class SLTObject(BaseModel):
     )
 
     def _is_default(self, key: str) -> bool:
-        field_info = self.model_fields[key]
+        field_info = self.model_fields[key]  # pylint: disable=E1136
         if field_info.default_factory is not None:
             default = field_info.default_factory()
         elif field_info.default is not PydanticUndefined:

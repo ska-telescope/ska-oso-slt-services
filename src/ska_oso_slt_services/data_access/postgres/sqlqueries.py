@@ -7,14 +7,12 @@ selecting, and querying shifts.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
 from psycopg import sql
 
 from ska_oso_slt_services.data_access.postgres.mapping import TableDetails
 from ska_oso_slt_services.domain.shift_models import (
-    EntityFilter,
-    MatchType,
     SbiEntityStatus,
     Shift,
     ShiftLogComment,
@@ -206,6 +204,80 @@ def select_by_shift_params(
     return query, tuple(params)
 
 
+def _build_where_clause(
+    field_name: str, value: str, match_type_name: str
+) -> Tuple[sql.SQL, str]:
+    """
+    Build WHERE clause based on field name, value and match type.
+
+    Args:
+        field_name (str): Name of the field to filter on
+        value (str): Value to match against
+        match_type_name (str): Type of match to perform (EQUALS, STARTS_WITH, CONTAINS)
+
+    Returns:
+        Tuple[sql.SQL, str]: SQL WHERE clause and parameter value
+    """
+    if match_type_name == "EQUALS":
+        return sql.SQL(f"""WHERE {field_name} = %s"""), value
+    elif match_type_name in ["STARTS_WITH", "CONTAINS"]:
+        return sql.SQL(f"""WHERE {field_name} LIKE %s"""), f"%{value}%"
+    return sql.SQL(""), ""
+
+
+def select_table_data_by_where_clause(
+    table_details: TableDetails, oda_entities: Any = None, match_type: str = "Failed"
+) -> QueryAndParameters:
+    """
+    Creates a query to select shifts based on user-specific criteria.
+
+    Args:
+        table_details (TableDetails): The information about the table to query.
+        oda_entities (Any): The entities containing filter criteria.
+        match_type (str): The type of match to perform.
+
+    Returns:
+        QueryAndParameters: A tuple of the query and parameters.
+    """
+    params = []
+    columns = table_details.get_columns_with_metadata()
+    where_clause = sql.SQL("")
+
+    if oda_entities:
+        if oda_entities.sbi_id:
+            where_clause, param = _build_where_clause(
+                "sbi_ref", oda_entities.sbi_id, match_type.match_type.name
+            )
+            params.append(param)
+        elif oda_entities.eb_id:
+            where_clause, param = _build_where_clause(
+                "eb_id", oda_entities.eb_id, match_type.match_type.name
+            )
+            params.append(param)
+    elif match_type and match_type.sbi_status:
+        where_clause = sql.SQL("""WHERE sbi_status = %s""")
+        params.append(match_type.sbi_status.name.title())
+
+    query = (
+        sql.SQL(
+            """
+        SELECT {fields}
+        FROM {table}
+        """
+        ).format(
+            fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
+            table=sql.Identifier(table_details.table_details.table_name),
+            identifier_field=sql.Identifier(
+                table_details.table_details.identifier_field
+            ),
+        )
+        + where_clause
+        + sql.SQL(" ORDER BY id DESC")
+    )
+
+    return query, tuple(params)
+
+
 def select_by_date_query(
     table_details: TableDetails, qry_params: Shift
 ) -> QueryAndParameters:
@@ -264,282 +336,8 @@ def select_by_date_query(
     return query, params
 
 
-def select_by_text_query(
-    table_details: TableDetails, search_text: str, qry_params: MatchType
-) -> QueryAndParameters:
-    """
-    Creates a query to select shifts based on text-based criteria
-    using full-text search.
-
-    Args:
-        table_details (TableDetails): The information about the table to query.
-        qry_params (TextQuery): The text-based query parameters.
-        search_text (str): The text to search for.
-
-    Returns:
-        QueryAndParameters: A tuple of the query and parameters.
-    """
-    columns = list(table_details.get_columns_with_metadata())
-    search_columns = get_search_columns(table_details)
-
-    query, params = build_search_query(
-        table_details, columns, search_columns, qry_params, search_text
-    )
-
-    return query, params
-
-
-def get_search_columns(table_details: TableDetails) -> List[str]:
-    """
-    Get the search columns for the given table.
-    Args:
-        table_details (TableDetails): The information about the table to query.
-    Returns:
-        List[str]: A list of search columns for the given table
-    """
-    return [table_details.table_details.text_base_search_fields]
-
-
-def build_search_query(
-    table_details: TableDetails,
-    columns: List[str],
-    search_columns: List[str],
-    qry_params: MatchType,
-    search_text: str,
-) -> Tuple[sql.Composed, Tuple[str, ...]]:
-    """
-    Builds a search query based on the provided parameters.
-
-    Args:
-        table_details (TableDetails): The information about the table to query.
-        columns (List[str]): The list of columns to select.
-        search_columns (List[str]): The list of columns to search within.
-        qry_params (TextQuery): The text-based query parameters.
-        search_text (str): The text to search for.
-
-    Returns:
-        Tuple[sql.Composed, Tuple[str, ...]]:
-        A tuple containing the query and parameters.
-
-    Raises:
-        ValueError: If an unsupported match_type is provided.
-    """
-
-    if qry_params.match_type.value == "equals":
-        return build_full_text_search_query(
-            table_details, columns, search_columns, search_text
-        )
-    elif qry_params.match_type.value in ["starts_with", "contains"]:
-        return build_like_query(
-            table_details, columns, search_columns[0], search_text, qry_params
-        )
-    else:
-        raise ValueError(f"Unsupported match_type: {qry_params.match_type}")
-
-
-def build_full_text_search_query(
-    table_details: TableDetails,
-    columns: List[str],
-    search_columns: List[str],
-    search_text: str,
-) -> Tuple[sql.Composed, Tuple[str, str]]:
-    """
-    Builds a full-text search query using the provided parameters.
-
-    Args:
-        table_details (TableDetails): The information about the table to query.
-        columns (List[str]): The list of columns to select.
-        search_columns (List[str]): The list of columns to search within.
-        search_text (str): The text to search for.
-
-    Returns:
-        Tuple[sql.Composed, Tuple[str, str]]: A tuple containing
-        the query and parameters.
-    """
-    combined_tsvector = sql.SQL(" || ").join(
-        sql.SQL("to_tsvector('english', {}::text)").format(sql.Identifier(col))
-        for col in search_columns
-    )
-
-    query = sql.SQL(
-        """
-        SELECT {fields},
-            ts_rank({combined_tsvector}, plainto_tsquery('english', %s)) AS search_rank
-        FROM {table}
-        WHERE {combined_tsvector} @@ plainto_tsquery('english', %s)
-        ORDER BY search_rank DESC
-    """
-    ).format(
-        fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
-        table=sql.Identifier(table_details.table_details.table_name),
-        combined_tsvector=combined_tsvector,
-    )
-
-    return query, (search_text, search_text)
-
-
-def build_like_query(
-    table_details: TableDetails,
-    columns: List[str],
-    search_column: str,
-    search_text: str,
-    qry_params: str,
-) -> Tuple[sql.Composed, Tuple[str]]:
-    """
-    Builds a LIKE query using the provided parameters.
-
-    Args:
-        table_details (TableDetails): The information about the table to query.
-        columns (List[str]): The list of columns to select.
-        search_column (str): The column to search within.
-        qry_params (TextQuery): The text-based query parameters.
-        search_text (str): The text to search for.
-
-    Returns:
-        Tuple[sql.Composed, Tuple[str]]: A tuple containing the query and parameters.
-    """
-    like_pattern = (
-        f"{search_text}%"
-        if qry_params.match_type == "starts_with"
-        else f"%{search_text}%"
-    )
-
-    query = sql.SQL(
-        """
-        SELECT {fields}
-        FROM {table}
-        WHERE {search_column} ILIKE %s
-    """
-    ).format(
-        fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
-        table=sql.Identifier(table_details.table_details.table_name),
-        search_column=sql.Identifier(search_column),
-    )
-
-    return query, (like_pattern,)
-
-
-def select_logs_by_status(
-    table_details: TableDetails,
-    qry_params: SbiEntityStatus = None,
-    status_column: str = None,
-    entity_filter: EntityFilter = None,
-    match_type: MatchType = None,
-) -> Tuple[str, Tuple[str]]:
-    """
-    Creates an optimized query to select logs based on the
-    status of the shift or entity IDs.
-
-    Args:
-        match_type(MatchType): The type of matching to perform.
-        table_details (TableDetails): The information about the table to query.
-        qry_params (SbiEntityStatus): The JSON-based query parameters.
-        status_column (str): The column to search within
-        entity_filter (EntityFilter): Filter for sbi_id and eb_id search
-
-    Returns:
-        QueryAndParameters: A tuple of the query and parameters.
-    """
-    # Use list comprehension for better performance
-    dynamic_columns = table_details.get_columns_with_metadata()
-
-    # Pre-allocate conditions and params lists with estimated size
-    conditions = []
-    params = []
-
-    # Add status condition if applicable
-    if qry_params and status_column:
-        dynamic_columns = table_details.get_columns_with_metadata()
-        column_selection = ", ".join(dynamic_columns)
-
-        # Build the dynamic column selection part of the query_
-        query_str = f"""
-            SELECT
-                {column_selection},
-                jsonb_agg(
-                    jsonb_build_object(
-                        'info', log->'info',
-                        'source', log->'source',
-                        'log_time', log->'log_time'
-                    )
-                ) shift_logs
-            FROM
-                {table_details.table_details.table_name},
-                jsonb_array_elements(shift_logs) AS log
-            WHERE
-                log->'info'->>{status_column!r} = %s
-            GROUP BY
-                {column_selection}
-        """
-        params = (qry_params.sbi_status.value,)
-        return query_str, params
-
-    # Process entity filter conditions
-    if entity_filter:
-        match_type_value = match_type.dict()["match_type"].value if match_type else None
-
-        # Helper function to determine operator and value
-        def get_operator_and_value(id_value: str) -> Tuple[str, str]:
-            if match_type_value in ["starts_with", "contains"]:
-                operator = "LIKE"
-                value = (
-                    f"{id_value}%"
-                    if match_type_value == "starts_with"
-                    else f"%{id_value}%"
-                )
-            else:
-                operator = "="
-                value = id_value
-            return operator, value
-
-        # Add SBI ID condition
-        if entity_filter.sbi_id:
-            operator, value = get_operator_and_value(entity_filter.sbi_id)
-            conditions.append(f"(log->'info'->>'sbi_ref')::text {operator} %s")
-            params.append(value)
-
-        # Add EB ID condition
-        if entity_filter.eb_id:
-            operator, value = get_operator_and_value(entity_filter.eb_id)
-            conditions.append(f"(log->'info'->>'eb_id')::text {operator} %s")
-            params.append(value)
-
-    # Build the WHERE clause once
-    where_clause = " AND ".join(conditions) if conditions else "TRUE"
-
-    # Use a pre-built template string for better performance
-    query_template = """
-        SELECT
-            {columns},
-            jsonb_agg(
-                jsonb_build_object(
-                    'info', log->'info',
-                    'source', log->'source',
-                    'log_time', log->'log_time'
-                ) ORDER BY (log->>'log_time')::timestamp
-            ) FILTER (WHERE log IS NOT NULL) AS shift_logs
-        FROM
-            {table_name},
-            jsonb_array_elements(shift_logs) AS log
-        WHERE
-            {where_clause}
-        GROUP BY
-            {columns}
-    """
-
-    # Format the query with all components
-    query_str = query_template.format(
-        columns=", ".join(dynamic_columns),
-        table_name=table_details.table_details.table_name,
-        where_clause=where_clause,
-    )
-
-    return query_str, tuple(params)
-
-
 def select_latest_query(
-    table_details: TableDetails,
-    filters,
+    table_details: TableDetails, filters, entity_ids=None
 ) -> QueryAndParameters:
     """
     Creates a query to select comments / annotation based on various criteria:
@@ -559,16 +357,12 @@ def select_latest_query(
         QueryAndParameters: A tuple of the query and parameters.
     """
     # Get the columns for the select statement
-    tid, shift_id, eb_id = (
-        filters.get("id"),
-        filters.get("shift_id"),
-        filters.get("eb_id"),
-    )
-
+    # Initialize an empty list for where clauses and parameters
+    where_clauses = []
+    params = []
     column_list = list(table_details.get_columns_with_metadata())
     column_list.append("id")
     columns = tuple(column_list)
-
     # Start building the base SQL query
     base_query = sql.SQL(
         """
@@ -579,33 +373,40 @@ def select_latest_query(
         fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
         table=sql.Identifier(table_details.table_details.table_name),
     )
-
-    # Initialize an empty list for where clauses and parameters
-    where_clauses = []
-    params = []
-
-    # Add conditions based on the parameters provided
-    if tid is not None:
-        where_clauses.append(sql.SQL("{field} = %s").format(field=sql.Identifier("id")))
-        params.append(tid)
-
-    if shift_id is not None:
-        where_clauses.append(
-            sql.SQL("{field} = %s").format(field=sql.Identifier("shift_id"))
+    if entity_ids:
+        # write in query where shift in entity_ids
+        where_clauses.append(sql.SQL("shift_id = ANY(%s)"))
+        params.append(entity_ids)
+    else:
+        tid, shift_id, eb_id = (
+            filters.get("id"),
+            filters.get("shift_id"),
+            filters.get("eb_id"),
         )
-        params.append(shift_id)
+        # Add conditions based on the parameters provided
+        if tid is not None:
+            where_clauses.append(
+                sql.SQL("{field} = %s").format(field=sql.Identifier("id"))
+            )
+            params.append(tid)
 
-    if shift_id is not None and eb_id is not None:
-        where_clauses.append(
-            sql.SQL("{field} = %s").format(field=sql.Identifier("eb_id"))
-        )
-        params.append(eb_id)
+        if shift_id is not None:
+            where_clauses.append(
+                sql.SQL("{field} = %s").format(field=sql.Identifier("shift_id"))
+            )
+            params.append(shift_id)
 
-    if eb_id:
-        where_clauses.append(
-            sql.SQL("{field} = %s").format(field=sql.Identifier("eb_id"))
-        )
-        params.append(eb_id)
+        if shift_id is not None and eb_id is not None:
+            where_clauses.append(
+                sql.SQL("{field} = %s").format(field=sql.Identifier("eb_id"))
+            )
+            params.append(eb_id)
+
+        if eb_id:
+            where_clauses.append(
+                sql.SQL("{field} = %s").format(field=sql.Identifier("eb_id"))
+            )
+            params.append(eb_id)
 
     # Build the final query based on the conditions
     if where_clauses:

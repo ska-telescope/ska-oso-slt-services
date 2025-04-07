@@ -12,6 +12,7 @@ from ska_oso_slt_services.domain.shift_models import (
     ShiftAnnotation,
     ShiftComment,
     ShiftLogComment,
+    ShiftLogs,
 )
 from ska_oso_slt_services.services.shift_annotation_service import ShiftAnnotations
 from ska_oso_slt_services.services.shift_comments_service import ShiftComments
@@ -178,9 +179,26 @@ class ShiftService(ShiftComments, ShiftLogsComments, ShiftAnnotations):
         Raises:
             NotFoundError: If no shifts are found for the given query.
         """
-        shifts = self.crud_shift_repository.get_shifts(
-            shift, match_type, status, entities
-        )
+        # TO DO below code will modify once we implement join quries
+        shift_ids = []
+        if (status and not isinstance(status, str) and status.sbi_status) or entities:
+            logs_status = self.crud_shift_repository.get_shift_logs_info(
+                entity=ShiftLogs(),
+                entities=entities,
+                entity_status=status,
+                match_type=match_type,
+            )
+            if logs_status:
+                shift_ids = [log["shift_id"] for log in logs_status]
+            else:
+                raise NotFoundError("No shifts found for the given query.")
+
+        if shift_ids:
+            shifts = self.crud_shift_repository.get_shifts(
+                shift, match_type, shift_ids=shift_ids
+            )
+        else:
+            shifts = self.crud_shift_repository.get_shifts(shift, match_type)
         if not shifts:
             raise NotFoundError("No shifts found for the given query.")
         LOGGER.info("Shifts: %s", shifts)

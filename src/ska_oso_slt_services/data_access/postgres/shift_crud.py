@@ -19,8 +19,8 @@ from ska_oso_slt_services.data_access.postgres.sqlqueries import (
     select_by_shift_params,
     select_latest_query,
     select_latest_shift_query,
-    select_logs_by_status,
     select_metadata_query,
+    select_table_data_by_where_clause,
     update_query,
 )
 
@@ -128,6 +128,7 @@ class DBCrud:
         entity_status: Optional[Any] = None,
         match_type: Optional[Any] = None,
         filters: Optional[dict] = None,
+        entity_ids: Optional[List[int]] = None,
     ) -> List[T]:
         """Get multiple entities from the database based on various criteria.
 
@@ -148,7 +149,7 @@ class DBCrud:
         """
         try:
             query, params = self._build_entities_query(
-                entity, oda_entities, entity_status, match_type, filters
+                entity, oda_entities, entity_status, match_type, filters, entity_ids
             )
             return db.get(query=query, params=params)
         except Exception as e:
@@ -164,6 +165,7 @@ class DBCrud:
         entity_status: Optional[Any],
         match_type: Optional[Any],
         filters: Optional[dict],
+        entity_ids: Optional[List[int]] = None,
     ) -> tuple[str, list]:
         """Build the appropriate query for retrieving
             entities based on provided criteria.
@@ -187,13 +189,14 @@ class DBCrud:
             and entity.shift_end
         ):
             return select_by_date_query(table_details, entity)
-
         if entity_status and entity_status.sbi_status:
-            return select_logs_by_status(table_details, entity_status, "sbi_status")
+            return select_table_data_by_where_clause(
+                table_details, match_type=entity_status
+            )
 
         if oda_entities and (oda_entities.sbi_id or oda_entities.eb_id):
-            return select_logs_by_status(
-                table_details, entity_filter=oda_entities, match_type=match_type
+            return select_table_data_by_where_clause(
+                table_details, oda_entities=oda_entities, match_type=match_type
             )
 
         if (
@@ -204,7 +207,7 @@ class DBCrud:
         ):
             return select_by_shift_params(table_details, entity, match_type)
 
-        return select_latest_query(table_details, filters)
+        return select_latest_query(table_details, filters, entity_ids)
 
     def _get_table_details(self, entity: T) -> BaseMapping:
         """Get table mapping details for the given entity.
