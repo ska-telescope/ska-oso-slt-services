@@ -255,8 +255,10 @@ def select_table_data_by_where_clause(
             )
             params.append(param)
     elif match_type and match_type.sbi_status:
-        where_clause = sql.SQL("""WHERE sbi_status = %s""")
-        params.append(match_type.sbi_status.name.title())
+        where_clause, param = _build_where_clause(
+            "sbi_status", match_type.sbi_status.title(), "EQUALS"
+        )
+        params.append(param)
 
     query = (
         sql.SQL(
