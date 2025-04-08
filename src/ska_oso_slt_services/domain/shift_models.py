@@ -133,8 +133,6 @@ class ShiftLogs(SLTObject):
     sbi_ref: Optional[str] = None
     eb_status: Optional[OSOEBStatus] = None
     sbi_status: Optional[SBIStatus] = None
-    interface: Optional[str] = None
-    telescope: Optional[str] = None
     sbd_version: Optional[int] = None
     request_response: Optional[list] = None
     metadata: Optional[Metadata] = None

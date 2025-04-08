@@ -210,7 +210,7 @@ class TableCreator:
             ON public.tab_oda_slt_shift_annotations (shift_id);
             CREATE INDEX IF NOT EXISTS idx_tab_oda_slt_shift_annotations_user_name
             ON public.tab_oda_slt_shift_annotations (user_name);
-                        CREATE TABLE IF NOT EXISTS public.tab_oda_slt_shift_logs (
+            CREATE TABLE IF NOT EXISTS public.tab_oda_slt_shift_logs (
                 id SERIAL PRIMARY KEY,
                 shift_id VARCHAR(50) NOT NULL,
                 user_id VARCHAR(100) NOT NULL,
@@ -218,8 +218,6 @@ class TableCreator:
                 sbd_ref VARCHAR(60) NOT NULL,
                 sbi_ref VARCHAR(60) NOT NULL,
                 eb_status eb_status NOT NULL,
-                interface VARCHAR(60) NOT NULL,
-                telescope TEXT,
                 sbi_status sbi_status NOT NULL,
                 sbd_version integer NOT NULL,
                 request_response jsonb NOT NULL,

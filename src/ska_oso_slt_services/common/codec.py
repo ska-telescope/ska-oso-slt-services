@@ -26,6 +26,10 @@ class SLTObject(BaseModel):
     )
 
     def _is_default(self, key: str) -> bool:
+        """Returns True if the given key has the default value for models.
+        :param key: model key.
+        :return: boolean value True or False
+        """
         field_info = self.model_fields[key]  # pylint: disable=E1136
         if field_info.default_factory is not None:
             default = field_info.default_factory()

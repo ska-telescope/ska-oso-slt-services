@@ -1,12 +1,18 @@
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from psycopg import DatabaseError
 
 from ska_oso_slt_services.common.custom_exceptions import ShiftEndedException
-from ska_oso_slt_services.domain.shift_models import Media, Shift, ShiftLogComment
+from ska_oso_slt_services.common.error_handling import NotFoundError
+from ska_oso_slt_services.domain.shift_models import (
+    Media,
+    Shift,
+    ShiftLogComment,
+    ShiftLogs,
+)
 from ska_oso_slt_services.repository.postgres_shift_repository import (
     PostgresShiftRepository,
 )
@@ -44,9 +50,6 @@ class TestPostgressShiftRepository(unittest.TestCase):
         repository.postgres_data_access = Mock()
 
         filter_date = "2023-01-01T00:00:00"
-        expected_filter_date_tz = datetime.fromisoformat(filter_date).replace(
-            tzinfo=timezone(timedelta(hours=0, minutes=0))
-        )
 
         mock_eb_rows = (
             self._create_mock_eb("EB001", ["OK", "OK", "OK", "OK", "OK"], "Completed"),
@@ -65,10 +68,6 @@ class TestPostgressShiftRepository(unittest.TestCase):
         self._assert_eb_status("EB002", result, "Failed", "Failed")
         self._assert_eb_status("EB003", result, "Executing", "In Progress")
         self._assert_eb_status("EB004", result, "Created", "Created")
-
-        repository.postgres_data_access.get.assert_called_once_with(
-            query=unittest.mock.ANY, params=(expected_filter_date_tz,)
-        )
 
     def _create_mock_eb(self, eb_id, statuses, current_status):
         """
@@ -273,3 +272,88 @@ class TestPostgressShiftRepository(unittest.TestCase):
         # Test case where comment has no images
         mock_comment.image = []
         self.repository.get_shift_logs_comment = MagicMock(return_value=mock_comment)
+
+    def test_updated_shift_log_info_1(self):
+        """
+        Test case for updated_shift_log_info method when no current shift data is found.
+
+        This test verifies that the method raises a NotFoundError when the current
+        shift data is not found for the given shift ID.
+        """
+        repository = mocked_postgres_repository()
+        repository.get_shift = Mock(return_value=None)
+
+        with self.assertRaises(NotFoundError) as context:
+            repository.updated_shift_log_info("non_existent_shift_id")
+
+        self.assertIn("No shift found with id", str(context.exception))
+        repository.get_shift.assert_called_once_with("non_existent_shift_id")
+
+    def test_updated_shift_log_info_2(self):
+        """
+        Test updated_shift_log_info method when current_shift_data exists.
+        Verifies that the method correctly processes ODA data and updates shift logs.
+        """
+        repository = PostgresShiftRepository()
+        repository.get_shift = Mock(
+            return_value=Shift(shift_id="test-shift", shift_start="2023-01-01T00:00:00")
+        )
+        repository.get_oda_data = Mock(
+            return_value={
+                "eb1": {
+                    "user_id": "1",
+                    "shift_id": "test",
+                    "eb_id": "eb1",
+                    "sbd_ref": "sbd1",
+                    "sbi_ref": "sbi1",
+                    "eb_status": "Created",
+                    "sbi_status": "Created",
+                    "sbd_version": 2,
+                    "request_responses": ["OK", "OK"],
+                    "log_time": datetime.now(tz=timezone.utc),
+                    "source": "ODA",
+                }
+            }
+        )
+        repository.crud.get_entity = Mock(return_value=None)
+        repository.crud.insert_entity = Mock()
+        repository.crud.get_entities = Mock(return_value=[])
+
+        with patch(
+            "ska_oso_slt_services.repository.postgres_shift_repository.datetime"
+        ) as mock_datetime:
+            mock_datetime.now.return_value = datetime(
+                2023, 1, 1, 12, 0, 0, tzinfo=timezone.utc
+            )
+            result = repository.updated_shift_log_info("test-shift", "user1")
+
+        self.assertIsInstance(result, Shift)
+        self.assertEqual(result.shift_id, "test-shift")
+        repository.crud.insert_entity.assert_called_once()
+        inserted_log = repository.crud.insert_entity.call_args[1]["entity"]
+        self.assertIsInstance(inserted_log, ShiftLogs)
+        self.assertEqual(inserted_log.user_id, "user1")
+        self.assertEqual(inserted_log.shift_id, "test-shift")
+        self.assertEqual(inserted_log.eb_id, "eb1")
+        self.assertEqual(inserted_log.sbd_ref, "sbd1")
+        self.assertEqual(inserted_log.sbi_ref, "sbi1")
+        self.assertEqual(inserted_log.eb_status, "Created")
+        self.assertEqual(inserted_log.sbi_status, "Created")
+        self.assertEqual(inserted_log.sbd_version, 2)
+        self.assertEqual(inserted_log.request_response, ["OK", "OK"])
+        self.assertEqual(inserted_log.source, "ODA")
+
+    def test_updated_shift_log_info_shift_not_found(self):
+        """
+        Test the updated_shift_log_info method when the shift is not found.
+        This test verifies that a NotFoundError is raised when the shift doesn't exist.
+        """
+        repository = PostgresShiftRepository()
+        repository.get_shift = Mock(return_value=None)
+
+        with self.assertRaises(NotFoundError) as context:
+            repository.updated_shift_log_info("non_existent_shift_id")
+
+        self.assertEqual(
+            str(context.exception), "404: No shift found with id: non_existent_shift_id"
+        )

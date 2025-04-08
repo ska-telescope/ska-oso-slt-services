@@ -1,7 +1,7 @@
 import logging
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
 
 from psycopg import DatabaseError, DataError, InternalError, sql
@@ -510,9 +510,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
             Exception: If there are issues with data retrieval or processing
         """
         try:
-            filter_date_tz = datetime.fromisoformat(filter_date).replace(
-                tzinfo=timezone(timedelta(hours=0, minutes=0))
-            )
             eb_query = """
                         SELECT
                             e.eb_id,
@@ -537,7 +534,7 @@ class PostgresShiftRepository(CRUDShiftRepository):
                         WHERE
                             e.last_modified_on >=%s
                         """
-            eb_params = [filter_date_tz]
+            eb_params = [filter_date]
             eb_rows = self.postgres_data_access.get(
                 query=sql.SQL(eb_query), params=tuple(eb_params)
             )
@@ -710,15 +707,8 @@ class PostgresShiftRepository(CRUDShiftRepository):
                 "sbi_ref": logs["sbi_ref"],
                 "eb_status": logs["eb_status"],
                 "sbi_status": logs["sbi_status"],
-                "interface": logs["interface"],
-                "telescope": logs["telescope"],
                 "sbd_version": logs["sbd_version"],
-                "request_response": [
-                    {
-                        "log_time": datetime.now(tz=timezone.utc),
-                        "logs": logs["request_responses"],
-                    }
-                ],
+                "request_response": logs["request_responses"],
                 "log_time": datetime.now(tz=timezone.utc),
                 "source": "ODA",
             }
@@ -737,9 +727,6 @@ class PostgresShiftRepository(CRUDShiftRepository):
             shift_logs = ShiftLogs.model_validate(shift_log_params)
 
             if existing_logs:
-                # Update existing log
-                existing_logs["request_response"].extend(shift_logs.request_response)
-                shift_logs.request_response = existing_logs["request_response"]
                 shift_logs = set_new_metadata(shift_logs, user_id)
                 self.crud.update_entity(
                     entity_id=existing_logs["id"],

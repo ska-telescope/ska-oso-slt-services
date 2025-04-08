@@ -201,8 +201,6 @@ class ShiftLogsMapping(BaseMapping[ShiftLogs]):
                 "sbi_ref": lambda shift_logs: shift_logs.sbi_ref,
                 "eb_status": lambda shift_logs: shift_logs.eb_status,
                 "sbi_status": lambda shift_logs: shift_logs.sbi_status,
-                "interface": lambda shift_logs: shift_logs.interface,
-                "telescope": lambda shift_logs: shift_logs.telescope,
                 "sbd_version": lambda shift_logs: shift_logs.sbd_version,
                 "request_response": lambda shift_logs: _field_json_dump(
                     shift_logs, "request_response"
