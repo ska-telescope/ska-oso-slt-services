@@ -48,6 +48,8 @@ COPY --chown=$APP_USER:$APP_USER . ./
 
 RUN python -m pip --require-virtualenv install --no-deps -e .
 
+RUN apt-get install postgresql postgresql-contrib postgresql-server-dev-all
+
 USER ${APP_USER}
 
 CMD ["fastapi", \
